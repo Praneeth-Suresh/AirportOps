@@ -1,84 +1,73 @@
 # Testing Policy
 
+## Test Strategy For This Product
+
+The first tests protect connections between modules before any external integration or AI provider is introduced.
+
+### Contract tests
+
+- Validate `OperationalSnapshot` completeness, immutability, zone paths, role constraints, timestamps, freshness, and confidence.
+- Validate `FlowForecast`, `ScenarioProjection`, and `DecisionOption` schemas at public entry points.
+- Verify that scenario decisions cannot mutate the live snapshot.
+
+### Deterministic domain tests
+
+- Prediction produces stable flow and queue-pressure results from the same fixture snapshot and clock.
+- Simulation changes projections when counters, staff movement, or shift timing changes.
+- Invalid movement, role mismatch, rest-period violations, and impossible counter capacity are rejected.
+- Decision support ranks options using measurable impact and includes rationale and confidence.
+- Missing or stale inputs lower confidence and activate the documented fallback behavior.
+
+### Connection tests
+
+- A fixture adapter can produce a snapshot consumed by prediction, monitoring, simulation, and decision support without vendor services.
+- The application shell can compose the public module interfaces without importing internal files.
+- Monitoring distinguishes live state from forecast and scenario state.
+- The assistant can render deterministic recommendations when the intelligence adapter is unavailable.
+
+### Browser tests
+
+When the web runtime exists, use Microsoft Playwright MCP for user-visible behavior:
+
+- The map renders zones, staff dots, blue passenger flow, and red critical states.
+- The landing transition changes from dark pre-landing to active post-landing state.
+- The time slider changes displayed simulation points without changing live state.
+- Selecting a zone or recommendation exposes details, freshness, confidence, and rationale.
+
 ## Command Matrix
 
 | Check | Command | Status | Notes |
 | --- | --- | --- | --- |
-| Markdown sanity | `./.beryl/scripts/check-md.sh` | available | Unclosed fences and tabs |
-| Test manifest immutability check | `./.beryl/scripts/check-tests-unchanged.sh` | available | Detects changes in configured test scope from `.beryl/agent/test-manifest.conf` |
-| Affected test gate | `./.beryl/scripts/check-affected.sh --worktree` | available | Selects related tests from changed files and uses full-test fallback for broad changes |
-| Aggregate deterministic gate | `./.beryl/scripts/check.sh` | available | Runs all deterministic checks |
-| Format | `not available yet` | unavailable | Add the project formatter command when configured |
-| Lint | `not available yet` | unavailable | Add the project lint command when configured |
-| Typecheck | `not available yet` | unavailable | Add the project typecheck command when configured |
-| Unit tests | `not available yet` | unavailable | Add the project unit test command when configured |
-| Integration tests | `not available yet` | unavailable | Add the project integration test command when configured |
-| E2E smoke | `not available yet` | unavailable | When web runtime exists, use Microsoft Playwright MCP for deterministic browser feedback |
+| Markdown sanity | `./.beryl/scripts/check-md.sh` | available | Checks unclosed fences and tabs |
+| Test manifest immutability check | `./.beryl/scripts/check-tests-unchanged.sh` | available | Detects changes in configured test scope |
+| Affected test gate | `./.beryl/scripts/check-affected.sh --worktree` | available | Selects related tests and uses full-test fallback when configured |
+| Aggregate deterministic gate | `./.beryl/scripts/check.sh` | available | Runs repository deterministic checks |
+| Format | `not available yet` | unavailable | Add a formatter if the project adopts one |
+| Lint | `not available yet` | unavailable | Add lint when the project adopts a lint tool |
+| Typecheck | `not available yet` | unavailable | Add typecheck if the project adopts TypeScript |
+| Unit tests | `npm test` | available | Uses Node's built-in test runner |
+| Integration tests | `npm test` | available | Current fixture connection tests run in the same command |
+| E2E smoke | `not available yet` | unavailable | Use Playwright MCP once the web runtime exists |
 
 ## Default Loop
 
-1. Identify or add the failing behavior.
-2. Select the smallest useful test level.
-3. State success checks before implementation: expected artifact, narrow command, broader command, generated output or browser evidence when applicable, and one user-visible behavior.
-4. Implement one internal feature slice.
-5. Run narrow checks first, then broader checks.
-6. Repair from actual tool output.
-7. For web UI or HTML/CSS work, include a Playwright MCP browser verification step.
-
-## Generated Output Verification
-
-For static-site changes, source inspection is not enough. Always verify generated output that users, crawlers, or downstream tooling receive.
-
-Check affected:
-
-- Relevant `dist` HTML or equivalent built pages.
-- Sitemap, robots, search index, feed, or structured data output.
-- Copied assets when asset handling changed.
-- Browser behavior when UI, routing, or layout changed.
-
-If generated output is unavailable, explain why and run the closest deterministic build or inspection command.
+1. State the success checks and affected public contract.
+2. Add or identify the smallest deterministic contract or behavior test.
+3. Implement one vertical slice through the smallest necessary boundary.
+4. Run the narrow contract/domain check, then the affected test gate, then `./.beryl/scripts/check.sh`.
+5. For UI changes, verify generated output and browser behavior with Playwright MCP.
+6. Repair only from actual tool output and record durable boundary changes in the design tree or an ADR.
 
 ## Affected Test Gate
 
-Commit-time tests run through the affected test gate so developers get fast feedback without choosing test subsets manually.
-
-- The pre-commit hook sets `CHECK_AFFECTED_MODE=staged` and runs `./.beryl/scripts/check.sh`.
-- Manual `./.beryl/scripts/check.sh` uses worktree mode by default and selects from all changes relative to `HEAD`.
-- `.beryl/scripts/check-affected.sh` reads `.beryl/agent/affected-tests.conf`.
-- Changes to broad configuration, dependency, hook, or test-strategy files force `FULL_TEST_CMD` when configured.
-- Source and test changes run `RELATED_TEST_CMD` with changed files appended when configured.
-- If no project test runner is configured yet, the gate reports that no project tests are available and exits successfully.
-
-Recommended project configurations:
-
-```bash
-# Jest
-RELATED_TEST_CMD=(npx --no-install jest --findRelatedTests --passWithNoTests)
-FULL_TEST_CMD=(npm test)
-
-# pytest with testmon
-RELATED_TEST_CMD=(pytest --testmon)
-FULL_TEST_CMD=(pytest)
-```
+`.beryl/agent/affected-tests.conf` uses `npm test` for both related and full test selections. Broad changes to contracts, adapters, persistence, or test strategy must use the full test command.
 
 ## Test Modification Rule
 
-Existing tests may not be weakened to make implementation pass.
-
-Intentional test changes are allowed only when all conditions are met:
-
-1. The behavior change is explicit in the task or design artifact.
-2. `./.beryl/scripts/update-test-manifest.sh` is run after the intentional change.
-3. The manifest update is committed with the test change.
-4. The final response explains why tests changed.
-5. `.beryl/agent/test-manifest.conf` is updated if new test locations/patterns are introduced.
-
-## Immutability Enforcement Scope
-
-- The SHA manifest mechanism provides deterministic change detection, not cryptographic immutability guarantees against privileged users.
-- Enforce stronger controls in CI/review policy, such as branch protection, required status checks, and code review.
+Existing tests may not be weakened. Intentional test changes require an explicit behavior/design change, an update via `./.beryl/scripts/update-test-manifest.sh`, and an explanation in the final handoff.
 
 ## Mocking Rules
 
-- Mock external systems such as network, clocks, randomness, payment providers, and email providers.
-- Do not mock domain logic in the same bounded context.
+- Mock external systems, clocks, randomness, network calls, and AI providers at adapter boundaries.
+- Do not mock domain logic inside the same bounded context.
+- Prefer deterministic fixture adapters over mocks for connection tests.
