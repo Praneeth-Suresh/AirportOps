@@ -1,0 +1,7 @@
+{
+  "installerVersion": "1",
+  "sourceRef": "main",
+  "source": "https://codeload.github.com/Praneeth-Suresh/Beryl/tar.gz/main",
+  "requestedComponents": ["agent-core","tool-shims","checks","githooks"],
+  "components": ["agent-core","tool-shims","checks","githooks"]
+}

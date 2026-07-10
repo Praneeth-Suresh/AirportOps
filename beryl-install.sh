@@ -1,0 +1,607 @@
+#!/bin/sh
+set -eu
+
+INSTALLER_VERSION="1"
+# Canonical repository slug. Every default URL must be derived from this so a
+# single owner rename cannot leave a stale (potentially claimable) slug behind.
+REPO_SLUG="Praneeth-Suresh/Beryl"
+DEFAULT_REF="main"
+DEFAULT_RAW_BASE_URL="https://raw.githubusercontent.com/$REPO_SLUG/$DEFAULT_REF"
+DEFAULT_ARCHIVE_URL="https://codeload.github.com/$REPO_SLUG/tar.gz/$DEFAULT_REF"
+
+fail() {
+  printf "ERROR: %s\n" "$*" >&2
+  exit 1
+}
+
+usage() {
+  cat <<'USAGE'
+Usage:
+  sh install.sh [--profile minimal|standard|full] [--components a,b] [--target DIR]
+
+Options:
+  --profile NAME              Install a named profile. Default: standard.
+  --components a,b            Install explicit components plus dependencies.
+  --target DIR                Install into DIR. Default: current directory.
+  --source-dir DIR            Copy from a local Beryl checkout. Used by tests.
+  --ref REF                   GitHub ref for remote install. Default: main.
+  --raw-base-url URL          Raw GitHub base URL for install.sh and manifest.
+  --archive-url URL           GitHub codeload tarball URL.
+  --root-conflict POLICY      fail, overwrite, or skip root files. Default: fail.
+  --enable-githooks           Set core.hooksPath=.beryl/githooks when installed.
+  --expected-sha256 HEX       Fail unless the downloaded archive matches this
+                              SHA-256 digest. Strongly recommended together
+                              with --ref pinned to a tag or commit SHA.
+  --dry-run                   Print resolved components and paths only.
+  --bootstrap-agent           Enable optional post-install agent bootstrap after seed/sync.
+  --agent-fallback [on|off]   Control fallback behavior when no agent runner is available. Default: on.
+  --agent-runner [codex|claude|custom|off]
+                             Choose agent runner override.
+  --agent-command-template TPL Custom runner template for enterprise/private agents.
+  --agent-policy [strict|interactive]
+                             strict never edits outside the allowed scope; interactive prints manual next-step.
+USAGE
+}
+
+split_csv() {
+  printf "%s\n" "$1" | tr ',' '\n' | sed 's/^ *//; s/ *$//; /^$/d'
+}
+
+manifest_line() {
+  kind="$1"
+  name="$2"
+  grep -F "\"kind\":\"${kind}\",\"name\":\"${name}\"" "$MANIFEST" || true
+}
+
+array_field_from_line() {
+  line="$1"
+  field="$2"
+  printf "%s\n" "$line" | sed -n "s/^.*\"${field}\":\\[\\([^]]*\\)\\].*$/\\1/p" \
+    | tr ',' '\n' \
+    | sed 's/^"//; s/"$//; /^$/d'
+}
+
+profile_components() {
+  line="$(manifest_line profile "$1")"
+  [ -n "$line" ] || fail "unknown profile: $1"
+  array_field_from_line "$line" components
+}
+
+component_field() {
+  line="$(manifest_line component "$1")"
+  [ -n "$line" ] || fail "unknown component: $1"
+  array_field_from_line "$line" "$2"
+}
+
+component_names() {
+  sed -n 's/^.*"kind":"component","name":"\([^"]*\)".*$/\1/p' "$MANIFEST"
+}
+
+existing_lock_components() {
+  lockfile="$TARGET_DIR/.beryl/lock.json"
+  [ -f "$lockfile" ] || return 0
+  sed -n 's/^  "components": \[\(.*\)\].*$/\1/p' "$lockfile" \
+    | tr ',' '\n' \
+    | sed 's/^"//; s/"$//; /^$/d'
+}
+
+list_has() {
+  printf "%s\n" "$1" | grep -qxF "$2"
+}
+
+json_array_from_lines() {
+  first=1
+  printf "["
+  while IFS= read -r item; do
+    [ -n "$item" ] || continue
+    if [ "$first" -eq 0 ]; then
+      printf ","
+    fi
+    first=0
+    printf "\"%s\"" "$item"
+  done
+  printf "]"
+}
+
+ensure_https() {
+  case "$1" in
+    https://*) ;;
+    *) fail "remote downloads must use HTTPS: $1" ;;
+  esac
+}
+
+# Root files a manifest may install outside .beryl/. The manifest is fetched
+# from the network in remote installs, so its paths are untrusted input.
+ROOT_PATH_ALLOWLIST="AGENTS.md
+CLAUDE.md
+.cursor/rules/agent-rules.md
+.github/copilot-instructions.md
+.codex/AGENTS.md
+.github/workflows/deterministic-checks.yml"
+
+validate_manifest_sanity() {
+  grep -q '"schemaVersion": 1' "$MANIFEST" || fail "manifest schemaVersion must be 1"
+  grep -q '"installerVersion": "1"' "$MANIFEST" || fail "manifest installerVersion must be 1"
+}
+
+validate_install_path() {
+  rel="$1"
+  case "$rel" in
+    /*) fail "manifest install path must be repository-relative: $rel" ;;
+    ..|../*|*/..|*/../*) fail "manifest install path must not contain ..: $rel" ;;
+  esac
+  case "$rel" in
+    .beryl/*) return 0 ;;
+  esac
+  list_has "$ROOT_PATH_ALLOWLIST" "${rel%/}" \
+    || fail "manifest install path outside .beryl/ is not in the root allowlist: $rel"
+}
+
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  else
+    fail "need sha256sum or shasum for --expected-sha256"
+  fi
+}
+
+verify_archive_digest() {
+  archive_path="$1"
+  [ -n "$EXPECTED_SHA256" ] || return 0
+  actual_sha256="$(sha256_of "$archive_path")"
+  if [ "$actual_sha256" != "$EXPECTED_SHA256" ]; then
+    fail "archive SHA-256 mismatch: expected $EXPECTED_SHA256 got $actual_sha256 (refusing to install)"
+  fi
+  printf "beryl: archive SHA-256 verified\n"
+}
+
+# fetch_https URL OUT
+# --proto/--proto-redir keep every hop (including redirects) on HTTPS, so a
+# redirect cannot downgrade the scheme after the initial ensure_https check.
+fetch_https() {
+  ensure_https "$1"
+  curl --proto '=https' --proto-redir '=https' --tlsv1.2 --max-redirs 3 \
+    -fsSL "$1" -o "$2"
+}
+
+download_manifest() {
+  mkdir -p "$TMP_DIR"
+  MANIFEST="$TMP_DIR/beryl.components.json"
+  printf "beryl: fetching manifest from %s/.beryl/beryl.components.json\n" "$RAW_BASE_URL"
+  fetch_https "$RAW_BASE_URL/.beryl/beryl.components.json" "$MANIFEST"
+}
+
+copy_local_path() {
+  rel="$1"
+  src="${SOURCE_DIR%/}/$rel"
+  dst="${TARGET_DIR%/}/$rel"
+
+  [ -e "$src" ] || fail "source path missing: $rel"
+  mkdir -p "$(dirname "$dst")"
+
+  case "$rel" in
+    .beryl/*)
+      rm -rf "$dst"
+      cp -R "$src" "$dst"
+      ;;
+    *)
+      if [ -e "$dst" ] && ! cmp -s "$src" "$dst" 2>/dev/null; then
+        case "$ROOT_CONFLICT" in
+          fail) fail "root file conflict: $rel (use --root-conflict overwrite or skip)" ;;
+          skip) printf "beryl: skipped existing root file %s\n" "$rel"; return 0 ;;
+          overwrite) ;;
+        esac
+      fi
+      cp -R "$src" "$dst"
+      ;;
+  esac
+  printf "beryl: installed %s\n" "$rel"
+}
+
+extract_remote_paths() {
+  archive="$TMP_DIR/beryl.tar.gz"
+  stage="$TMP_DIR/stage"
+  mkdir -p "$stage"
+
+  printf "beryl: fetching archive %s\n" "$ARCHIVE_URL"
+  fetch_https "$ARCHIVE_URL" "$archive"
+  verify_archive_digest "$archive"
+  prefix="$(tar -tzf "$archive" | sed -n '1s#/$##p; q')"
+  [ -n "$prefix" ] || fail "could not detect archive prefix"
+
+  for rel in $INSTALL_PATHS; do
+    tar -xzf "$archive" -C "$stage" --strip-components=1 "${prefix}/${rel%/}" 2>/dev/null || \
+      tar -xzf "$archive" -C "$stage" --strip-components=1 "${prefix}/${rel}" 2>/dev/null || \
+      fail "archive path missing: $rel"
+  done
+
+  for rel in $INSTALL_PATHS; do
+    SOURCE_DIR="$stage"
+    copy_local_path "$rel"
+  done
+}
+
+run_post_install_hooks() {
+  ran_hooks=""
+  for component in $RESOLVED_COMPONENTS; do
+    for hook in $(component_field "$component" postInstall); do
+      if list_has "$ran_hooks" "$hook"; then
+        continue
+      fi
+      ran_hooks="${ran_hooks}
+${hook}"
+      case "$hook" in
+        seed-agent-context)
+          if [ -x "$TARGET_DIR/.beryl/agent/scripts/seed-agent-context.sh" ]; then
+            printf "beryl: running post-install hook: .beryl/agent/scripts/seed-agent-context.sh\n"
+            (cd "$TARGET_DIR" && BERYL_AGENT_TEMPLATE_CONFLICT="${BERYL_AGENT_TEMPLATE_CONFLICT:-skip}" ./.beryl/agent/scripts/seed-agent-context.sh)
+          fi
+          ;;
+        sync-agent-env)
+          if [ -x "$TARGET_DIR/.beryl/agent/scripts/sync-agent-env.sh" ]; then
+            printf "beryl: running post-install hook: .beryl/agent/scripts/sync-agent-env.sh\n"
+            (cd "$TARGET_DIR" && BERYL_SHIM_CONFLICT="$ROOT_CONFLICT" ./.beryl/agent/scripts/sync-agent-env.sh)
+          fi
+          ;;
+        bootstrap-agent-context)
+          if [ -x "$TARGET_DIR/.beryl/agent/scripts/bootstrap-agent-context.sh" ]; then
+            printf "beryl: running post-install hook: .beryl/agent/scripts/bootstrap-agent-context.sh\n"
+            (cd "$TARGET_DIR" && \
+              BERYL_AGENT_FALLBACK="$AGENT_FALLBACK" \
+              BERYL_AGENT_RUNNER="${AGENT_RUNNER}" \
+              BERYL_AGENT_COMMAND_TEMPLATE="${AGENT_COMMAND_TEMPLATE}" \
+              BERYL_AGENT_POLICY="${AGENT_POLICY}" \
+              BERYL_BOOTSTRAP_SOURCE_REF="$SOURCE_REF" \
+              BERYL_BOOTSTRAP_INSTALLER_VERSION="$INSTALLER_VERSION" \
+              BERYL_BOOTSTRAP_PROFILE="${PROFILE}" \
+              BERYL_BOOTSTRAP_COMPONENTS="$RESOLVED_COMPONENTS" \
+              ./.beryl/agent/scripts/bootstrap-agent-context.sh)
+          fi
+          ;;
+        update-test-manifest)
+          if [ -x "$TARGET_DIR/.beryl/scripts/update-test-manifest.sh" ]; then
+            printf "beryl: running post-install hook: .beryl/scripts/update-test-manifest.sh\n"
+            (cd "$TARGET_DIR" && ./.beryl/scripts/update-test-manifest.sh)
+          fi
+          ;;
+        enable-githooks)
+          if [ "$ENABLE_GITHOOKS" = "1" ] && command -v git >/dev/null 2>&1 && git -C "$TARGET_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+            printf "beryl: running post-install hook: git config core.hooksPath .beryl/githooks\n"
+            git -C "$TARGET_DIR" config core.hooksPath .beryl/githooks
+          else
+            printf "beryl: skipped githook enablement (pass --enable-githooks inside a Git repo)\n"
+          fi
+          ;;
+      esac
+    done
+  done
+}
+
+print_first_run_guide() {
+  local target script_ref
+  target="$(printf "%s" "$TARGET_DIR")"
+  script_ref="$0"
+
+  printf "beryl: first-run components selected:\n"
+  printf "beryl: %s\n" "$RESOLVED_COMPONENTS" | sed 's/^/  - /'
+
+  if [ ! -f "$TARGET_DIR/.beryl/driver/run.sh" ]; then
+    printf "beryl: driver workflow files are not present yet (no .beryl/driver/run.sh).\n"
+    printf "beryl: to enable driver usage, rerun with one of:\n"
+    printf "beryl:   sh %s --profile full\n" "$script_ref"
+    printf "beryl:   sh %s --components driver\n" "$script_ref"
+  fi
+
+  if printf "%s\n" "$RESOLVED_COMPONENTS" | grep -qx "githooks"; then
+    printf "beryl: if you need the local pre-commit hook, run:\n"
+    printf "beryl:   cd %s && git config core.hooksPath .beryl/githooks\n" "$target"
+    printf "beryl: required before running this command:\n"
+    printf "beryl:   - command must run inside a Git repo (or initialize one first)\n"
+    printf "beryl:   - .git/config must be writable by this process\n"
+    printf "beryl: common failure modes:\n"
+    printf "beryl:   - fatal: not a git repository (run inside a repo)\n"
+    printf "beryl:   - fatal: could not lock config file .git/config: Permission denied\n"
+  fi
+}
+
+write_lockfile() {
+  mkdir -p "$TARGET_DIR/.beryl"
+  {
+    printf "{\n"
+    printf "  \"installerVersion\": \"%s\",\n" "$INSTALLER_VERSION"
+    printf "  \"sourceRef\": \"%s\",\n" "$SOURCE_REF"
+    printf "  \"source\": \"%s\",\n" "$SOURCE_LABEL"
+    printf "  \"requestedComponents\": "
+    printf "%s\n" "$REQUESTED_COMPONENTS" | json_array_from_lines
+    printf ",\n"
+    printf "  \"components\": "
+    printf "%s\n" "$RESOLVED_COMPONENTS" | json_array_from_lines
+    printf "\n}\n"
+  } >"$TARGET_DIR/.beryl/lock.json"
+  printf "beryl: wrote .beryl/lock.json\n"
+}
+
+PROFILE="standard"
+COMPONENTS_CSV=""
+BOOTSTRAP_AGENT="0"
+AGENT_FALLBACK="${BERYL_AGENT_FALLBACK:-on}"
+AGENT_RUNNER="${BERYL_AGENT_RUNNER:-}"
+AGENT_COMMAND_TEMPLATE="${BERYL_AGENT_COMMAND_TEMPLATE:-}"
+AGENT_POLICY="${BERYL_AGENT_POLICY:-interactive}"
+TARGET_DIR="$(pwd)"
+SOURCE_DIR=""
+SOURCE_REF="$DEFAULT_REF"
+RAW_BASE_URL="$DEFAULT_RAW_BASE_URL"
+ARCHIVE_URL="$DEFAULT_ARCHIVE_URL"
+ROOT_CONFLICT="fail"
+ENABLE_GITHOOKS="0"
+EXPECTED_SHA256=""
+DRY_RUN="0"
+TMP_DIR="${TMPDIR:-/tmp}/beryl-install.$$"
+MANIFEST=""
+trap 'rm -rf "$TMP_DIR"' EXIT INT TERM
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --profile)
+      [ "$#" -ge 2 ] || fail "--profile requires a value"
+      PROFILE="$2"
+      shift 2
+      ;;
+    --profile=*)
+      PROFILE="${1#--profile=}"
+      shift
+      ;;
+    --components)
+      [ "$#" -ge 2 ] || fail "--components requires a value"
+      COMPONENTS_CSV="$2"
+      PROFILE=""
+      shift 2
+      ;;
+    --components=*)
+      COMPONENTS_CSV="${1#--components=}"
+      PROFILE=""
+      shift
+      ;;
+    --bootstrap-agent)
+      BOOTSTRAP_AGENT="1"
+      shift
+      ;;
+    --agent-fallback)
+      [ "$#" -ge 2 ] || fail "--agent-fallback requires a value"
+      AGENT_FALLBACK="$2"
+      shift 2
+      ;;
+    --agent-fallback=*)
+      AGENT_FALLBACK="${1#--agent-fallback=}"
+      shift
+      ;;
+    --agent-runner)
+      [ "$#" -ge 2 ] || fail "--agent-runner requires a value"
+      AGENT_RUNNER="${2}"
+      shift 2
+      ;;
+    --agent-runner=*)
+      AGENT_RUNNER="${1#--agent-runner=}"
+      shift
+      ;;
+    --agent-command-template)
+      [ "$#" -ge 2 ] || fail "--agent-command-template requires a value"
+      AGENT_COMMAND_TEMPLATE="${2}"
+      shift 2
+      ;;
+    --agent-command-template=*)
+      AGENT_COMMAND_TEMPLATE="${1#--agent-command-template=}"
+      shift
+      ;;
+    --agent-policy)
+      [ "$#" -ge 2 ] || fail "--agent-policy requires a value"
+      AGENT_POLICY="${2}"
+      shift 2
+      ;;
+    --agent-policy=*)
+      AGENT_POLICY="${1#--agent-policy=}"
+      shift
+      ;;
+    --target)
+      [ "$#" -ge 2 ] || fail "--target requires a value"
+      TARGET_DIR="$2"
+      shift 2
+      ;;
+    --target=*)
+      TARGET_DIR="${1#--target=}"
+      shift
+      ;;
+    --source-dir)
+      [ "$#" -ge 2 ] || fail "--source-dir requires a value"
+      SOURCE_DIR="$2"
+      shift 2
+      ;;
+    --source-dir=*)
+      SOURCE_DIR="${1#--source-dir=}"
+      shift
+      ;;
+    --ref)
+      [ "$#" -ge 2 ] || fail "--ref requires a value"
+      SOURCE_REF="$2"
+      RAW_BASE_URL="https://raw.githubusercontent.com/$REPO_SLUG/$SOURCE_REF"
+      ARCHIVE_URL="https://codeload.github.com/$REPO_SLUG/tar.gz/$SOURCE_REF"
+      shift 2
+      ;;
+    --ref=*)
+      SOURCE_REF="${1#--ref=}"
+      RAW_BASE_URL="https://raw.githubusercontent.com/$REPO_SLUG/$SOURCE_REF"
+      ARCHIVE_URL="https://codeload.github.com/$REPO_SLUG/tar.gz/$SOURCE_REF"
+      shift
+      ;;
+    --raw-base-url)
+      [ "$#" -ge 2 ] || fail "--raw-base-url requires a value"
+      RAW_BASE_URL="$2"
+      shift 2
+      ;;
+    --raw-base-url=*)
+      RAW_BASE_URL="${1#--raw-base-url=}"
+      shift
+      ;;
+    --archive-url)
+      [ "$#" -ge 2 ] || fail "--archive-url requires a value"
+      ARCHIVE_URL="$2"
+      shift 2
+      ;;
+    --archive-url=*)
+      ARCHIVE_URL="${1#--archive-url=}"
+      shift
+      ;;
+    --root-conflict)
+      [ "$#" -ge 2 ] || fail "--root-conflict requires a value"
+      ROOT_CONFLICT="$2"
+      shift 2
+      ;;
+    --root-conflict=*)
+      ROOT_CONFLICT="${1#--root-conflict=}"
+      shift
+      ;;
+    --enable-githooks)
+      ENABLE_GITHOOKS="1"
+      shift
+      ;;
+    --expected-sha256)
+      [ "$#" -ge 2 ] || fail "--expected-sha256 requires a value"
+      EXPECTED_SHA256="$2"
+      shift 2
+      ;;
+    --expected-sha256=*)
+      EXPECTED_SHA256="${1#--expected-sha256=}"
+      shift
+      ;;
+    --dry-run)
+      DRY_RUN="1"
+      shift
+      ;;
+    --*)
+      fail "unknown argument: $1"
+      ;;
+    *)
+      fail "unknown positional argument: $1"
+      ;;
+  esac
+done
+
+case "$ROOT_CONFLICT" in
+  fail|overwrite|skip) ;;
+  *) fail "--root-conflict must be fail, overwrite, or skip" ;;
+esac
+case "$AGENT_FALLBACK" in
+  on|off) ;;
+  *) fail "--agent-fallback must be on or off" ;;
+esac
+case "$AGENT_POLICY" in
+  strict|interactive) ;;
+  *) fail "--agent-policy must be strict or interactive" ;;
+esac
+case "$AGENT_RUNNER" in
+  ""|codex|claude|custom|off) ;;
+  *) fail "--agent-runner must be codex, claude, or custom" ;;
+esac
+
+if [ -n "$EXPECTED_SHA256" ]; then
+  case "$EXPECTED_SHA256" in
+    *[!0-9a-fA-F]*) fail "--expected-sha256 must be a 64-char hex digest" ;;
+  esac
+  [ "${#EXPECTED_SHA256}" -eq 64 ] || fail "--expected-sha256 must be a 64-char hex digest"
+fi
+
+mkdir -p "$TARGET_DIR"
+TARGET_DIR="$(cd "$TARGET_DIR" && pwd)"
+
+if [ -n "$SOURCE_DIR" ]; then
+  SOURCE_DIR="$(cd "$SOURCE_DIR" && pwd)"
+  MANIFEST="$SOURCE_DIR/.beryl/beryl.components.json"
+  SOURCE_LABEL="$SOURCE_DIR"
+  [ -f "$MANIFEST" ] || fail "missing local manifest: $MANIFEST"
+else
+  SOURCE_LABEL="$ARCHIVE_URL"
+  download_manifest
+fi
+validate_manifest_sanity
+
+if [ -n "$COMPONENTS_CSV" ]; then
+  REQUESTED_COMPONENTS="$(split_csv "$COMPONENTS_CSV")"
+else
+  REQUESTED_COMPONENTS="$(profile_components "$PROFILE")"
+fi
+if [ "$BOOTSTRAP_AGENT" = "1" ]; then
+  REQUESTED_COMPONENTS="${REQUESTED_COMPONENTS}
+agent-bootstrap"
+fi
+
+EXISTING_COMPONENTS="$(existing_lock_components)"
+ALL_COMPONENTS="$(printf "%s\n%s\n" "$REQUESTED_COMPONENTS" "$EXISTING_COMPONENTS" | sed '/^$/d' | awk '!seen[$0]++')"
+changed=1
+while [ "$changed" -eq 1 ]; do
+  changed=0
+  for component in $ALL_COMPONENTS; do
+    [ -n "$(manifest_line component "$component")" ] || fail "unknown component: $component"
+    for dep in $(component_field "$component" requires); do
+      if ! list_has "$ALL_COMPONENTS" "$dep"; then
+        ALL_COMPONENTS="${ALL_COMPONENTS}
+${dep}"
+        changed=1
+      fi
+    done
+  done
+done
+
+RESOLVED_COMPONENTS=""
+for component in $(component_names); do
+  if list_has "$ALL_COMPONENTS" "$component"; then
+    RESOLVED_COMPONENTS="${RESOLVED_COMPONENTS}
+${component}"
+  fi
+done
+RESOLVED_COMPONENTS="$(printf "%s\n" "$RESOLVED_COMPONENTS" | sed '/^$/d')"
+REQUESTED_COMPONENTS="$(printf "%s\n" "$REQUESTED_COMPONENTS" | sed '/^$/d')"
+
+INSTALL_PATHS=""
+for component in $RESOLVED_COMPONENTS; do
+  INSTALL_PATHS="${INSTALL_PATHS}
+$(component_field "$component" paths)
+$(component_field "$component" rootPaths)"
+done
+INSTALL_PATHS="$(printf "%s\n" "$INSTALL_PATHS" | sed '/^$/d' | awk '!seen[$0]++')"
+for rel in $INSTALL_PATHS; do
+  validate_install_path "$rel"
+done
+
+printf "beryl: installer version %s\n" "$INSTALLER_VERSION"
+printf "beryl: source ref %s\n" "$SOURCE_REF"
+printf "beryl: resolved components: %s\n" "$(printf "%s" "$RESOLVED_COMPONENTS" | tr '\n' ' ')"
+
+if [ "$DRY_RUN" = "1" ]; then
+  printf "beryl: install paths:\n"
+  printf "%s\n" "$INSTALL_PATHS" | sed 's/^/  /'
+  exit 0
+fi
+
+if [ -n "$SOURCE_DIR" ]; then
+  for rel in $INSTALL_PATHS; do
+    copy_local_path "$rel"
+  done
+else
+  extract_remote_paths
+fi
+
+chmod +x "$TARGET_DIR"/.beryl/scripts/*.sh 2>/dev/null || true
+chmod +x "$TARGET_DIR"/.beryl/agent/scripts/*.sh 2>/dev/null || true
+chmod +x "$TARGET_DIR"/.beryl/githooks/pre-commit 2>/dev/null || true
+
+run_post_install_hooks
+write_lockfile
+print_first_run_guide
+printf "beryl: install complete in %s\n" "$TARGET_DIR"
