@@ -37,6 +37,10 @@ export function assertOperationalSnapshot(snapshot) {
   assertArray(snapshot.observations, "OperationalSnapshot.observations");
 
   const zoneIds = new Set(snapshot.zones.map((zone) => zone.zoneId));
+  assertArray(snapshot.airport.paths, "AirportLayout.paths");
+  if (snapshot.airport.transferRules) {
+    assertArray(snapshot.airport.transferRules, "AirportLayout.transferRules");
+  }
 
   for (const zone of snapshot.zones) {
     assertString(zone.zoneId, "Zone.zoneId");
@@ -50,6 +54,48 @@ export function assertOperationalSnapshot(snapshot) {
       throw new Error(`PassengerFlow references an unknown zone: ${flow.fromZoneId} -> ${flow.toZoneId}`);
     }
     assertNumber(flow.estimatedCount, "PassengerFlow.estimatedCount");
+  }
+
+  for (const counter of snapshot.counters) {
+    assertString(counter.counterId, "CounterState.counterId");
+    assertString(counter.zoneId, "CounterState.zoneId");
+    if (!zoneIds.has(counter.zoneId)) {
+      throw new Error(`CounterState ${counter.counterId} references unknown zone: ${counter.zoneId}`);
+    }
+    assertNumber(counter.open, `${counter.counterId}.open`);
+    assertNumber(counter.available, `${counter.counterId}.available`);
+    assertNumber(counter.maxOpen, `${counter.counterId}.maxOpen`);
+    assertNumber(counter.openLeadMinutes, `${counter.counterId}.openLeadMinutes`);
+    assertString(counter.roleRequired, `${counter.counterId}.roleRequired`);
+    assertString(counter.observedAt, `${counter.counterId}.observedAt`);
+    assertConfidence(counter.confidence, `${counter.counterId}.confidence`);
+    if (counter.maxOpen < counter.open) {
+      throw new Error(`CounterState ${counter.counterId} maxOpen must cover open counters`);
+    }
+  }
+
+  for (const staff of snapshot.staff) {
+    assertString(staff.staffId, "StaffState.staffId");
+    assertString(staff.role, `${staff.staffId}.role`);
+    assertString(staff.zoneId, `${staff.staffId}.zoneId`);
+    if (!zoneIds.has(staff.zoneId)) {
+      throw new Error(`StaffState ${staff.staffId} references unknown zone: ${staff.zoneId}`);
+    }
+    assertString(staff.availability, `${staff.staffId}.availability`);
+    assertNumber(staff.coverageUnits, `${staff.staffId}.coverageUnits`);
+    assertNumber(staff.restMinutesDue, `${staff.staffId}.restMinutesDue`);
+    assertString(staff.observedAt, `${staff.staffId}.observedAt`);
+    assertConfidence(staff.confidence, `${staff.staffId}.confidence`);
+  }
+
+  for (const rule of snapshot.airport.transferRules ?? []) {
+    assertString(rule.role, "TransferRule.role");
+    assertString(rule.fromZoneId, "TransferRule.fromZoneId");
+    assertString(rule.toZoneId, "TransferRule.toZoneId");
+    assertNumber(rule.transferMinutes, "TransferRule.transferMinutes");
+    if (!zoneIds.has(rule.fromZoneId) || !zoneIds.has(rule.toZoneId)) {
+      throw new Error(`TransferRule references an unknown zone: ${rule.fromZoneId} -> ${rule.toZoneId}`);
+    }
   }
 }
 
@@ -88,6 +134,7 @@ export function assertMonitoringAnalytics(analytics) {
   assertString(analytics.generatedAt, "MonitoringAnalytics.generatedAt");
   assertArray(analytics.queueStates, "MonitoringAnalytics.queueStates");
   assertArray(analytics.counterUtilizations, "MonitoringAnalytics.counterUtilizations");
+  assertArray(analytics.staffingContexts, "MonitoringAnalytics.staffingContexts");
   assertArray(analytics.crowdingEvents, "MonitoringAnalytics.crowdingEvents");
   assertArray(analytics.operationalAlerts, "MonitoringAnalytics.operationalAlerts");
 
@@ -107,6 +154,16 @@ export function assertMonitoringAnalytics(analytics) {
     assertNumber(utilization.utilizationRatio, "CounterUtilization.utilizationRatio");
     assertString(utilization.status, "CounterUtilization.status");
     assertConfidence(utilization.confidence, "CounterUtilization.confidence");
+  }
+
+  for (const context of analytics.staffingContexts) {
+    assertString(context.zoneId, "StaffingContext.zoneId");
+    assertString(context.roleRequired, "StaffingContext.roleRequired");
+    assertNumber(context.activeCoverageUnits, "StaffingContext.activeCoverageUnits");
+    assertNumber(context.requiredCoverageUnits, "StaffingContext.requiredCoverageUnits");
+    assertNumber(context.staffingGap, "StaffingContext.staffingGap");
+    assertArray(context.reliefCandidates, "StaffingContext.reliefCandidates");
+    assertConfidence(context.confidence, "StaffingContext.confidence");
   }
 
   for (const event of analytics.crowdingEvents) {

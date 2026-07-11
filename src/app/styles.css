@@ -192,7 +192,8 @@ h2 {
 
 .alert-card span,
 .supporting-note,
-.bottleneck {
+.bottleneck,
+.staffing-note {
   color: #5d574b;
   font-size: 0.84rem;
 }
@@ -345,6 +346,11 @@ h2 {
   margin-bottom: 8px;
   font-weight: 800;
   text-transform: capitalize;
+}
+
+.staffing-note {
+  margin-bottom: 8px;
+  line-height: 1.35;
 }
 
 .simulation-panel {

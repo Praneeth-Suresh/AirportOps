@@ -83,6 +83,12 @@ function createSnapshotVariant(variant) {
         ["departure-hall", "security-north"],
         ["security-north", "departure-gate-c"],
       ],
+      transferRules: [
+        { role: "ground-staff", fromZoneId: "departure-hall", toZoneId: "check-in-a", transferMinutes: 7, allowed: true },
+        { role: "ground-staff", fromZoneId: "bag-drop-a", toZoneId: "check-in-a", transferMinutes: 4, allowed: true },
+        { role: "immigration-officer", fromZoneId: "arrival-gate-a", toZoneId: "immigration-east", transferMinutes: 6, allowed: true },
+        { role: "security", fromZoneId: "departure-hall", toZoneId: "security-north", transferMinutes: 8, allowed: true },
+      ],
     },
     zones: [
       {
@@ -177,20 +183,20 @@ function createSnapshotVariant(variant) {
       },
     ],
     counters: [
-      { counterId: "chk-a-01", zoneId: "check-in-a", open: 6, available: 10, roleRequired: "ground-staff" },
-      { counterId: "bag-a-01", zoneId: "bag-drop-a", open: 4, available: 6, roleRequired: "ground-staff" },
-      { counterId: "imm-e-01", zoneId: "immigration-east", open: 9, available: 12, roleRequired: "immigration-officer" },
-      { counterId: "sec-n-01", zoneId: "security-north", open: 7, available: 10, roleRequired: "security" },
-      { counterId: "dep-h-01", zoneId: "departure-hall", open: 8, available: 14, roleRequired: "ground-staff" },
+      createCounterState("chk-a-01", "check-in-a", 6, 10, "ground-staff", variantConfig.observedAt, variantConfig.confidenceScore, 6),
+      createCounterState("bag-a-01", "bag-drop-a", 4, 6, "ground-staff", variantConfig.observedAt, variantConfig.confidenceScore - 0.03, 8),
+      createCounterState("imm-e-01", "immigration-east", 9, 12, "immigration-officer", "2026-07-11T09:17:00+07:00", 0.86, 10),
+      createCounterState("sec-n-01", "security-north", 7, 10, "security", "2026-07-11T09:13:00+07:00", 0.83, 12),
+      createCounterState("dep-h-01", "departure-hall", 8, 14, "ground-staff", "2026-07-11T09:19:00+07:00", 0.88, 10),
     ],
     staff: [
-      { staffId: "io-12", role: "immigration-officer", zoneId: "immigration-east", availability: "active", restMinutesDue: 40 },
-      { staffId: "io-18", role: "immigration-officer", zoneId: "arrival-gate-a", availability: "available", restMinutesDue: 75 },
-      { staffId: "sec-04", role: "security", zoneId: "security-north", availability: "active", restMinutesDue: 55 },
-      { staffId: "sec-09", role: "security", zoneId: "departure-hall", availability: "available", restMinutesDue: 90 },
-      { staffId: "ops-21", role: "ground-staff", zoneId: "departure-hall", availability: "active", restMinutesDue: 120 },
-      { staffId: "ops-33", role: "ground-staff", zoneId: "check-in-a", availability: "active", restMinutesDue: 65 },
-      { staffId: "ops-38", role: "ground-staff", zoneId: "bag-drop-a", availability: "active", restMinutesDue: 85 },
+      createStaffState("io-12", "immigration-officer", "immigration-east", "active", 8, 40, "2026-07-11T09:16:00+07:00", 0.9),
+      createStaffState("io-18", "immigration-officer", "arrival-gate-a", "available", 3, 75, "2026-07-11T09:16:00+07:00", 0.9),
+      createStaffState("sec-04", "security", "security-north", "active", 6, 55, "2026-07-11T09:14:00+07:00", 0.88),
+      createStaffState("sec-09", "security", "departure-hall", "available", 2, 90, "2026-07-11T09:14:00+07:00", 0.88),
+      createStaffState("ops-21", "ground-staff", "departure-hall", "available", 4, 120, "2026-07-11T09:15:00+07:00", 0.9),
+      createStaffState("ops-33", "ground-staff", "check-in-a", "active", 5, 65, variantConfig.observedAt, variantConfig.confidenceScore),
+      createStaffState("ops-38", "ground-staff", "bag-drop-a", "active", 3, 85, variantConfig.observedAt, variantConfig.confidenceScore - 0.03),
     ],
     flights: [
       {
@@ -244,5 +250,40 @@ function createSnapshotVariant(variant) {
       { source: "floor-plate", observedAt: "2026-07-11T09:11:00+07:00", confidence: { score: 0.78, basis: "fixture" } },
       { source: "roster", observedAt: "2026-07-11T08:45:00+07:00", confidence: { score: 0.9, basis: "fixture" } },
     ],
+  };
+}
+
+function createCounterState(counterId, zoneId, open, available, roleRequired, observedAt, confidenceScore, openLeadMinutes) {
+  return {
+    counterId,
+    zoneId,
+    open,
+    available,
+    maxOpen: available,
+    openLeadMinutes,
+    roleRequired,
+    observedAt,
+    confidence: {
+      score: Number(confidenceScore.toFixed(2)),
+      basis: "counter status feed fixture",
+    },
+  };
+}
+
+function createStaffState(staffId, role, zoneId, availability, coverageUnits, restMinutesDue, observedAt, confidenceScore) {
+  return {
+    staffId,
+    role,
+    zoneId,
+    availability,
+    coverageUnits,
+    restMinutesDue,
+    shiftStartsAt: "2026-07-11T06:00:00+07:00",
+    shiftEndsAt: "2026-07-11T14:00:00+07:00",
+    observedAt,
+    confidence: {
+      score: Number(confidenceScore.toFixed(2)),
+      basis: "roster feed fixture",
+    },
   };
 }

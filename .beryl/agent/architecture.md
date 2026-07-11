@@ -41,9 +41,18 @@ These contracts are the only cross-context data required for the first build:
 OperationalSnapshot
   asOf: Instant
   airport: AirportLayout
+    paths: ZonePath[]
+    transferRules: ZoneRoleTransferRule[]
   zones: ZoneState[]
   counters: CounterState[]
+    maxOpen: Count
+    openLeadMinutes: DurationEstimate
+    observedAt: Instant
+    confidence: Confidence
   staff: StaffState[]
+    coverageUnits: Count
+    observedAt: Instant
+    confidence: Confidence
   flights: FlightState[]
   passengerFlows: PassengerFlow[]
   observations: ObservationMetadata[]

@@ -57,6 +57,9 @@ export function assembleOperationalSnapshot(rows, requestedSnapshotId) {
       paths: rows.zonePaths
         .filter((path) => path.airportId === airport.airportId)
         .map((path) => [path.fromZoneId, path.toZoneId]),
+      transferRules: (rows.zoneRoleTransferRules ?? [])
+        .filter((rule) => rule.airportId === airport.airportId)
+        .map(({ airportId: _airportId, ...rule }) => rule),
     },
     zones,
     counters: rows.counterStates
@@ -103,6 +106,10 @@ export function createFixtureOperationalDatabaseRows(snapshotId = "fixture-peak"
       airportId: snapshot.airport.airportId,
       fromZoneId,
       toZoneId,
+    })),
+    zoneRoleTransferRules: snapshot.airport.transferRules.map((rule) => ({
+      airportId: snapshot.airport.airportId,
+      ...rule,
     })),
     operationalSnapshots: [
       {

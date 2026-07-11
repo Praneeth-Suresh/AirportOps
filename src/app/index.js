@@ -78,9 +78,13 @@ function render() {
           <div><span>${selectedZone.queueState.queueLength}</span><small>Queue length</small></div>
           <div><span>${selectedZone.queueState.estimatedWaitMinutes}m</span><small>Estimated wait</small></div>
           <div><span>${formatUtilization(selectedZone.counterUtilization)}</span><small>Counter utilization</small></div>
+          <div><span>${formatStaffingGap(selectedZone.staffingContext)}</span><small>Staffing gap</small></div>
+          <div><span>${formatReliefCoverage(selectedZone.staffingContext)}</span><small>Relief coverage</small></div>
+          <div><span>${formatOpenCapacity(selectedZone.staffingContext)}</span><small>Openable counters</small></div>
           <div><span>${selectedZone.alert?.severity ?? selectedZone.status}</span><small>Alert state</small></div>
         </div>
         <p class="bottleneck">${selectedZone.bottleneck.label}</p>
+        <p class="staffing-note">${formatStaffingContext(selectedZone.staffingContext)}</p>
         <p class="freshness">${selectedZone.freshness.status.toUpperCase()} observation, confidence ${Math.round(selectedZone.confidence.score * 100)}%</p>
       </aside>
 
@@ -170,7 +174,9 @@ function renderDecision(decision) {
     ? `Open ${decision.openDelta} counter(s) at ${labelize(decision.zoneId)}`
     : decision.type === "passenger-movement"
       ? `Move ${decision.passengers} passengers from ${labelize(decision.fromZoneId)}`
-      : `Start ${decision.role} shift ${Math.abs(decision.startDeltaMinutes)} min earlier`;
+      : decision.type === "staff-reassignment"
+        ? `Move ${decision.coverageUnits} ${decision.role} unit(s) from ${labelize(decision.fromZoneId)}`
+        : `Start ${decision.role} shift ${Math.abs(decision.startDeltaMinutes)} min earlier`;
   return `<div class="decision-chip">${label}</div>`;
 }
 
@@ -178,7 +184,7 @@ function renderOption(option) {
   return `
     <article class="option-card">
       <strong>${option.expectedImpact.label}</strong>
-      <span>${option.expectedImpact.passengersRelieved} passengers relieved, ${option.expectedImpact.estimatedWaitMinutesReduced} min wait reduction, confidence ${Math.round(option.confidence.score * 100)}%</span>
+      <span>${renderOptionDecision(option.decision)}. ${option.expectedImpact.passengersRelieved} passengers relieved, ${option.expectedImpact.estimatedWaitMinutesReduced} min wait reduction, confidence ${Math.round(option.confidence.score * 100)}%</span>
     </article>
   `;
 }
@@ -207,6 +213,51 @@ function formatUtilization(counterUtilization) {
     return "n/a";
   }
   return `${Math.round(counterUtilization.utilizationRatio * 100)}%`;
+}
+
+function formatStaffingGap(staffingContext) {
+  if (!staffingContext) {
+    return "n/a";
+  }
+  return `${staffingContext.staffingGap}`;
+}
+
+function formatReliefCoverage(staffingContext) {
+  if (!staffingContext) {
+    return "n/a";
+  }
+  return `${staffingContext.reliefCoverageUnits}`;
+}
+
+function formatOpenCapacity(staffingContext) {
+  if (!staffingContext) {
+    return "n/a";
+  }
+  return `${staffingContext.openCounterCapacity}`;
+}
+
+function formatStaffingContext(staffingContext) {
+  if (!staffingContext) {
+    return "No staffed counter bank in this zone";
+  }
+  const candidate = staffingContext.reliefCandidates[0];
+  const relief = candidate
+    ? `${candidate.coverageUnits} ${staffingContext.roleRequired} unit(s) from ${labelize(candidate.fromZoneId)} in ${candidate.transferMinutes} min`
+    : `no same-role relief candidate`;
+  return `${staffingContext.activeCoverageUnits}/${staffingContext.requiredCoverageUnits} ${staffingContext.roleRequired} coverage active; ${relief}.`;
+}
+
+function renderOptionDecision(decision) {
+  if (decision.type === "staff-reassignment") {
+    return `Reassign ${decision.coverageUnits} ${decision.role} unit(s) from ${labelize(decision.fromZoneId)} in ${decision.transferMinutes} min`;
+  }
+  if (decision.type === "counter-capacity") {
+    return `Open ${decision.openDelta} ${decision.roleRequired} counter(s) within ${decision.openLeadMinutes} min`;
+  }
+  if (decision.type === "shift-timing") {
+    return `Start ${decision.role} shift ${Math.abs(decision.startDeltaMinutes)} min earlier`;
+  }
+  return `Route ${decision.passengers} passengers from ${labelize(decision.fromZoneId)}`;
 }
 
 function formatTime(value) {

@@ -37,6 +37,20 @@ test("operational database reader drives the full airport operations decision pa
   assert.ok(options.some((option) => option.affectedZones.includes("check-in-a")));
 });
 
+test("operational database reader preserves staffing and counter feasibility context", () => {
+  const snapshot = createOperationalDatabaseReader().getSnapshot();
+  const checkInCounter = snapshot.counters.find((counter) => counter.zoneId === "check-in-a");
+  const checkInStaff = snapshot.staff.find((staff) => staff.staffId === "ops-33");
+  const transferRule = snapshot.airport.transferRules.find((rule) => rule.toZoneId === "check-in-a");
+
+  assert.equal(checkInCounter.maxOpen, 10);
+  assert.equal(checkInCounter.openLeadMinutes, 6);
+  assert.equal(checkInCounter.confidence.score, 0.88);
+  assert.equal(checkInStaff.coverageUnits, 5);
+  assert.equal(checkInStaff.confidence.score, 0.88);
+  assert.equal(transferRule.transferMinutes, 7);
+});
+
 test("operational database reader rejects rows that reference unknown zones", () => {
   const rows = createFixtureOperationalDatabaseRows();
   rows.staffStates[0] = { ...rows.staffStates[0], zoneId: "missing-zone" };
@@ -55,6 +69,16 @@ test("simulation rejects scenario decisions for unknown zones", () => {
   assert.throws(
     () => simulationService.project(snapshot, forecast, [{ type: "counter-capacity", zoneId: "missing-zone", openDelta: 1 }]),
     /unknown zone/,
+  );
+});
+
+test("simulation rejects counter decisions that exceed available opening capacity", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+
+  assert.throws(
+    () => simulationService.project(snapshot, forecast, [{ type: "counter-capacity", zoneId: "check-in-a", openDelta: 5 }]),
+    /exceeds counter capacity/,
   );
 });
 
@@ -92,6 +116,18 @@ test("monitoring analytics derives check-in counter utilization and alert severi
   assert.equal(alert.lifecycleState, "new");
 });
 
+test("monitoring analytics exposes staffing context for counter relief", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const analytics = monitoringAnalyticsService.analyze(snapshot);
+  const staffing = analytics.staffingContexts.find((candidate) => candidate.zoneId === "check-in-a");
+
+  assert.equal(staffing.roleRequired, "ground-staff");
+  assert.equal(staffing.staffingGap, 1);
+  assert.equal(staffing.openCounterCapacity, 4);
+  assert.equal(staffing.reliefCandidates[0].fromZoneId, "bag-drop-a");
+  assert.equal(staffing.reliefCandidates[0].transferMinutes, 4);
+});
+
 test("stale edge observations lower confidence and generate data-quality alerts", () => {
   const staleSnapshot = createOperationalStateReader(() => createFixtureSnapshotSeries()[2]).getSnapshot();
   const analytics = monitoringAnalyticsService.analyze(staleSnapshot);
@@ -122,4 +158,19 @@ test("decision options can trace recommendations to monitoring alerts", () => {
 
   assert.ok(options.some((option) => option.relatedAlertId));
   assert.ok(options.some((option) => option.expectedImpact.estimatedWaitMinutesReduced >= 1));
+  assert.ok(options.every((option) => option.expectedImpact.queuePressureDrop > 0));
+});
+
+test("decision options include staffing rearrangement feasibility", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const projection = simulationService.project(snapshot, forecast, defaultScenarioDecisions());
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+  const options = decisionSupportService.options(snapshot, forecast, projection, monitoring.analytics.operationalAlerts);
+  const checkInOption = options.find((option) => option.affectedZones.includes("check-in-a"));
+
+  assert.equal(checkInOption.decision.type, "staff-reassignment");
+  assert.equal(checkInOption.decision.fromZoneId, "bag-drop-a");
+  assert.equal(checkInOption.expectedImpact.staffingGap, 1);
+  assert.ok(checkInOption.rationale.some((item) => item.label.includes("coverage unit")));
 });

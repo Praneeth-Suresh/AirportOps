@@ -66,33 +66,69 @@ SET occupancy = EXCLUDED.occupancy,
     observed_at = EXCLUDED.observed_at,
     freshness_status = EXCLUDED.freshness_status;
 
-INSERT INTO airport_ops.counter_states (snapshot_id, counter_id, zone_id, open_count, available_count, role_required)
+INSERT INTO airport_ops.counter_states (
+  snapshot_id,
+  counter_id,
+  zone_id,
+  open_count,
+  available_count,
+  max_open_count,
+  open_lead_minutes,
+  role_required,
+  observed_at,
+  confidence_score,
+  confidence_basis
+)
 VALUES
-  ('fixture-peak-2026-07-11T09:20:00+07:00', 'chk-a-01', 'check-in-a', 6, 10, 'ground-staff'),
-  ('fixture-peak-2026-07-11T09:20:00+07:00', 'bag-a-01', 'bag-drop-a', 4, 6, 'ground-staff'),
-  ('fixture-peak-2026-07-11T09:20:00+07:00', 'imm-e-01', 'immigration-east', 9, 12, 'immigration-officer'),
-  ('fixture-peak-2026-07-11T09:20:00+07:00', 'sec-n-01', 'security-north', 7, 10, 'security'),
-  ('fixture-peak-2026-07-11T09:20:00+07:00', 'dep-h-01', 'departure-hall', 8, 14, 'ground-staff')
+  ('fixture-peak-2026-07-11T09:20:00+07:00', 'chk-a-01', 'check-in-a', 6, 10, 10, 6, 'ground-staff', '2026-07-11T09:19:00+07:00', 0.880, 'deterministic counter status fixture'),
+  ('fixture-peak-2026-07-11T09:20:00+07:00', 'bag-a-01', 'bag-drop-a', 4, 6, 6, 8, 'ground-staff', '2026-07-11T09:19:00+07:00', 0.850, 'deterministic counter status fixture'),
+  ('fixture-peak-2026-07-11T09:20:00+07:00', 'imm-e-01', 'immigration-east', 9, 12, 12, 10, 'immigration-officer', '2026-07-11T09:17:00+07:00', 0.860, 'deterministic counter status fixture'),
+  ('fixture-peak-2026-07-11T09:20:00+07:00', 'sec-n-01', 'security-north', 7, 10, 10, 12, 'security', '2026-07-11T09:13:00+07:00', 0.830, 'deterministic counter status fixture'),
+  ('fixture-peak-2026-07-11T09:20:00+07:00', 'dep-h-01', 'departure-hall', 8, 14, 14, 10, 'ground-staff', '2026-07-11T09:19:00+07:00', 0.880, 'deterministic counter status fixture')
 ON CONFLICT (snapshot_id, counter_id) DO UPDATE
 SET zone_id = EXCLUDED.zone_id,
     open_count = EXCLUDED.open_count,
     available_count = EXCLUDED.available_count,
-    role_required = EXCLUDED.role_required;
+    max_open_count = EXCLUDED.max_open_count,
+    open_lead_minutes = EXCLUDED.open_lead_minutes,
+    role_required = EXCLUDED.role_required,
+    observed_at = EXCLUDED.observed_at,
+    confidence_score = EXCLUDED.confidence_score,
+    confidence_basis = EXCLUDED.confidence_basis;
 
-INSERT INTO airport_ops.staff_states (snapshot_id, staff_id, role, zone_id, availability, rest_minutes_due)
+INSERT INTO airport_ops.staff_states (
+  snapshot_id,
+  staff_id,
+  role,
+  zone_id,
+  availability,
+  coverage_units,
+  rest_minutes_due,
+  shift_starts_at,
+  shift_ends_at,
+  observed_at,
+  confidence_score,
+  confidence_basis
+)
 VALUES
-  ('fixture-peak-2026-07-11T09:20:00+07:00', 'io-12', 'immigration-officer', 'immigration-east', 'active', 40),
-  ('fixture-peak-2026-07-11T09:20:00+07:00', 'io-18', 'immigration-officer', 'arrival-gate-a', 'available', 75),
-  ('fixture-peak-2026-07-11T09:20:00+07:00', 'sec-04', 'security', 'security-north', 'active', 55),
-  ('fixture-peak-2026-07-11T09:20:00+07:00', 'sec-09', 'security', 'departure-hall', 'available', 90),
-  ('fixture-peak-2026-07-11T09:20:00+07:00', 'ops-21', 'ground-staff', 'departure-hall', 'active', 120),
-  ('fixture-peak-2026-07-11T09:20:00+07:00', 'ops-33', 'ground-staff', 'check-in-a', 'active', 65),
-  ('fixture-peak-2026-07-11T09:20:00+07:00', 'ops-38', 'ground-staff', 'bag-drop-a', 'active', 85)
+  ('fixture-peak-2026-07-11T09:20:00+07:00', 'io-12', 'immigration-officer', 'immigration-east', 'active', 8, 40, '2026-07-11T06:00:00+07:00', '2026-07-11T14:00:00+07:00', '2026-07-11T09:16:00+07:00', 0.900, 'deterministic roster fixture'),
+  ('fixture-peak-2026-07-11T09:20:00+07:00', 'io-18', 'immigration-officer', 'arrival-gate-a', 'available', 3, 75, '2026-07-11T06:00:00+07:00', '2026-07-11T14:00:00+07:00', '2026-07-11T09:16:00+07:00', 0.900, 'deterministic roster fixture'),
+  ('fixture-peak-2026-07-11T09:20:00+07:00', 'sec-04', 'security', 'security-north', 'active', 6, 55, '2026-07-11T06:00:00+07:00', '2026-07-11T14:00:00+07:00', '2026-07-11T09:14:00+07:00', 0.880, 'deterministic roster fixture'),
+  ('fixture-peak-2026-07-11T09:20:00+07:00', 'sec-09', 'security', 'departure-hall', 'available', 2, 90, '2026-07-11T06:00:00+07:00', '2026-07-11T14:00:00+07:00', '2026-07-11T09:14:00+07:00', 0.880, 'deterministic roster fixture'),
+  ('fixture-peak-2026-07-11T09:20:00+07:00', 'ops-21', 'ground-staff', 'departure-hall', 'available', 4, 120, '2026-07-11T06:00:00+07:00', '2026-07-11T14:00:00+07:00', '2026-07-11T09:15:00+07:00', 0.900, 'deterministic roster fixture'),
+  ('fixture-peak-2026-07-11T09:20:00+07:00', 'ops-33', 'ground-staff', 'check-in-a', 'active', 5, 65, '2026-07-11T06:00:00+07:00', '2026-07-11T14:00:00+07:00', '2026-07-11T09:19:00+07:00', 0.880, 'deterministic roster fixture'),
+  ('fixture-peak-2026-07-11T09:20:00+07:00', 'ops-38', 'ground-staff', 'bag-drop-a', 'active', 3, 85, '2026-07-11T06:00:00+07:00', '2026-07-11T14:00:00+07:00', '2026-07-11T09:19:00+07:00', 0.850, 'deterministic roster fixture')
 ON CONFLICT (snapshot_id, staff_id) DO UPDATE
 SET role = EXCLUDED.role,
     zone_id = EXCLUDED.zone_id,
     availability = EXCLUDED.availability,
-    rest_minutes_due = EXCLUDED.rest_minutes_due;
+    coverage_units = EXCLUDED.coverage_units,
+    rest_minutes_due = EXCLUDED.rest_minutes_due,
+    shift_starts_at = EXCLUDED.shift_starts_at,
+    shift_ends_at = EXCLUDED.shift_ends_at,
+    observed_at = EXCLUDED.observed_at,
+    confidence_score = EXCLUDED.confidence_score,
+    confidence_basis = EXCLUDED.confidence_basis;
 
 INSERT INTO airport_ops.flight_states (snapshot_id, flight_id, flight_type, status, estimated_passengers, scheduled_at, gate_zone_id)
 VALUES

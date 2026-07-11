@@ -4,6 +4,7 @@ export class MonitoringAnalyticsService {
   analyze(snapshot) {
     const queueStates = snapshot.zones.map((zone) => buildQueueState(snapshot, zone));
     const counterUtilizations = snapshot.counters.map((counter) => buildCounterUtilization(snapshot, counter));
+    const staffingContexts = snapshot.counters.map((counter) => buildStaffingContext(snapshot, counter, counterUtilizations));
     const crowdingEvents = queueStates
       .filter((queue) => queue.severity !== "normal")
       .map((queue) => buildCrowdingEvent(snapshot, queue));
@@ -22,6 +23,7 @@ export class MonitoringAnalyticsService {
       refreshCadenceSeconds: 30,
       queueStates,
       counterUtilizations,
+      staffingContexts,
       crowdingEvents,
       operationalAlerts: dedupeAlerts(operationalAlerts),
       bottlenecks: queueStates.map((queue) => classifyBottleneck(queue, counterUtilizations)),
@@ -46,6 +48,7 @@ export class MonitoringViewModel {
         const forecastZone = currentPoint.zones.find((candidate) => candidate.zoneId === zone.zoneId);
         const queueState = analytics.queueStates.find((candidate) => candidate.zoneId === zone.zoneId);
         const counterUtilization = analytics.counterUtilizations.find((candidate) => candidate.zoneId === zone.zoneId);
+        const staffingContext = analytics.staffingContexts.find((candidate) => candidate.zoneId === zone.zoneId);
         const bottleneck = analytics.bottlenecks.find((candidate) => candidate.zoneId === zone.zoneId);
         const alert = analytics.operationalAlerts.find((candidate) => candidate.zoneId === zone.zoneId);
         return {
@@ -55,6 +58,7 @@ export class MonitoringViewModel {
           staffCount: snapshot.staff.filter((staff) => staff.zoneId === zone.zoneId).length,
           queueState,
           counterUtilization,
+          staffingContext,
           bottleneck,
           alert,
         };
@@ -115,6 +119,60 @@ function buildCounterUtilization(snapshot, counter) {
     observedAt: edgeMetric?.observedAt ?? snapshot.asOf,
     freshness: edgeMetric?.freshness ?? { observedAt: snapshot.asOf, status: "watch" },
     confidence: edgeMetric?.confidence ?? { score: 0.72, basis: "derived from counter state" },
+  };
+}
+
+function buildStaffingContext(snapshot, counter, counterUtilizations) {
+  const utilization = counterUtilizations.find((candidate) => candidate.counterId === counter.counterId);
+  const activeCoverageUnits = sumCoverage(
+    snapshot.staff.filter(
+      (staff) => staff.zoneId === counter.zoneId
+        && staff.role === counter.roleRequired
+        && staff.availability === "active",
+    ),
+  );
+  const requiredCoverageUnits = Math.max(counter.open, utilization?.busyCounters ?? counter.open);
+  const reliefCandidates = snapshot.staff
+    .filter((staff) => staff.zoneId !== counter.zoneId)
+    .filter((staff) => staff.role === counter.roleRequired)
+    .filter((staff) => staff.availability === "available" || staff.availability === "active")
+    .filter((staff) => staff.restMinutesDue >= 30)
+    .map((staff) => {
+      const transferRule = findTransferRule(snapshot, staff, counter.zoneId);
+      return {
+        staffId: staff.staffId,
+        fromZoneId: staff.zoneId,
+        coverageUnits: staff.coverageUnits,
+        availability: staff.availability,
+        transferMinutes: transferRule?.transferMinutes ?? 15,
+        confidence: staff.confidence,
+      };
+    })
+    .sort((a, b) => a.transferMinutes - b.transferMinutes);
+  const reliefCoverageUnits = sumCoverage(reliefCandidates);
+  const weakestConfidence = Math.min(
+    counter.confidence.score,
+    ...snapshot.staff
+      .filter((staff) => staff.role === counter.roleRequired)
+      .map((staff) => staff.confidence.score),
+  );
+
+  return {
+    zoneId: counter.zoneId,
+    counterId: counter.counterId,
+    roleRequired: counter.roleRequired,
+    activeCoverageUnits,
+    requiredCoverageUnits,
+    staffingGap: Math.max(0, requiredCoverageUnits - activeCoverageUnits),
+    reliefCoverageUnits,
+    reliefCandidates,
+    openCounterCapacity: Math.max(0, counter.maxOpen - counter.open),
+    openLeadMinutes: counter.openLeadMinutes,
+    freshness: { observedAt: counter.observedAt, status: "fresh" },
+    confidence: {
+      score: Number(weakestConfidence.toFixed(2)),
+      basis: "counter and roster confidence",
+    },
   };
 }
 
@@ -221,6 +279,19 @@ function findEdgeMetric(snapshot, zoneId) {
     confidence: observation.confidence,
     freshness,
   };
+}
+
+function findTransferRule(snapshot, staff, toZoneId) {
+  return snapshot.airport.transferRules?.find((rule) => (
+    rule.allowed
+    && rule.role === staff.role
+    && rule.fromZoneId === staff.zoneId
+    && rule.toZoneId === toZoneId
+  ));
+}
+
+function sumCoverage(staffLike) {
+  return staffLike.reduce((total, staff) => total + (staff.coverageUnits ?? 0), 0);
 }
 
 function labelForZone(snapshot, zoneId) {

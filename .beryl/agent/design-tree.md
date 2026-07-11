@@ -47,6 +47,7 @@ Scalability is the first design priority. The initial build must make the system
 | What is the first AI behavior? | Deterministic recommendations first, AI explanation/ranking through an adapter second | 2026-07-11 | [ADR 0002](adr/0002-shared-operational-snapshot.md) |
 | Repository structure for bounded contexts | Independent repositories per bounded context with a shared contracts repository | 2026-07-11 | [ADR 0003](adr/0003-bounded-context-repositories.md) |
 | Operational persistence | Postgres is owned by a separate operational-database bounded context that assembles public contracts | 2026-07-11 | [ADR 0004](adr/0004-postgres-operational-database-context.md) |
+| Queue rearrangement feasibility data | Persist staff coverage, staff freshness, counter opening limits, and zone-role transfer rules; derive recommendations from snapshots | 2026-07-11 | [ADR 0005](adr/0005-staffing-rearrangement-context.md) |
 | First public interface | Website app shell composed from bounded-context public APIs | 2026-07-11 | none yet |
 | Primary design priority | Scalability before visual polish or AI sophistication | 2026-07-11 | none yet |
 | Initial website runtime | Dependency-free static ES modules with Node's built-in test runner | 2026-07-11 | none yet |
