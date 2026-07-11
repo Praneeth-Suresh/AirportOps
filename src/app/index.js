@@ -22,6 +22,7 @@ import {
   createOperationalDatabaseReader,
   createOperationalDatabaseRowsFromSnapshot,
 } from "../operational-database/index.js";
+import { createTinyFishPublicContextAdapter } from "../operational-database/tinyfishPublicContext.js";
 import { DEFAULT_PREDICTION_REFRESH_CADENCE_SECONDS, predictionService } from "../prediction/index.js";
 import { MonitoringViewModel } from "../monitoring/index.js";
 import { defaultScenarioDecisions, simulationService } from "../simulation/index.js";
@@ -43,12 +44,14 @@ const ROLE_COLOR = {
 
 const SNAPSHOT_VARIANTS = ["normal", "peak", "stale"];
 const LIVE_REFRESH_MS = 5000; // demo cadence for pulling a fresh live snapshot
+const TINYFISH_PUBLIC_CONTEXT_API = "/api/tinyfish/public-context";
 
 // Live data source: rows exported from Postgres when available (written by
 // database/export-rows.mjs), otherwise fixture-shaped rows. Both are the same
 // contract shape and flow through the same operational-database reader, so
 // nothing downstream changes with the source.
 const EXPORTED_ROWS_URL = new URL("../../database/export/operational-rows.json", import.meta.url);
+const tinyFishPublicContextAdapter = createTinyFishPublicContextAdapter();
 
 function createFixtureRowsBundle() {
   const series = createFixtureSnapshotSeries();
@@ -68,11 +71,32 @@ function createFixtureRowsBundle() {
   };
 }
 
+function enrichRowsBundleWithPublicContext(bundle, updates) {
+  const adapter = updates
+    ? createTinyFishPublicContextAdapter(() => updates)
+    : tinyFishPublicContextAdapter;
+  return adapter.enrichRowsBundle(bundle);
+}
+
+function labelForDataSource() {
+  if (dataSource === "postgres+tinyfish+live") return "PG + LIVE TINYFISH";
+  if (dataSource === "fixtures+tinyfish+live") return "FIX + LIVE TINYFISH";
+  if (dataSource === "postgres+tinyfish") return "PG + TINYFISH";
+  if (dataSource === "fixtures+tinyfish") return "FIX + TINYFISH";
+  return dataSource === "postgres" ? "PG EXPORT" : "FIXTURES";
+}
+
+function markDataSourceLive() {
+  if (!dataSource.endsWith("+live")) {
+    dataSource = `${dataSource}+live`;
+  }
+}
+
 // Synchronous fixture default keeps the node test seam and the no-export run
 // working; loadRowsBundle() swaps in the Postgres export before init().
-let rowsBundle = createFixtureRowsBundle();
+let rowsBundle = enrichRowsBundleWithPublicContext(createFixtureRowsBundle());
 let snapshotIds = rowsBundle.operationalSnapshots.map((row) => row.snapshotId);
-let dataSource = "fixtures";
+let dataSource = "fixtures+tinyfish";
 
 async function loadRowsBundle() {
   try {
@@ -80,13 +104,13 @@ async function loadRowsBundle() {
     // stale numbers after the database is re-exported mid-shift.
     const response = await fetch(EXPORTED_ROWS_URL, { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const bundle = await response.json();
+    const bundle = enrichRowsBundleWithPublicContext(await response.json());
     if (!Array.isArray(bundle?.operationalSnapshots) || bundle.operationalSnapshots.length === 0) {
       throw new Error("export contains no operational snapshots");
     }
     rowsBundle = bundle;
     snapshotIds = bundle.operationalSnapshots.map((row) => row.snapshotId);
-    dataSource = "postgres";
+    dataSource = "postgres+tinyfish";
     state.snapshotIndex = Math.min(state.snapshotIndex, snapshotIds.length - 1);
   } catch (error) {
     console.warn("Stratus: Postgres export unavailable, staying on fixture rows.", error);
@@ -125,6 +149,11 @@ const state = {
   booted: false,
   tick: 0,
   lastRefresh: 0,
+  liveTinyFish: {
+    status: "idle",
+    message: "Ready for live public-web search",
+    receivedAt: null,
+  },
   log: [],
 };
 
@@ -342,6 +371,7 @@ function computeFrame() {
     projection,
     projectionPoint,
     options,
+    publicContext: monitoring.analytics.publicContext,
     layout,
     mapZones,
     alerts,
@@ -389,11 +419,64 @@ function render() {
   wireEvents();
 }
 
+async function fetchTinyFishLiveUpdates(fetcher = globalThis.fetch) {
+  if (state.liveTinyFish.status === "loading") return;
+  const snapshotId = snapshotIds[state.snapshotIndex];
+  state.liveTinyFish = {
+    status: "loading",
+    message: "Fetching TinyFish Search API",
+    receivedAt: null,
+  };
+  render();
+
+  try {
+    const url = `${TINYFISH_PUBLIC_CONTEXT_API}?snapshotId=${encodeURIComponent(snapshotId)}&zoneId=check-in-a`;
+    const response = await fetcher(url, { cache: "no-store" });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.message || `TinyFish live update failed with HTTP ${response.status}`);
+    }
+    if (!Array.isArray(payload.updates)) {
+      throw new Error("TinyFish live update response did not include updates");
+    }
+
+    rowsBundle = enrichRowsBundleWithPublicContext(rowsBundle, payload.updates);
+    markDataSourceLive();
+    const count = payload.updates.length;
+    const receivedAt = new Date().toISOString();
+    state.liveTinyFish = {
+      status: "ready",
+      message: count > 0 ? `${count} live update${count > 1 ? "s" : ""} applied` : "No live updates returned",
+      receivedAt,
+    };
+    state.log = [
+      { time: hhmm(parseClockMinutes(receivedAt)), txt: `TinyFish live search applied · ${count} update${count === 1 ? "" : "s"}`, dot: TEAL },
+      ...state.log,
+    ].slice(0, 4);
+  } catch (error) {
+    state.liveTinyFish = {
+      status: "error",
+      message: error.message,
+      receivedAt: null,
+    };
+  }
+
+  render();
+}
+
 function renderCommandBar(frame, clockMinutes, isSim) {
   const { snapshot, kpiPax, kpiAlerts, mapZones } = frame;
   const allFresh = frame.freshCount === mapZones.length;
   const freshColor = allFresh ? OK : WARN;
   const alertColor = kpiAlerts > 0 ? BUSY : OK;
+  const liveColor = state.liveTinyFish.status === "ready"
+    ? TEAL
+    : state.liveTinyFish.status === "error"
+      ? BUSY
+      : state.liveTinyFish.status === "loading"
+        ? WARN
+        : ACCENT;
+  const liveLabel = state.liveTinyFish.status === "loading" ? "Fetching..." : "Fetch live updates";
   const viewLabel = state.view === "arrival" ? "Arrivals" : "Departures";
   const viewBtns = [
     { key: "departure", label: "Departures" },
@@ -430,11 +513,14 @@ function renderCommandBar(frame, clockMinutes, isSim) {
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SNAPSHOT</div><div class="mono" style="font-size:12px;">${hhmm(clockMinutes)}</div></div>
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">OCCUPANCY</div><div class="mono" style="font-size:12px;">${kpiPax.toLocaleString("en")}</div></div>
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">ALERTS</div><div class="mono" style="font-size:12px; color:${alertColor};">${kpiAlerts}</div></div>
-        <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SOURCE</div><div class="mono" style="font-size:12px;" data-source="${dataSource}">${dataSource === "postgres" ? "PG EXPORT" : "FIXTURES"}</div></div>
+        <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SOURCE</div><div class="mono" style="font-size:12px;" data-source="${dataSource}">${labelForDataSource()}</div></div>
       </div>
       <div style="flex:1;"></div>
       <div style="display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden;">${viewBtns}</div>
       <div style="display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden;">${modeBtns}</div>
+      <button data-action="fetch-tinyfish" data-live-api="${TINYFISH_PUBLIC_CONTEXT_API}" title="${escapeHtml(state.liveTinyFish.message)}" style="display:flex; align-items:center; gap:7px; padding:7px 12px; border:1px solid rgba(39,211,209,.45); border-radius:6px; background:${state.liveTinyFish.status === "loading" ? "rgba(245,185,66,.15)" : "var(--hover)"}; color:${liveColor}; cursor:${state.liveTinyFish.status === "loading" ? "default" : "pointer"}; font-size:11px; font-weight:600;">
+        <span style="width:6px; height:6px; border-radius:50%; background:${liveColor}; box-shadow:0 0 6px ${liveColor};"></span>${liveLabel}
+      </button>
       <div style="display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid ${allFresh ? "rgba(50,199,131,.4)" : "rgba(245,185,66,.4)"}; border-radius:6px; font-size:11px; color:${freshColor};">
         <span style="width:6px; height:6px; border-radius:50%; background:${freshColor};"></span>${allFresh ? "All fresh" : `${frame.freshCount}/${mapZones.length} fresh`}
       </div>
@@ -783,6 +869,7 @@ function renderTerminalStatus(frame) {
         </div>
         ${nextFlight ? `<div style="font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">Next Movement</div>
         <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:var(--panel2); border:1px solid var(--border); border-radius:7px; margin-bottom:16px;"><div><div class="mono" style="font-size:13px; font-weight:600;">${nextFlight.flightId}</div><div style="font-size:10px; color:var(--text3);">${labelize(nextFlight.gateZoneId)} · ${nextFlight.estimatedPassengers} pax</div></div><div class="mono" style="font-size:15px; color:${ACCENT};">${hhmm(parseClockMinutes(nextFlight.scheduledAt))}</div></div>` : ""}
+        ${renderPublicContext(frame)}
         <div style="font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">Recent Events</div>
         <div style="display:flex; flex-direction:column; gap:8px;">${feed
           .map((f) => `<div style="display:flex; gap:8px; align-items:baseline; font-size:11px; line-height:1.35;"><span class="mono" style="color:var(--text3); flex:none;">${f.time}</span><span style="width:5px; height:5px; border-radius:50%; background:${f.dot}; flex:none; margin-top:5px;"></span><span style="color:var(--text2);">${escapeHtml(f.txt)}</span></div>`)
@@ -792,9 +879,23 @@ function renderTerminalStatus(frame) {
   `;
 }
 
+function renderPublicContext(frame) {
+  const updates = frame.publicContext ?? [];
+  if (updates.length === 0) return "";
+  return `
+    <div style="font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">TinyFish Public Context</div>
+    <div style="display:flex; flex-direction:column; gap:7px; margin-bottom:16px;">${updates.slice(0, 2)
+      .map((update) => `<div style="padding:9px 11px; background:var(--panel2); border:1px solid rgba(39,211,209,.38); border-left:3px solid ${TEAL}; border-radius:7px;"><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:12px; font-weight:600;">${escapeHtml(update.title)}</span><span class="mono" style="font-size:9px; color:${TEAL};">${update.severity}</span></div><div style="font-size:10px; color:var(--text2); line-height:1.35; margin-top:4px;">${escapeHtml(update.summary)}</div><div style="font-size:9px; color:var(--text3); margin-top:5px;">${labelize(update.zoneId)} · confidence <span class="mono">${pct(update.confidence.score)}</span></div></div>`)
+      .join("")}</div>
+  `;
+}
+
 function buildFeed(frame) {
   const clock = hhmm(currentClockMinutes());
   const feed = [...state.log];
+  frame.publicContext.forEach((update) => {
+    feed.push({ time: hhmm(parseClockMinutes(update.observedAt)), txt: `TinyFish · ${update.title}`, dot: TEAL });
+  });
   frame.alerts.forEach((a) => {
     feed.push({ time: clock, txt: `${labelize(a.zoneId)} ${a.severity === "critical" ? "abnormal crowding" : "queue build-up"}`, dot: a.severity === "critical" ? BUSY : WARN });
   });
@@ -1070,6 +1171,9 @@ function wireEvents() {
     "zoom-reset": () => resetView(),
     "toggle-play": () => (state.playing = !state.playing),
     "cycle-speed": () => (state.speed = state.speed === 1 ? 2 : state.speed === 2 ? 4 : 1),
+    "fetch-tinyfish": () => {
+      void fetchTinyFishLiveUpdates();
+    },
     confirm: () => {
       if (draftCount() > 0) confirmDecisions();
     },
@@ -1178,4 +1282,4 @@ if (app) {
 
 // Test seam: these are pure (no DOM) and let the seed / render checks exercise
 // the full data path and template output under node --test without a browser.
-export { state, computeFrame, renderToString };
+export { state, computeFrame, fetchTinyFishLiveUpdates, renderToString };

@@ -6,6 +6,10 @@ import {
   createOperationalDatabaseReader,
   createOperationalDatabaseRowsFromSnapshot,
 } from "../src/operational-database/index.js";
+import {
+  TINYFISH_PUBLIC_CONTEXT_SOURCE,
+  createTinyFishPublicContextAdapter,
+} from "../src/operational-database/tinyfishPublicContext.js";
 import { createFixtureSnapshotSeries } from "../src/fixtures/deterministicAdapters.js";
 import {
   COLLECTION_QUERIES,
@@ -113,6 +117,57 @@ test("postgres-shaped rows assemble snapshots identical to fixture-assembled sna
   });
 });
 
+test("tinyfish adapter appends public-web observations without mutating source rows", () => {
+  const bundle = fakePostgresBundle();
+  const peakSnapshotId = bundle.operationalSnapshots[1].snapshotId;
+  const adapter = createTinyFishPublicContextAdapter(() => [
+    {
+      snapshotId: peakSnapshotId,
+      observedAt: "2026-07-11T09:19:30+07:00",
+      zoneId: "check-in-a",
+      flightId: "SQ-981",
+      severity: "watch",
+      title: "SQ-981 public gate advisory",
+      summary: "Public airline status page reports SQ-981 boarding demand building near Check-in A.",
+      url: "https://airline.example.test/status/SQ-981",
+      evidence: ["browser-rendered airline page updated at 09:19"],
+      confidence: { score: 0.74, basis: "TinyFish browser-rendered public airline page" },
+    },
+  ]);
+
+  const originalObservationCount = bundle.observations.length;
+  const enriched = adapter.enrichRowsBundle(bundle);
+
+  assert.equal(bundle.observations.length, originalObservationCount);
+  assert.equal(enriched.observations.length, originalObservationCount + 1);
+
+  const observation = enriched.observations.at(-1);
+  assert.equal(observation.source, TINYFISH_PUBLIC_CONTEXT_SOURCE);
+  assert.equal(observation.observedAt, "2026-07-11T09:19:30+07:00");
+  assert.equal(observation.publicUpdates[0].zoneId, "check-in-a");
+  assert.equal(observation.publicUpdates[0].flightId, "SQ-981");
+  assert.equal(observation.confidence.score, 0.74);
+
+  const snapshot = createOperationalDatabaseReader(() => enriched).getSnapshot(peakSnapshotId);
+  assert.ok(snapshot.observations.some((candidate) => candidate.source === TINYFISH_PUBLIC_CONTEXT_SOURCE));
+});
+
+test("tinyfish adapter rejects public updates for unknown zones", () => {
+  const bundle = fakePostgresBundle();
+  const adapter = createTinyFishPublicContextAdapter(() => [
+    {
+      snapshotId: bundle.operationalSnapshots[1].snapshotId,
+      observedAt: "2026-07-11T09:19:30+07:00",
+      zoneId: "unknown-zone",
+      title: "Unknown zone advisory",
+      summary: "This update should not enter the operational snapshot.",
+      confidence: { score: 0.7, basis: "TinyFish browser-rendered public page" },
+    },
+  ]);
+
+  assert.throws(() => adapter.enrichRowsBundle(bundle), /unknown zone/);
+});
+
 test("export fails loudly when a zone state row is missing", () => {
   const bundle = fakePostgresBundle();
   bundle.zoneStates = bundle.zoneStates.filter(
@@ -152,8 +207,13 @@ test("app shell renders from the fixture bundle when no export is loaded", async
   assert.equal(frame.snapshot.zones.find((zone) => zone.zoneId === "check-in-a").occupancy, 720);
 
   const html = renderToString();
-  assert.ok(html.includes('data-source="fixtures"'));
-  assert.ok(html.includes("FIXTURES"));
+  assert.ok(html.includes('data-source="fixtures+tinyfish"'));
+  assert.ok(html.includes("FIX + TINYFISH"));
+  assert.ok(html.includes("TinyFish"));
+  assert.ok(html.includes("SQ-981 public gate advisory"));
+  assert.ok(html.includes("Fetch live updates"));
+  assert.ok(html.includes("/api/tinyfish/public-context"));
+  assert.equal(html.includes("api.search.tinyfish.ai"), false);
 });
 
 test("committed Postgres export drives the monitoring pipeline with the seeded values", async () => {

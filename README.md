@@ -32,6 +32,28 @@ python3 -m http.server 8080
 
 Then open `http://localhost:8080/`.
 
+### Run the TinyFish live-update demo
+
+For the hackathon demo, run the local Node server so the browser can request live TinyFish Search results without seeing your API key:
+
+```bash
+TINYFISH_API_KEY=... npm run demo:tinyfish
+```
+
+Then open:
+
+```text
+http://localhost:8000/
+```
+
+Press **Fetch live updates** in the Stratus header. The browser calls the local `/api/tinyfish/public-context` route, and that route calls `GET https://api.search.tinyfish.ai` with the `X-API-Key` header. The returned search results are normalized into `tinyfish-public-web` observations with freshness and confidence before the monitoring panel renders them.
+
+Optional environment overrides:
+
+```bash
+PORT=8080 TINYFISH_SEARCH_QUERY="latest airport passenger congestion Vietnam" TINYFISH_API_KEY=... npm run demo:tinyfish
+```
+
 ## Run the Back-End Domain Systems
 
 There is no separate long-running backend service in the current implementation. The backend systems are domain modules under `src/`:
