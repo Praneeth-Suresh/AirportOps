@@ -6,6 +6,8 @@
   "scripts": {
     "test": "node --test",
     "check": "npm test",
-    "seed": "node database/seed.mjs"
+    "seed": "node database/seed.mjs",
+    "export:rows": "node database/export-rows.mjs",
+    "generate:seeds": "node database/generate-variant-seeds.mjs"
   }
 }

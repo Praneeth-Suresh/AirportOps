@@ -1,0 +1,3145 @@
+{
+  "airports": [
+    {
+      "name": "Suvarnabhumi Operations Model",
+      "airportId": "BKK",
+      "mapVersion": "fixture-2026-07-11"
+    }
+  ],
+  "zones": [
+    {
+      "type": "arrival",
+      "label": "Arrival Gate A",
+      "zoneId": "arrival-gate-a",
+      "capacity": 620,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 34
+    },
+    {
+      "type": "arrival",
+      "label": "Arrival Gate B",
+      "zoneId": "arrival-gate-b",
+      "capacity": 620,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 34
+    },
+    {
+      "type": "arrival",
+      "label": "Arrivals Hall",
+      "zoneId": "arrivals-hall",
+      "capacity": 600,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 40
+    },
+    {
+      "type": "check-in",
+      "label": "Bag Drop A",
+      "zoneId": "bag-drop-a",
+      "capacity": 420,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 24
+    },
+    {
+      "type": "arrival",
+      "label": "Baggage Hall",
+      "zoneId": "baggage-hall",
+      "capacity": 760,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 28
+    },
+    {
+      "type": "arrival",
+      "label": "Baggage Reclaim North",
+      "zoneId": "baggage-reclaim-north",
+      "capacity": 480,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 28
+    },
+    {
+      "type": "arrival",
+      "label": "Baggage Reclaim South",
+      "zoneId": "baggage-reclaim-south",
+      "capacity": 480,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 28
+    },
+    {
+      "type": "check-in",
+      "label": "Check-in A",
+      "zoneId": "check-in-a",
+      "capacity": 760,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 36
+    },
+    {
+      "type": "check-in",
+      "label": "Check-in B",
+      "zoneId": "check-in-b",
+      "capacity": 760,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 36
+    },
+    {
+      "type": "arrival",
+      "label": "Customs Hall",
+      "zoneId": "customs-hall",
+      "capacity": 400,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 35
+    },
+    {
+      "type": "departure",
+      "label": "Departure Gate A",
+      "zoneId": "departure-gate-a",
+      "capacity": 680,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 32
+    },
+    {
+      "type": "departure",
+      "label": "Departure Gate B",
+      "zoneId": "departure-gate-b",
+      "capacity": 680,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 32
+    },
+    {
+      "type": "departure",
+      "label": "Departure Gate C",
+      "zoneId": "departure-gate-c",
+      "capacity": 680,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 32
+    },
+    {
+      "type": "departure",
+      "label": "Departure Gate D",
+      "zoneId": "departure-gate-d",
+      "capacity": 680,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 32
+    },
+    {
+      "type": "departure",
+      "label": "Departure Hall",
+      "zoneId": "departure-hall",
+      "capacity": 900,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 40
+    },
+    {
+      "type": "immigration",
+      "label": "Immigration East",
+      "zoneId": "immigration-east",
+      "capacity": 720,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 22
+    },
+    {
+      "type": "immigration",
+      "label": "Immigration West",
+      "zoneId": "immigration-west",
+      "capacity": 720,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 22
+    },
+    {
+      "type": "security",
+      "label": "Security North",
+      "zoneId": "security-north",
+      "capacity": 650,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 25
+    },
+    {
+      "type": "security",
+      "label": "Security South",
+      "zoneId": "security-south",
+      "capacity": 650,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 25
+    },
+    {
+      "type": "entrance",
+      "label": "Terminal Entrance East",
+      "zoneId": "terminal-entrance-east",
+      "capacity": 520,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 32
+    },
+    {
+      "type": "entrance",
+      "label": "Terminal Entrance West",
+      "zoneId": "terminal-entrance-west",
+      "capacity": 520,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 32
+    },
+    {
+      "type": "departure",
+      "label": "Transfer Corridor",
+      "zoneId": "transfer-corridor",
+      "capacity": 400,
+      "airportId": "BKK",
+      "serviceRatePerMinute": 30
+    }
+  ],
+  "zonePaths": [
+    {
+      "toZoneId": "immigration-east",
+      "airportId": "BKK",
+      "fromZoneId": "arrival-gate-a"
+    },
+    {
+      "toZoneId": "immigration-west",
+      "airportId": "BKK",
+      "fromZoneId": "arrival-gate-b"
+    },
+    {
+      "toZoneId": "security-north",
+      "airportId": "BKK",
+      "fromZoneId": "bag-drop-a"
+    },
+    {
+      "toZoneId": "customs-hall",
+      "airportId": "BKK",
+      "fromZoneId": "baggage-reclaim-north"
+    },
+    {
+      "toZoneId": "customs-hall",
+      "airportId": "BKK",
+      "fromZoneId": "baggage-reclaim-south"
+    },
+    {
+      "toZoneId": "bag-drop-a",
+      "airportId": "BKK",
+      "fromZoneId": "check-in-a"
+    },
+    {
+      "toZoneId": "bag-drop-a",
+      "airportId": "BKK",
+      "fromZoneId": "check-in-b"
+    },
+    {
+      "toZoneId": "arrivals-hall",
+      "airportId": "BKK",
+      "fromZoneId": "customs-hall"
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "airportId": "BKK",
+      "fromZoneId": "departure-gate-a"
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "airportId": "BKK",
+      "fromZoneId": "departure-gate-b"
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "airportId": "BKK",
+      "fromZoneId": "departure-gate-c"
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "airportId": "BKK",
+      "fromZoneId": "departure-gate-d"
+    },
+    {
+      "toZoneId": "security-north",
+      "airportId": "BKK",
+      "fromZoneId": "departure-hall"
+    },
+    {
+      "toZoneId": "security-south",
+      "airportId": "BKK",
+      "fromZoneId": "departure-hall"
+    },
+    {
+      "toZoneId": "baggage-hall",
+      "airportId": "BKK",
+      "fromZoneId": "immigration-east"
+    },
+    {
+      "toZoneId": "baggage-reclaim-north",
+      "airportId": "BKK",
+      "fromZoneId": "immigration-east"
+    },
+    {
+      "toZoneId": "baggage-reclaim-south",
+      "airportId": "BKK",
+      "fromZoneId": "immigration-west"
+    },
+    {
+      "toZoneId": "departure-gate-a",
+      "airportId": "BKK",
+      "fromZoneId": "security-north"
+    },
+    {
+      "toZoneId": "departure-gate-c",
+      "airportId": "BKK",
+      "fromZoneId": "security-north"
+    },
+    {
+      "toZoneId": "departure-gate-b",
+      "airportId": "BKK",
+      "fromZoneId": "security-south"
+    },
+    {
+      "toZoneId": "departure-gate-d",
+      "airportId": "BKK",
+      "fromZoneId": "security-south"
+    },
+    {
+      "toZoneId": "check-in-a",
+      "airportId": "BKK",
+      "fromZoneId": "terminal-entrance-east"
+    },
+    {
+      "toZoneId": "departure-hall",
+      "airportId": "BKK",
+      "fromZoneId": "terminal-entrance-east"
+    },
+    {
+      "toZoneId": "check-in-b",
+      "airportId": "BKK",
+      "fromZoneId": "terminal-entrance-west"
+    },
+    {
+      "toZoneId": "departure-hall",
+      "airportId": "BKK",
+      "fromZoneId": "terminal-entrance-west"
+    }
+  ],
+  "zoneRoleTransferRules": [
+    {
+      "role": "ground-staff",
+      "allowed": true,
+      "toZoneId": "customs-hall",
+      "airportId": "BKK",
+      "fromZoneId": "arrivals-hall",
+      "transferMinutes": 4
+    },
+    {
+      "role": "ground-staff",
+      "allowed": true,
+      "toZoneId": "check-in-a",
+      "airportId": "BKK",
+      "fromZoneId": "bag-drop-a",
+      "transferMinutes": 4
+    },
+    {
+      "role": "ground-staff",
+      "allowed": true,
+      "toZoneId": "baggage-reclaim-south",
+      "airportId": "BKK",
+      "fromZoneId": "baggage-reclaim-north",
+      "transferMinutes": 6
+    },
+    {
+      "role": "ground-staff",
+      "allowed": true,
+      "toZoneId": "check-in-b",
+      "airportId": "BKK",
+      "fromZoneId": "check-in-a",
+      "transferMinutes": 5
+    },
+    {
+      "role": "ground-staff",
+      "allowed": true,
+      "toZoneId": "check-in-a",
+      "airportId": "BKK",
+      "fromZoneId": "check-in-b",
+      "transferMinutes": 5
+    },
+    {
+      "role": "ground-staff",
+      "allowed": true,
+      "toZoneId": "check-in-a",
+      "airportId": "BKK",
+      "fromZoneId": "departure-hall",
+      "transferMinutes": 7
+    },
+    {
+      "role": "ground-staff",
+      "allowed": true,
+      "toZoneId": "check-in-b",
+      "airportId": "BKK",
+      "fromZoneId": "departure-hall",
+      "transferMinutes": 7
+    },
+    {
+      "role": "immigration-officer",
+      "allowed": true,
+      "toZoneId": "immigration-east",
+      "airportId": "BKK",
+      "fromZoneId": "arrival-gate-a",
+      "transferMinutes": 6
+    },
+    {
+      "role": "immigration-officer",
+      "allowed": true,
+      "toZoneId": "immigration-west",
+      "airportId": "BKK",
+      "fromZoneId": "arrival-gate-b",
+      "transferMinutes": 6
+    },
+    {
+      "role": "immigration-officer",
+      "allowed": true,
+      "toZoneId": "immigration-west",
+      "airportId": "BKK",
+      "fromZoneId": "immigration-east",
+      "transferMinutes": 8
+    },
+    {
+      "role": "immigration-officer",
+      "allowed": true,
+      "toZoneId": "immigration-east",
+      "airportId": "BKK",
+      "fromZoneId": "immigration-west",
+      "transferMinutes": 8
+    },
+    {
+      "role": "security",
+      "allowed": true,
+      "toZoneId": "security-north",
+      "airportId": "BKK",
+      "fromZoneId": "departure-hall",
+      "transferMinutes": 8
+    },
+    {
+      "role": "security",
+      "allowed": true,
+      "toZoneId": "security-south",
+      "airportId": "BKK",
+      "fromZoneId": "security-north",
+      "transferMinutes": 10
+    },
+    {
+      "role": "security",
+      "allowed": true,
+      "toZoneId": "security-north",
+      "airportId": "BKK",
+      "fromZoneId": "security-south",
+      "transferMinutes": 10
+    }
+  ],
+  "operationalSnapshots": [
+    {
+      "asOf": "2026-07-11T09:10:00+07:00",
+      "airportId": "BKK",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "contractVersion": "v1"
+    },
+    {
+      "asOf": "2026-07-11T09:20:00+07:00",
+      "airportId": "BKK",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "contractVersion": "v1"
+    },
+    {
+      "asOf": "2026-07-11T09:30:00+07:00",
+      "airportId": "BKK",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "contractVersion": "v1"
+    }
+  ],
+  "zoneStates": [
+    {
+      "zoneId": "arrival-gate-a",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 420,
+      "confidence": {
+        "basis": "gate counters and flight load",
+        "score": 0.91
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "arrival-gate-b",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 380,
+      "confidence": {
+        "basis": "gate counters and flight load",
+        "score": 0.91
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "arrivals-hall",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 340,
+      "confidence": {
+        "basis": "floor-plate aggregate",
+        "score": 0.85
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "bag-drop-a",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:09:00+07:00"
+      },
+      "occupancy": 180,
+      "confidence": {
+        "basis": "edge queue analytics",
+        "score": 0.87
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "baggage-hall",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:11:00+07:00"
+      },
+      "occupancy": 310,
+      "confidence": {
+        "basis": "floor-plate aggregate",
+        "score": 0.78
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "baggage-reclaim-north",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:12:00+07:00"
+      },
+      "occupancy": 290,
+      "confidence": {
+        "basis": "floor-plate aggregate",
+        "score": 0.78
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "baggage-reclaim-south",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:12:00+07:00"
+      },
+      "occupancy": 260,
+      "confidence": {
+        "basis": "floor-plate aggregate",
+        "score": 0.78
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "check-in-a",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:09:00+07:00"
+      },
+      "occupancy": 360,
+      "confidence": {
+        "basis": "edge queue analytics and counter activity",
+        "score": 0.9
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "check-in-b",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:09:00+07:00"
+      },
+      "occupancy": 290,
+      "confidence": {
+        "basis": "edge queue analytics and counter activity",
+        "score": 0.88
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "customs-hall",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:16:00+07:00"
+      },
+      "occupancy": 220,
+      "confidence": {
+        "basis": "customs camera aggregate",
+        "score": 0.82
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "departure-gate-a",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 310,
+      "confidence": {
+        "basis": "boarding area counter",
+        "score": 0.8
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "departure-gate-b",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 240,
+      "confidence": {
+        "basis": "boarding area counter",
+        "score": 0.8
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "departure-gate-c",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 260,
+      "confidence": {
+        "basis": "boarding area counter",
+        "score": 0.8
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "departure-gate-d",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:16:00+07:00"
+      },
+      "occupancy": 280,
+      "confidence": {
+        "basis": "boarding area counter",
+        "score": 0.79
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "departure-hall",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:19:00+07:00"
+      },
+      "occupancy": 540,
+      "confidence": {
+        "basis": "entrance cameras and schedule",
+        "score": 0.88
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "immigration-east",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 690,
+      "confidence": {
+        "basis": "camera aggregate and officer roster",
+        "score": 0.86
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "immigration-west",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 640,
+      "confidence": {
+        "basis": "camera aggregate and officer roster",
+        "score": 0.86
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "security-north",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:13:00+07:00"
+      },
+      "occupancy": 610,
+      "confidence": {
+        "basis": "security queue camera aggregate",
+        "score": 0.83
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "security-south",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:14:00+07:00"
+      },
+      "occupancy": 520,
+      "confidence": {
+        "basis": "security queue camera aggregate",
+        "score": 0.83
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "terminal-entrance-east",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:09:00+07:00"
+      },
+      "occupancy": 190,
+      "confidence": {
+        "basis": "entrance camera aggregate",
+        "score": 0.88
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "terminal-entrance-west",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:09:00+07:00"
+      },
+      "occupancy": 170,
+      "confidence": {
+        "basis": "entrance camera aggregate",
+        "score": 0.88
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "transfer-corridor",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:15:00+07:00"
+      },
+      "occupancy": 150,
+      "confidence": {
+        "basis": "camera aggregate",
+        "score": 0.75
+      },
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "zoneId": "arrival-gate-a",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 420,
+      "confidence": {
+        "basis": "gate counters and flight load",
+        "score": 0.91
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "arrival-gate-b",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 380,
+      "confidence": {
+        "basis": "gate counters and flight load",
+        "score": 0.91
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "arrivals-hall",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 340,
+      "confidence": {
+        "basis": "floor-plate aggregate",
+        "score": 0.85
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "bag-drop-a",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:19:00+07:00"
+      },
+      "occupancy": 310,
+      "confidence": {
+        "basis": "edge queue analytics",
+        "score": 0.85
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "baggage-hall",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:11:00+07:00"
+      },
+      "occupancy": 310,
+      "confidence": {
+        "basis": "floor-plate aggregate",
+        "score": 0.78
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "baggage-reclaim-north",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:12:00+07:00"
+      },
+      "occupancy": 290,
+      "confidence": {
+        "basis": "floor-plate aggregate",
+        "score": 0.78
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "baggage-reclaim-south",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:12:00+07:00"
+      },
+      "occupancy": 260,
+      "confidence": {
+        "basis": "floor-plate aggregate",
+        "score": 0.78
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "check-in-a",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:19:00+07:00"
+      },
+      "occupancy": 720,
+      "confidence": {
+        "basis": "edge queue analytics and counter activity",
+        "score": 0.88
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "check-in-b",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:19:00+07:00"
+      },
+      "occupancy": 580,
+      "confidence": {
+        "basis": "edge queue analytics and counter activity",
+        "score": 0.86
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "customs-hall",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:16:00+07:00"
+      },
+      "occupancy": 220,
+      "confidence": {
+        "basis": "customs camera aggregate",
+        "score": 0.82
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "departure-gate-a",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 310,
+      "confidence": {
+        "basis": "boarding area counter",
+        "score": 0.8
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "departure-gate-b",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 240,
+      "confidence": {
+        "basis": "boarding area counter",
+        "score": 0.8
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "departure-gate-c",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 260,
+      "confidence": {
+        "basis": "boarding area counter",
+        "score": 0.8
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "departure-gate-d",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:16:00+07:00"
+      },
+      "occupancy": 280,
+      "confidence": {
+        "basis": "boarding area counter",
+        "score": 0.79
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "departure-hall",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:19:00+07:00"
+      },
+      "occupancy": 540,
+      "confidence": {
+        "basis": "entrance cameras and schedule",
+        "score": 0.88
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "immigration-east",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 690,
+      "confidence": {
+        "basis": "camera aggregate and officer roster",
+        "score": 0.86
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "immigration-west",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 640,
+      "confidence": {
+        "basis": "camera aggregate and officer roster",
+        "score": 0.86
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "security-north",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:13:00+07:00"
+      },
+      "occupancy": 610,
+      "confidence": {
+        "basis": "security queue camera aggregate",
+        "score": 0.83
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "security-south",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:14:00+07:00"
+      },
+      "occupancy": 520,
+      "confidence": {
+        "basis": "security queue camera aggregate",
+        "score": 0.83
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "terminal-entrance-east",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:19:00+07:00"
+      },
+      "occupancy": 190,
+      "confidence": {
+        "basis": "entrance camera aggregate",
+        "score": 0.88
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "terminal-entrance-west",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:19:00+07:00"
+      },
+      "occupancy": 170,
+      "confidence": {
+        "basis": "entrance camera aggregate",
+        "score": 0.88
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "transfer-corridor",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:15:00+07:00"
+      },
+      "occupancy": 150,
+      "confidence": {
+        "basis": "camera aggregate",
+        "score": 0.75
+      },
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "zoneId": "arrival-gate-a",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 420,
+      "confidence": {
+        "basis": "gate counters and flight load",
+        "score": 0.91
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "arrival-gate-b",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 380,
+      "confidence": {
+        "basis": "gate counters and flight load",
+        "score": 0.91
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "arrivals-hall",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 340,
+      "confidence": {
+        "basis": "floor-plate aggregate",
+        "score": 0.85
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "bag-drop-a",
+      "freshness": {
+        "status": "stale",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 330,
+      "confidence": {
+        "basis": "edge queue analytics",
+        "score": 0.59
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "baggage-hall",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:11:00+07:00"
+      },
+      "occupancy": 310,
+      "confidence": {
+        "basis": "floor-plate aggregate",
+        "score": 0.78
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "baggage-reclaim-north",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:12:00+07:00"
+      },
+      "occupancy": 290,
+      "confidence": {
+        "basis": "floor-plate aggregate",
+        "score": 0.78
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "baggage-reclaim-south",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:12:00+07:00"
+      },
+      "occupancy": 260,
+      "confidence": {
+        "basis": "floor-plate aggregate",
+        "score": 0.78
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "check-in-a",
+      "freshness": {
+        "status": "stale",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 730,
+      "confidence": {
+        "basis": "edge queue analytics and counter activity",
+        "score": 0.62
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "check-in-b",
+      "freshness": {
+        "status": "stale",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 580,
+      "confidence": {
+        "basis": "edge queue analytics and counter activity",
+        "score": 0.6
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "customs-hall",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:16:00+07:00"
+      },
+      "occupancy": 220,
+      "confidence": {
+        "basis": "customs camera aggregate",
+        "score": 0.82
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "departure-gate-a",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 310,
+      "confidence": {
+        "basis": "boarding area counter",
+        "score": 0.8
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "departure-gate-b",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 240,
+      "confidence": {
+        "basis": "boarding area counter",
+        "score": 0.8
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "departure-gate-c",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 260,
+      "confidence": {
+        "basis": "boarding area counter",
+        "score": 0.8
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "departure-gate-d",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:16:00+07:00"
+      },
+      "occupancy": 280,
+      "confidence": {
+        "basis": "boarding area counter",
+        "score": 0.79
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "departure-hall",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:19:00+07:00"
+      },
+      "occupancy": 540,
+      "confidence": {
+        "basis": "entrance cameras and schedule",
+        "score": 0.88
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "immigration-east",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 690,
+      "confidence": {
+        "basis": "camera aggregate and officer roster",
+        "score": 0.86
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "immigration-west",
+      "freshness": {
+        "status": "fresh",
+        "observedAt": "2026-07-11T09:17:00+07:00"
+      },
+      "occupancy": 640,
+      "confidence": {
+        "basis": "camera aggregate and officer roster",
+        "score": 0.86
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "security-north",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:13:00+07:00"
+      },
+      "occupancy": 610,
+      "confidence": {
+        "basis": "security queue camera aggregate",
+        "score": 0.83
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "security-south",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:14:00+07:00"
+      },
+      "occupancy": 520,
+      "confidence": {
+        "basis": "security queue camera aggregate",
+        "score": 0.83
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "terminal-entrance-east",
+      "freshness": {
+        "status": "stale",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 190,
+      "confidence": {
+        "basis": "entrance camera aggregate",
+        "score": 0.88
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "terminal-entrance-west",
+      "freshness": {
+        "status": "stale",
+        "observedAt": "2026-07-11T09:18:00+07:00"
+      },
+      "occupancy": 170,
+      "confidence": {
+        "basis": "entrance camera aggregate",
+        "score": 0.88
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "zoneId": "transfer-corridor",
+      "freshness": {
+        "status": "watch",
+        "observedAt": "2026-07-11T09:15:00+07:00"
+      },
+      "occupancy": 150,
+      "confidence": {
+        "basis": "camera aggregate",
+        "score": 0.75
+      },
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    }
+  ],
+  "counterStates": [
+    {
+      "open": 4,
+      "zoneId": "bag-drop-a",
+      "maxOpen": 6,
+      "available": 6,
+      "counterId": "bag-a-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.87
+      },
+      "observedAt": "2026-07-11T09:09:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "roleRequired": "ground-staff",
+      "openLeadMinutes": 8
+    },
+    {
+      "open": 6,
+      "zoneId": "check-in-a",
+      "maxOpen": 10,
+      "available": 10,
+      "counterId": "chk-a-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:09:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "roleRequired": "ground-staff",
+      "openLeadMinutes": 6
+    },
+    {
+      "open": 5,
+      "zoneId": "check-in-b",
+      "maxOpen": 10,
+      "available": 10,
+      "counterId": "chk-b-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:09:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "roleRequired": "ground-staff",
+      "openLeadMinutes": 6
+    },
+    {
+      "open": 5,
+      "zoneId": "customs-hall",
+      "maxOpen": 8,
+      "available": 8,
+      "counterId": "cus-h-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.82
+      },
+      "observedAt": "2026-07-11T09:16:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "roleRequired": "customs-officer",
+      "openLeadMinutes": 8
+    },
+    {
+      "open": 8,
+      "zoneId": "departure-hall",
+      "maxOpen": 14,
+      "available": 14,
+      "counterId": "dep-h-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:19:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "roleRequired": "ground-staff",
+      "openLeadMinutes": 10
+    },
+    {
+      "open": 9,
+      "zoneId": "immigration-east",
+      "maxOpen": 12,
+      "available": 12,
+      "counterId": "imm-e-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.86
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "roleRequired": "immigration-officer",
+      "openLeadMinutes": 10
+    },
+    {
+      "open": 8,
+      "zoneId": "immigration-west",
+      "maxOpen": 12,
+      "available": 12,
+      "counterId": "imm-w-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.86
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "roleRequired": "immigration-officer",
+      "openLeadMinutes": 10
+    },
+    {
+      "open": 7,
+      "zoneId": "security-north",
+      "maxOpen": 10,
+      "available": 10,
+      "counterId": "sec-n-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.83
+      },
+      "observedAt": "2026-07-11T09:13:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "roleRequired": "security",
+      "openLeadMinutes": 12
+    },
+    {
+      "open": 6,
+      "zoneId": "security-south",
+      "maxOpen": 10,
+      "available": 10,
+      "counterId": "sec-s-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.83
+      },
+      "observedAt": "2026-07-11T09:14:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "roleRequired": "security",
+      "openLeadMinutes": 12
+    },
+    {
+      "open": 4,
+      "zoneId": "bag-drop-a",
+      "maxOpen": 6,
+      "available": 6,
+      "counterId": "bag-a-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.85
+      },
+      "observedAt": "2026-07-11T09:19:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "roleRequired": "ground-staff",
+      "openLeadMinutes": 8
+    },
+    {
+      "open": 6,
+      "zoneId": "check-in-a",
+      "maxOpen": 10,
+      "available": 10,
+      "counterId": "chk-a-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:19:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "roleRequired": "ground-staff",
+      "openLeadMinutes": 6
+    },
+    {
+      "open": 5,
+      "zoneId": "check-in-b",
+      "maxOpen": 10,
+      "available": 10,
+      "counterId": "chk-b-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.86
+      },
+      "observedAt": "2026-07-11T09:19:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "roleRequired": "ground-staff",
+      "openLeadMinutes": 6
+    },
+    {
+      "open": 5,
+      "zoneId": "customs-hall",
+      "maxOpen": 8,
+      "available": 8,
+      "counterId": "cus-h-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.82
+      },
+      "observedAt": "2026-07-11T09:16:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "roleRequired": "customs-officer",
+      "openLeadMinutes": 8
+    },
+    {
+      "open": 8,
+      "zoneId": "departure-hall",
+      "maxOpen": 14,
+      "available": 14,
+      "counterId": "dep-h-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:19:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "roleRequired": "ground-staff",
+      "openLeadMinutes": 10
+    },
+    {
+      "open": 9,
+      "zoneId": "immigration-east",
+      "maxOpen": 12,
+      "available": 12,
+      "counterId": "imm-e-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.86
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "roleRequired": "immigration-officer",
+      "openLeadMinutes": 10
+    },
+    {
+      "open": 8,
+      "zoneId": "immigration-west",
+      "maxOpen": 12,
+      "available": 12,
+      "counterId": "imm-w-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.86
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "roleRequired": "immigration-officer",
+      "openLeadMinutes": 10
+    },
+    {
+      "open": 7,
+      "zoneId": "security-north",
+      "maxOpen": 10,
+      "available": 10,
+      "counterId": "sec-n-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.83
+      },
+      "observedAt": "2026-07-11T09:13:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "roleRequired": "security",
+      "openLeadMinutes": 12
+    },
+    {
+      "open": 6,
+      "zoneId": "security-south",
+      "maxOpen": 10,
+      "available": 10,
+      "counterId": "sec-s-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.83
+      },
+      "observedAt": "2026-07-11T09:14:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "roleRequired": "security",
+      "openLeadMinutes": 12
+    },
+    {
+      "open": 4,
+      "zoneId": "bag-drop-a",
+      "maxOpen": 6,
+      "available": 6,
+      "counterId": "bag-a-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.59
+      },
+      "observedAt": "2026-07-11T09:18:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "roleRequired": "ground-staff",
+      "openLeadMinutes": 8
+    },
+    {
+      "open": 6,
+      "zoneId": "check-in-a",
+      "maxOpen": 10,
+      "available": 10,
+      "counterId": "chk-a-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.62
+      },
+      "observedAt": "2026-07-11T09:18:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "roleRequired": "ground-staff",
+      "openLeadMinutes": 6
+    },
+    {
+      "open": 5,
+      "zoneId": "check-in-b",
+      "maxOpen": 10,
+      "available": 10,
+      "counterId": "chk-b-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.6
+      },
+      "observedAt": "2026-07-11T09:18:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "roleRequired": "ground-staff",
+      "openLeadMinutes": 6
+    },
+    {
+      "open": 5,
+      "zoneId": "customs-hall",
+      "maxOpen": 8,
+      "available": 8,
+      "counterId": "cus-h-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.82
+      },
+      "observedAt": "2026-07-11T09:16:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "roleRequired": "customs-officer",
+      "openLeadMinutes": 8
+    },
+    {
+      "open": 8,
+      "zoneId": "departure-hall",
+      "maxOpen": 14,
+      "available": 14,
+      "counterId": "dep-h-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:19:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "roleRequired": "ground-staff",
+      "openLeadMinutes": 10
+    },
+    {
+      "open": 9,
+      "zoneId": "immigration-east",
+      "maxOpen": 12,
+      "available": 12,
+      "counterId": "imm-e-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.86
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "roleRequired": "immigration-officer",
+      "openLeadMinutes": 10
+    },
+    {
+      "open": 8,
+      "zoneId": "immigration-west",
+      "maxOpen": 12,
+      "available": 12,
+      "counterId": "imm-w-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.86
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "roleRequired": "immigration-officer",
+      "openLeadMinutes": 10
+    },
+    {
+      "open": 7,
+      "zoneId": "security-north",
+      "maxOpen": 10,
+      "available": 10,
+      "counterId": "sec-n-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.83
+      },
+      "observedAt": "2026-07-11T09:13:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "roleRequired": "security",
+      "openLeadMinutes": 12
+    },
+    {
+      "open": 6,
+      "zoneId": "security-south",
+      "maxOpen": 10,
+      "available": 10,
+      "counterId": "sec-s-01",
+      "confidence": {
+        "basis": "counter status feed fixture",
+        "score": 0.83
+      },
+      "observedAt": "2026-07-11T09:14:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "roleRequired": "security",
+      "openLeadMinutes": 12
+    }
+  ],
+  "staffStates": [
+    {
+      "role": "customs-officer",
+      "zoneId": "customs-hall",
+      "staffId": "cus-02",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.82
+      },
+      "observedAt": "2026-07-11T09:16:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 4,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 60
+    },
+    {
+      "role": "immigration-officer",
+      "zoneId": "immigration-east",
+      "staffId": "io-12",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:16:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 8,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 40
+    },
+    {
+      "role": "immigration-officer",
+      "zoneId": "arrival-gate-a",
+      "staffId": "io-18",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:16:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 3,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 75
+    },
+    {
+      "role": "immigration-officer",
+      "zoneId": "immigration-west",
+      "staffId": "io-22",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 7,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 45
+    },
+    {
+      "role": "immigration-officer",
+      "zoneId": "arrival-gate-b",
+      "staffId": "io-25",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 3,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 80
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "departure-hall",
+      "staffId": "ops-21",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:15:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 4,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 120
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "check-in-a",
+      "staffId": "ops-33",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:09:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 5,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 65
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "bag-drop-a",
+      "staffId": "ops-38",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.87
+      },
+      "observedAt": "2026-07-11T09:09:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 3,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 85
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "check-in-b",
+      "staffId": "ops-44",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:09:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 4,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 70
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "arrivals-hall",
+      "staffId": "ops-51",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.85
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 3,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 100
+    },
+    {
+      "role": "security",
+      "zoneId": "security-north",
+      "staffId": "sec-04",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:14:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 6,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 55
+    },
+    {
+      "role": "security",
+      "zoneId": "departure-hall",
+      "staffId": "sec-09",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:14:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 2,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 90
+    },
+    {
+      "role": "security",
+      "zoneId": "security-south",
+      "staffId": "sec-11",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:14:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 5,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 50
+    },
+    {
+      "role": "customs-officer",
+      "zoneId": "customs-hall",
+      "staffId": "cus-02",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.82
+      },
+      "observedAt": "2026-07-11T09:16:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 4,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 60
+    },
+    {
+      "role": "immigration-officer",
+      "zoneId": "immigration-east",
+      "staffId": "io-12",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:16:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 8,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 40
+    },
+    {
+      "role": "immigration-officer",
+      "zoneId": "arrival-gate-a",
+      "staffId": "io-18",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:16:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 3,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 75
+    },
+    {
+      "role": "immigration-officer",
+      "zoneId": "immigration-west",
+      "staffId": "io-22",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 7,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 45
+    },
+    {
+      "role": "immigration-officer",
+      "zoneId": "arrival-gate-b",
+      "staffId": "io-25",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 3,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 80
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "departure-hall",
+      "staffId": "ops-21",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:15:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 4,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 120
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "check-in-a",
+      "staffId": "ops-33",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:19:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 5,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 65
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "bag-drop-a",
+      "staffId": "ops-38",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.85
+      },
+      "observedAt": "2026-07-11T09:19:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 3,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 85
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "check-in-b",
+      "staffId": "ops-44",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.86
+      },
+      "observedAt": "2026-07-11T09:19:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 4,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 70
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "arrivals-hall",
+      "staffId": "ops-51",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.85
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 3,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 100
+    },
+    {
+      "role": "security",
+      "zoneId": "security-north",
+      "staffId": "sec-04",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:14:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 6,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 55
+    },
+    {
+      "role": "security",
+      "zoneId": "departure-hall",
+      "staffId": "sec-09",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:14:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 2,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 90
+    },
+    {
+      "role": "security",
+      "zoneId": "security-south",
+      "staffId": "sec-11",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:14:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 5,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 50
+    },
+    {
+      "role": "customs-officer",
+      "zoneId": "customs-hall",
+      "staffId": "cus-02",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.82
+      },
+      "observedAt": "2026-07-11T09:16:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 4,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 60
+    },
+    {
+      "role": "immigration-officer",
+      "zoneId": "immigration-east",
+      "staffId": "io-12",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:16:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 8,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 40
+    },
+    {
+      "role": "immigration-officer",
+      "zoneId": "arrival-gate-a",
+      "staffId": "io-18",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:16:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 3,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 75
+    },
+    {
+      "role": "immigration-officer",
+      "zoneId": "immigration-west",
+      "staffId": "io-22",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 7,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 45
+    },
+    {
+      "role": "immigration-officer",
+      "zoneId": "arrival-gate-b",
+      "staffId": "io-25",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 3,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 80
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "departure-hall",
+      "staffId": "ops-21",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:15:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 4,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 120
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "check-in-a",
+      "staffId": "ops-33",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.62
+      },
+      "observedAt": "2026-07-11T09:18:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 5,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 65
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "bag-drop-a",
+      "staffId": "ops-38",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.59
+      },
+      "observedAt": "2026-07-11T09:18:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 3,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 85
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "check-in-b",
+      "staffId": "ops-44",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.6
+      },
+      "observedAt": "2026-07-11T09:18:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 4,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 70
+    },
+    {
+      "role": "ground-staff",
+      "zoneId": "arrivals-hall",
+      "staffId": "ops-51",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.85
+      },
+      "observedAt": "2026-07-11T09:17:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 3,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 100
+    },
+    {
+      "role": "security",
+      "zoneId": "security-north",
+      "staffId": "sec-04",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:14:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 6,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 55
+    },
+    {
+      "role": "security",
+      "zoneId": "departure-hall",
+      "staffId": "sec-09",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:14:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "available",
+      "coverageUnits": 2,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 90
+    },
+    {
+      "role": "security",
+      "zoneId": "security-south",
+      "staffId": "sec-11",
+      "confidence": {
+        "basis": "roster feed fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:14:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "shiftEndsAt": "2026-07-11T14:00:00+07:00",
+      "availability": "active",
+      "coverageUnits": 5,
+      "shiftStartsAt": "2026-07-11T06:00:00+07:00",
+      "restMinutesDue": 50
+    }
+  ],
+  "flightStates": [
+    {
+      "type": "arrival",
+      "status": "landed",
+      "flightId": "AX-417",
+      "gateZoneId": "arrival-gate-a",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "scheduledAt": "2026-07-11T09:10:00+07:00",
+      "estimatedPassengers": 312
+    },
+    {
+      "type": "departure",
+      "status": "boarding-soon",
+      "flightId": "SQ-981",
+      "gateZoneId": "departure-gate-c",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "scheduledAt": "2026-07-11T10:05:00+07:00",
+      "estimatedPassengers": 286
+    },
+    {
+      "type": "arrival",
+      "status": "landed",
+      "flightId": "AX-417",
+      "gateZoneId": "arrival-gate-a",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "scheduledAt": "2026-07-11T09:10:00+07:00",
+      "estimatedPassengers": 312
+    },
+    {
+      "type": "departure",
+      "status": "boarding-soon",
+      "flightId": "SQ-981",
+      "gateZoneId": "departure-gate-c",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "scheduledAt": "2026-07-11T10:05:00+07:00",
+      "estimatedPassengers": 286
+    },
+    {
+      "type": "arrival",
+      "status": "landed",
+      "flightId": "AX-417",
+      "gateZoneId": "arrival-gate-a",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "scheduledAt": "2026-07-11T09:10:00+07:00",
+      "estimatedPassengers": 312
+    },
+    {
+      "type": "departure",
+      "status": "boarding-soon",
+      "flightId": "SQ-981",
+      "gateZoneId": "departure-gate-c",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "scheduledAt": "2026-07-11T10:05:00+07:00",
+      "estimatedPassengers": 286
+    }
+  ],
+  "passengerFlows": [
+    {
+      "toZoneId": "immigration-east",
+      "fromZoneId": "arrival-gate-a",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 260,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "immigration-west",
+      "fromZoneId": "arrival-gate-b",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 240,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "security-north",
+      "fromZoneId": "bag-drop-a",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 48,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "customs-hall",
+      "fromZoneId": "baggage-reclaim-north",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 120,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "customs-hall",
+      "fromZoneId": "baggage-reclaim-south",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 110,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "bag-drop-a",
+      "fromZoneId": "check-in-a",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 62,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "bag-drop-a",
+      "fromZoneId": "check-in-b",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 42,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "arrivals-hall",
+      "fromZoneId": "customs-hall",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 200,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "fromZoneId": "departure-gate-a",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 25,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "fromZoneId": "departure-gate-b",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 20,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "fromZoneId": "departure-gate-c",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 30,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "fromZoneId": "departure-gate-d",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 20,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "security-north",
+      "fromZoneId": "departure-hall",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 230,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "security-south",
+      "fromZoneId": "departure-hall",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 200,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "baggage-hall",
+      "fromZoneId": "immigration-east",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 180,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "baggage-reclaim-north",
+      "fromZoneId": "immigration-east",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 160,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "baggage-reclaim-south",
+      "fromZoneId": "immigration-west",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 150,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-gate-a",
+      "fromZoneId": "security-north",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 85,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-gate-c",
+      "fromZoneId": "security-north",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 160,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-gate-b",
+      "fromZoneId": "security-south",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 95,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-gate-d",
+      "fromZoneId": "security-south",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 90,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "check-in-a",
+      "fromZoneId": "terminal-entrance-east",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 88,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-hall",
+      "fromZoneId": "terminal-entrance-east",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 45,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "check-in-b",
+      "fromZoneId": "terminal-entrance-west",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 75,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-hall",
+      "fromZoneId": "terminal-entrance-west",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00",
+      "estimatedCount": 40,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "immigration-east",
+      "fromZoneId": "arrival-gate-a",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 260,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "immigration-west",
+      "fromZoneId": "arrival-gate-b",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 240,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "security-north",
+      "fromZoneId": "bag-drop-a",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 105,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "customs-hall",
+      "fromZoneId": "baggage-reclaim-north",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 120,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "customs-hall",
+      "fromZoneId": "baggage-reclaim-south",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 110,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "bag-drop-a",
+      "fromZoneId": "check-in-a",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 130,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "bag-drop-a",
+      "fromZoneId": "check-in-b",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 100,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "arrivals-hall",
+      "fromZoneId": "customs-hall",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 200,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "fromZoneId": "departure-gate-a",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 25,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "fromZoneId": "departure-gate-b",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 20,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "fromZoneId": "departure-gate-c",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 30,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "fromZoneId": "departure-gate-d",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 20,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "security-north",
+      "fromZoneId": "departure-hall",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 230,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "security-south",
+      "fromZoneId": "departure-hall",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 200,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "baggage-hall",
+      "fromZoneId": "immigration-east",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 180,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "baggage-reclaim-north",
+      "fromZoneId": "immigration-east",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 160,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "baggage-reclaim-south",
+      "fromZoneId": "immigration-west",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 150,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-gate-a",
+      "fromZoneId": "security-north",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 85,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-gate-c",
+      "fromZoneId": "security-north",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 160,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-gate-b",
+      "fromZoneId": "security-south",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 95,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-gate-d",
+      "fromZoneId": "security-south",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 90,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "check-in-a",
+      "fromZoneId": "terminal-entrance-east",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 210,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-hall",
+      "fromZoneId": "terminal-entrance-east",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 110,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "check-in-b",
+      "fromZoneId": "terminal-entrance-west",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 180,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-hall",
+      "fromZoneId": "terminal-entrance-west",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00",
+      "estimatedCount": 95,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "immigration-east",
+      "fromZoneId": "arrival-gate-a",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 260,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "immigration-west",
+      "fromZoneId": "arrival-gate-b",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 240,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "security-north",
+      "fromZoneId": "bag-drop-a",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 105,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "customs-hall",
+      "fromZoneId": "baggage-reclaim-north",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 120,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "customs-hall",
+      "fromZoneId": "baggage-reclaim-south",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 110,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "bag-drop-a",
+      "fromZoneId": "check-in-a",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 130,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "bag-drop-a",
+      "fromZoneId": "check-in-b",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 100,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "arrivals-hall",
+      "fromZoneId": "customs-hall",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 200,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "fromZoneId": "departure-gate-a",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 25,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "fromZoneId": "departure-gate-b",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 20,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "fromZoneId": "departure-gate-c",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 30,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "transfer-corridor",
+      "fromZoneId": "departure-gate-d",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 20,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "security-north",
+      "fromZoneId": "departure-hall",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 230,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "security-south",
+      "fromZoneId": "departure-hall",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 200,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "baggage-hall",
+      "fromZoneId": "immigration-east",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 180,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "baggage-reclaim-north",
+      "fromZoneId": "immigration-east",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 160,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "baggage-reclaim-south",
+      "fromZoneId": "immigration-west",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 150,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-gate-a",
+      "fromZoneId": "security-north",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 85,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-gate-c",
+      "fromZoneId": "security-north",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 160,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-gate-b",
+      "fromZoneId": "security-south",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 95,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-gate-d",
+      "fromZoneId": "security-south",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 90,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "check-in-a",
+      "fromZoneId": "terminal-entrance-east",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 210,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-hall",
+      "fromZoneId": "terminal-entrance-east",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 110,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "check-in-b",
+      "fromZoneId": "terminal-entrance-west",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 180,
+      "intervalMinutes": 15
+    },
+    {
+      "toZoneId": "departure-hall",
+      "fromZoneId": "terminal-entrance-west",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00",
+      "estimatedCount": 95,
+      "intervalMinutes": 15
+    }
+  ],
+  "observations": [
+    {
+      "source": "camera-aggregate",
+      "confidence": {
+        "basis": "fixture",
+        "score": 0.86
+      },
+      "observedAt": "2026-07-11T09:18:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "source": "edge-queue-analytics",
+      "metrics": [
+        {
+          "zoneId": "check-in-a",
+          "queueLength": 54,
+          "busyCounters": 5,
+          "densityPerSquareMeter": 1.6,
+          "activeServiceLoadPerMinute": 34
+        },
+        {
+          "zoneId": "bag-drop-a",
+          "queueLength": 18,
+          "busyCounters": 2,
+          "densityPerSquareMeter": 1.1,
+          "activeServiceLoadPerMinute": 20
+        },
+        {
+          "zoneId": "check-in-b",
+          "queueLength": 38,
+          "busyCounters": 4,
+          "densityPerSquareMeter": 1.3,
+          "activeServiceLoadPerMinute": 30
+        },
+        {
+          "zoneId": "security-south",
+          "queueLength": 30,
+          "busyCounters": 4,
+          "densityPerSquareMeter": 1.2,
+          "activeServiceLoadPerMinute": 22
+        },
+        {
+          "zoneId": "immigration-west",
+          "queueLength": 42,
+          "busyCounters": 6,
+          "densityPerSquareMeter": 1.4,
+          "activeServiceLoadPerMinute": 18
+        }
+      ],
+      "confidence": {
+        "basis": "deterministic edge analytics fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T09:09:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "source": "floor-plate",
+      "confidence": {
+        "basis": "fixture",
+        "score": 0.78
+      },
+      "observedAt": "2026-07-11T09:11:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "source": "roster",
+      "confidence": {
+        "basis": "fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T08:45:00+07:00",
+      "snapshotId": "fixture-normal-2026-07-11T09:10:00+07:00"
+    },
+    {
+      "source": "camera-aggregate",
+      "confidence": {
+        "basis": "fixture",
+        "score": 0.86
+      },
+      "observedAt": "2026-07-11T09:18:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "source": "edge-queue-analytics",
+      "metrics": [
+        {
+          "zoneId": "check-in-a",
+          "queueLength": 138,
+          "busyCounters": 6,
+          "densityPerSquareMeter": 3.2,
+          "activeServiceLoadPerMinute": 34
+        },
+        {
+          "zoneId": "bag-drop-a",
+          "queueLength": 46,
+          "busyCounters": 3,
+          "densityPerSquareMeter": 1.9,
+          "activeServiceLoadPerMinute": 20
+        },
+        {
+          "zoneId": "check-in-b",
+          "queueLength": 98,
+          "busyCounters": 5,
+          "densityPerSquareMeter": 2.6,
+          "activeServiceLoadPerMinute": 30
+        },
+        {
+          "zoneId": "security-south",
+          "queueLength": 82,
+          "busyCounters": 5,
+          "densityPerSquareMeter": 2.4,
+          "activeServiceLoadPerMinute": 22
+        },
+        {
+          "zoneId": "immigration-west",
+          "queueLength": 110,
+          "busyCounters": 7,
+          "densityPerSquareMeter": 2.8,
+          "activeServiceLoadPerMinute": 18
+        }
+      ],
+      "confidence": {
+        "basis": "deterministic edge analytics fixture",
+        "score": 0.88
+      },
+      "observedAt": "2026-07-11T09:19:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "source": "floor-plate",
+      "confidence": {
+        "basis": "fixture",
+        "score": 0.78
+      },
+      "observedAt": "2026-07-11T09:11:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "source": "roster",
+      "confidence": {
+        "basis": "fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T08:45:00+07:00",
+      "snapshotId": "fixture-peak-2026-07-11T09:20:00+07:00"
+    },
+    {
+      "source": "camera-aggregate",
+      "confidence": {
+        "basis": "fixture",
+        "score": 0.86
+      },
+      "observedAt": "2026-07-11T09:18:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "source": "edge-queue-analytics",
+      "metrics": [
+        {
+          "zoneId": "check-in-a",
+          "queueLength": 142,
+          "busyCounters": 6,
+          "densityPerSquareMeter": 3.3,
+          "activeServiceLoadPerMinute": 34
+        },
+        {
+          "zoneId": "bag-drop-a",
+          "queueLength": 52,
+          "busyCounters": 4,
+          "densityPerSquareMeter": 2.1,
+          "activeServiceLoadPerMinute": 20
+        },
+        {
+          "zoneId": "check-in-b",
+          "queueLength": 98,
+          "busyCounters": 5,
+          "densityPerSquareMeter": 2.6,
+          "activeServiceLoadPerMinute": 30
+        },
+        {
+          "zoneId": "security-south",
+          "queueLength": 82,
+          "busyCounters": 5,
+          "densityPerSquareMeter": 2.4,
+          "activeServiceLoadPerMinute": 22
+        },
+        {
+          "zoneId": "immigration-west",
+          "queueLength": 110,
+          "busyCounters": 7,
+          "densityPerSquareMeter": 2.8,
+          "activeServiceLoadPerMinute": 18
+        }
+      ],
+      "confidence": {
+        "basis": "deterministic edge analytics fixture",
+        "score": 0.62
+      },
+      "observedAt": "2026-07-11T09:18:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "source": "floor-plate",
+      "confidence": {
+        "basis": "fixture",
+        "score": 0.78
+      },
+      "observedAt": "2026-07-11T09:11:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    },
+    {
+      "source": "roster",
+      "confidence": {
+        "basis": "fixture",
+        "score": 0.9
+      },
+      "observedAt": "2026-07-11T08:45:00+07:00",
+      "snapshotId": "fixture-stale-2026-07-11T09:30:00+07:00"
+    }
+  ]
+}

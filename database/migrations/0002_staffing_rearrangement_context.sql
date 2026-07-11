@@ -1,12 +1,14 @@
 -- Adds the persisted context needed to explain staffing feasibility and queue
 -- rearrangement options while keeping downstream contexts on OperationalSnapshot.
+-- Idempotent (IF NOT EXISTS) to match migration 0001: the seed runner re-applies
+-- every migration on each run.
 
 ALTER TABLE airport_ops.counter_states
-  ADD COLUMN max_open_count integer,
-  ADD COLUMN open_lead_minutes integer,
-  ADD COLUMN observed_at timestamptz,
-  ADD COLUMN confidence_score numeric(4, 3),
-  ADD COLUMN confidence_basis text;
+  ADD COLUMN IF NOT EXISTS max_open_count integer,
+  ADD COLUMN IF NOT EXISTS open_lead_minutes integer,
+  ADD COLUMN IF NOT EXISTS observed_at timestamptz,
+  ADD COLUMN IF NOT EXISTS confidence_score numeric(4, 3),
+  ADD COLUMN IF NOT EXISTS confidence_basis text;
 
 UPDATE airport_ops.counter_states AS counter
 SET
@@ -30,16 +32,24 @@ ALTER TABLE airport_ops.counter_states
   ALTER COLUMN open_lead_minutes SET NOT NULL,
   ALTER COLUMN observed_at SET NOT NULL,
   ALTER COLUMN confidence_score SET NOT NULL,
-  ALTER COLUMN confidence_basis SET NOT NULL,
+  ALTER COLUMN confidence_basis SET NOT NULL;
+
+-- Postgres has no ADD CONSTRAINT IF NOT EXISTS; drop-then-add keeps re-runs clean.
+ALTER TABLE airport_ops.counter_states
+  DROP CONSTRAINT IF EXISTS counter_states_max_open_count_check,
+  DROP CONSTRAINT IF EXISTS counter_states_open_lead_minutes_check,
+  DROP CONSTRAINT IF EXISTS counter_states_confidence_score_check;
+
+ALTER TABLE airport_ops.counter_states
   ADD CONSTRAINT counter_states_max_open_count_check CHECK (max_open_count >= open_count),
   ADD CONSTRAINT counter_states_open_lead_minutes_check CHECK (open_lead_minutes >= 0),
   ADD CONSTRAINT counter_states_confidence_score_check CHECK (confidence_score >= 0 AND confidence_score <= 1);
 
 ALTER TABLE airport_ops.staff_states
-  ADD COLUMN coverage_units integer,
-  ADD COLUMN observed_at timestamptz,
-  ADD COLUMN confidence_score numeric(4, 3),
-  ADD COLUMN confidence_basis text;
+  ADD COLUMN IF NOT EXISTS coverage_units integer,
+  ADD COLUMN IF NOT EXISTS observed_at timestamptz,
+  ADD COLUMN IF NOT EXISTS confidence_score numeric(4, 3),
+  ADD COLUMN IF NOT EXISTS confidence_basis text;
 
 UPDATE airport_ops.staff_states AS staff
 SET
@@ -60,11 +70,17 @@ ALTER TABLE airport_ops.staff_states
   ALTER COLUMN coverage_units SET NOT NULL,
   ALTER COLUMN observed_at SET NOT NULL,
   ALTER COLUMN confidence_score SET NOT NULL,
-  ALTER COLUMN confidence_basis SET NOT NULL,
+  ALTER COLUMN confidence_basis SET NOT NULL;
+
+ALTER TABLE airport_ops.staff_states
+  DROP CONSTRAINT IF EXISTS staff_states_coverage_units_check,
+  DROP CONSTRAINT IF EXISTS staff_states_confidence_score_check;
+
+ALTER TABLE airport_ops.staff_states
   ADD CONSTRAINT staff_states_coverage_units_check CHECK (coverage_units > 0),
   ADD CONSTRAINT staff_states_confidence_score_check CHECK (confidence_score >= 0 AND confidence_score <= 1);
 
-CREATE TABLE airport_ops.zone_role_transfer_rules (
+CREATE TABLE IF NOT EXISTS airport_ops.zone_role_transfer_rules (
   transfer_rule_id bigserial PRIMARY KEY,
   airport_id text NOT NULL REFERENCES airport_ops.airports (airport_id),
   role text NOT NULL,
@@ -76,5 +92,5 @@ CREATE TABLE airport_ops.zone_role_transfer_rules (
   UNIQUE (airport_id, role, from_zone_id, to_zone_id)
 );
 
-CREATE INDEX zone_role_transfer_rules_lookup_idx
+CREATE INDEX IF NOT EXISTS zone_role_transfer_rules_lookup_idx
   ON airport_ops.zone_role_transfer_rules (airport_id, role, from_zone_id, to_zone_id);

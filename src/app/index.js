@@ -2,9 +2,10 @@
  * Stratus Digital Twin — Airport Flow Ops app shell.
  *
  * This is the composition root. It reads the live OperationalSnapshot through
- * the operational-database reader (whose schema is defined by
- * database/migrations and populated by database/seeds — mirrored into the
- * deterministic fixtures the browser runs on), then derives:
+ * the operational-database reader. The rows come from the Postgres export
+ * (database/export/operational-rows.json, written by database/export-rows.mjs
+ * from the seeded database) with deterministic fixture rows as the fallback
+ * when the export is absent. From the snapshot it derives:
  *
  *   snapshot  -> monitoring   (queue / counter / staffing / alerts)
  *             -> prediction   (120 min forecast horizon)
@@ -41,17 +42,61 @@ const ROLE_COLOR = {
 };
 
 const SNAPSHOT_VARIANTS = ["normal", "peak", "stale"];
-const snapshotSeries = createFixtureSnapshotSeries();
 const LIVE_REFRESH_MS = 5000; // demo cadence for pulling a fresh live snapshot
 
-// One reader over the whole series; the row source closes over the current
-// live index so getSnapshot() always returns the active snapshot.
-const databaseReader = createOperationalDatabaseReader(() =>
-  createOperationalDatabaseRowsFromSnapshot(
-    snapshotSeries[state.snapshotIndex],
-    `live-${SNAPSHOT_VARIANTS[state.snapshotIndex]}-${snapshotSeries[state.snapshotIndex].asOf}`,
-  ),
-);
+// Live data source: rows exported from Postgres when available (written by
+// database/export-rows.mjs), otherwise fixture-shaped rows. Both are the same
+// contract shape and flow through the same operational-database reader, so
+// nothing downstream changes with the source.
+const EXPORTED_ROWS_URL = new URL("../../database/export/operational-rows.json", import.meta.url);
+
+function createFixtureRowsBundle() {
+  const series = createFixtureSnapshotSeries();
+  const perSnapshot = series.map((snapshot, index) =>
+    createOperationalDatabaseRowsFromSnapshot(snapshot, `live-${SNAPSHOT_VARIANTS[index]}-${snapshot.asOf}`),
+  );
+  const reference = perSnapshot[0];
+  return {
+    ...reference,
+    operationalSnapshots: perSnapshot.flatMap((rows) => rows.operationalSnapshots),
+    zoneStates: perSnapshot.flatMap((rows) => rows.zoneStates),
+    counterStates: perSnapshot.flatMap((rows) => rows.counterStates),
+    staffStates: perSnapshot.flatMap((rows) => rows.staffStates),
+    flightStates: perSnapshot.flatMap((rows) => rows.flightStates),
+    passengerFlows: perSnapshot.flatMap((rows) => rows.passengerFlows),
+    observations: perSnapshot.flatMap((rows) => rows.observations),
+  };
+}
+
+// Synchronous fixture default keeps the node test seam and the no-export run
+// working; loadRowsBundle() swaps in the Postgres export before init().
+let rowsBundle = createFixtureRowsBundle();
+let snapshotIds = rowsBundle.operationalSnapshots.map((row) => row.snapshotId);
+let dataSource = "fixtures";
+
+async function loadRowsBundle() {
+  try {
+    // no-store: the export is live operational data; a cached copy could show
+    // stale numbers after the database is re-exported mid-shift.
+    const response = await fetch(EXPORTED_ROWS_URL, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const bundle = await response.json();
+    if (!Array.isArray(bundle?.operationalSnapshots) || bundle.operationalSnapshots.length === 0) {
+      throw new Error("export contains no operational snapshots");
+    }
+    rowsBundle = bundle;
+    snapshotIds = bundle.operationalSnapshots.map((row) => row.snapshotId);
+    dataSource = "postgres";
+    state.snapshotIndex = Math.min(state.snapshotIndex, snapshotIds.length - 1);
+  } catch (error) {
+    console.warn("Stratus: Postgres export unavailable, staying on fixture rows.", error);
+  }
+}
+
+// One reader over the whole bundle; getSnapshot(id) selects the active
+// snapshot while validation and freezing stay inside the operational-database
+// context exactly as before.
+const databaseReader = createOperationalDatabaseReader(() => rowsBundle);
 
 const app = typeof document !== "undefined" ? document.querySelector("#app") : null;
 
@@ -195,15 +240,20 @@ function applyOption(option) {
   }
 }
 
+function currentSnapshotAsOf() {
+  const activeId = snapshotIds[state.snapshotIndex];
+  const row = rowsBundle.operationalSnapshots.find((candidate) => candidate.snapshotId === activeId);
+  return row?.asOf ?? rowsBundle.operationalSnapshots[0].asOf;
+}
+
 function currentClockMinutes() {
-  const snapshot = snapshotSeries[state.snapshotIndex];
-  return parseClockMinutes(snapshot.asOf) + state.minute;
+  return parseClockMinutes(currentSnapshotAsOf()) + state.minute;
 }
 
 // --- frame computation (pure data from the pipeline) ------------------------
 
 function computeFrame() {
-  const snapshot = databaseReader.getSnapshot();
+  const snapshot = databaseReader.getSnapshot(snapshotIds[state.snapshotIndex]);
   const forecast = predictionService.forecast(snapshot);
   const monitoring = MonitoringViewModel.from(snapshot, forecast);
   const alerts = monitoring.analytics.operationalAlerts;
@@ -380,6 +430,7 @@ function renderCommandBar(frame, clockMinutes, isSim) {
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SNAPSHOT</div><div class="mono" style="font-size:12px;">${hhmm(clockMinutes)}</div></div>
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">OCCUPANCY</div><div class="mono" style="font-size:12px;">${kpiPax.toLocaleString("en")}</div></div>
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">ALERTS</div><div class="mono" style="font-size:12px; color:${alertColor};">${kpiAlerts}</div></div>
+        <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SOURCE</div><div class="mono" style="font-size:12px;" data-source="${dataSource}">${dataSource === "postgres" ? "PG EXPORT" : "FIXTURES"}</div></div>
       </div>
       <div style="flex:1;"></div>
       <div style="display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden;">${viewBtns}</div>
@@ -452,14 +503,25 @@ function renderMap(frame, isSim) {
     .join("");
 
   const chips = mapZones
-    .map(
-      (z) => `
-      <div data-zone-chip="${z.zoneId}" style="position:absolute; left:${z.chipLeft}%; top:${z.chipTop}%; transform:translate(-50%,-50%) scale(${invZoom}); cursor:pointer; z-index:4; display:flex; align-items:center; gap:7px; background:var(--chip-bg); backdrop-filter:blur(3px); border:1px solid ${z.status === "critical" ? BUSY : z.status === "watch" ? "rgba(245,185,66,.55)" : "var(--border2)"}; border-radius:5px; padding:4px 9px; white-space:nowrap; ${z.zoneId === state.selected ? "box-shadow:0 0 0 2px " + z.color + ";" : ""}">
+    .map((z) => {
+      const statusBorder = z.status === "critical" ? BUSY : z.status === "watch" ? "rgba(245,185,66,.55)" : "var(--border2)";
+      const selRing = z.zoneId === state.selected ? "box-shadow:0 0 0 2px " + z.color + ";" : "";
+      const base = `position:absolute; left:${z.chipLeft}%; top:${z.chipTop}%; transform:translate(-50%,-50%) scale(${invZoom}); cursor:pointer; z-index:4; background:var(--chip-bg); backdrop-filter:blur(3px); border:1px solid ${statusBorder};`;
+      // Check-in B collapses to an icon-only marker to relieve crowding near the
+      // Departure Hall / Check-in A labels; it stays clickable and hoverable.
+      if (z.zoneId === "check-in-b") {
+        return `
+      <div data-zone-chip="${z.zoneId}" title="${z.label} · ${z.loadPct}%" style="${base} display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; ${selRing}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${z.color}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V6.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6.5V8"/><path d="M8 8v12M16 8v12"/></svg>
+      </div>`;
+      }
+      return `
+      <div data-zone-chip="${z.zoneId}" style="${base} display:flex; align-items:center; gap:7px; border-radius:5px; padding:4px 9px; white-space:nowrap; ${selRing}">
         <span style="width:6px; height:6px; border-radius:50%; background:${z.color}; box-shadow:0 0 6px ${z.color};"></span>
         <span style="font-size:11px; font-weight:600; color:var(--text);">${z.label}</span>
         <span class="mono" style="font-size:11px; font-weight:600; color:${z.color};">${z.loadPct}%</span>
-      </div>`,
-    )
+      </div>`;
+    })
     .join("");
 
   const hover = state.hover ? mapZones.find((z) => z.zoneId === state.hover) : null;
@@ -491,7 +553,16 @@ function renderMap(frame, isSim) {
 }
 
 function renderHoverTip(hover, invZoom) {
-  const tx = hover.chipLeft > 62 ? "translate(-106%,-50%)" : hover.chipLeft < 22 ? "translate(6%,-50%)" : "translate(-50%,-118%)";
+  // Zones near the top of the floor (e.g. Departure Hall) can't place the tip
+  // above the chip — it would be clipped by the map's overflow. Flip those below.
+  const nearTop = hover.chipTop < 30;
+  const tx = hover.chipLeft > 62
+    ? "translate(-106%,-50%)"
+    : hover.chipLeft < 22
+      ? "translate(6%,-50%)"
+      : nearTop
+        ? "translate(-50%,18%)"
+        : "translate(-50%,-118%)";
   return `
     <div style="position:absolute; left:${hover.chipLeft}%; top:${hover.chipTop}%; transform:${tx} scale(${invZoom}); z-index:10; pointer-events:none; width:210px; background:var(--panel); border:1px solid ${hover.color}; border-radius:8px; box-shadow:0 10px 30px var(--scrim); overflow:hidden;">
       <div style="padding:9px 11px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px;">
@@ -1105,7 +1176,7 @@ function init() {
       // Each completed horizon loop pulls the next live snapshot, reproducing
       // the seeded normal -> peak -> stale monitoring progression.
       if (state.mode === "live") {
-        state.snapshotIndex = (state.snapshotIndex + 1) % snapshotSeries.length;
+        state.snapshotIndex = (state.snapshotIndex + 1) % snapshotIds.length;
       }
     }
     render();
@@ -1113,7 +1184,9 @@ function init() {
 }
 
 if (app) {
-  init();
+  // Resolve the data source before the first render; on any failure the
+  // fixture bundle already in place keeps the app fully functional.
+  loadRowsBundle().then(init);
 }
 
 // Test seam: these are pure (no DOM) and let the seed / render checks exercise

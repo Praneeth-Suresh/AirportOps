@@ -51,6 +51,7 @@ Scalability is the first design priority. The initial build must make the system
 | First public interface | Website app shell composed from bounded-context public APIs | 2026-07-11 | none yet |
 | Primary design priority | Scalability before visual polish or AI sophistication | 2026-07-11 | none yet |
 | Initial website runtime | Dependency-free static ES modules with Node's built-in test runner | 2026-07-11 | none yet |
+| How the website consumes Postgres data | Export bridge: `database/export-rows.mjs` (psql, zero npm deps) writes a contract-shaped rows bundle to `database/export/operational-rows.json`; the app shell fetches it (`cache: no-store`) before first render and falls back to fixture rows when absent. SQL never leaves the operational-database context; a live API server is a possible follow-up slice reusing the same export SQL | 2026-07-12 | none yet |
 
 ## Pressure Points
 
