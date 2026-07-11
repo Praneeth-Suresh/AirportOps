@@ -13,6 +13,7 @@ Each bounded context in `.beryl/agent` maps to an independent repository in the 
 - `airport-ops-monitoring`
 - `airport-ops-simulation`
 - `airport-ops-decision-support`
+- `airport-ops-operational-database`
 - `airport-ops-app-shell`
 
 Shared contracts for these repositories live in `airport-ops-contracts` and include `OperationalSnapshot`, `QueueState`, `CounterUtilization`, `CrowdingEvent`, `OperationalAlert`, `FlowForecast`, `ScenarioProjection`, `DecisionOption`, and all shared value-object schemas.
@@ -28,6 +29,7 @@ The current monorepo folder structure (`src/operational-state`, etc.) is treated
 | Monitoring | Live map read model, queue states, counter utilization, crowding events, operational alerts, zone status, movement display, landing transition state, and detail selection | Canonical operational data, forecast calculation, scenario mutation | `airport-ops-monitoring` repository package interface |
 | Simulation | Scenario decision validation, short-horizon projections, baseline comparison, and time-slider data | Live-state ingestion, recommendation ranking, external command execution | `airport-ops-simulation` repository package interface |
 | Decision Support | Ranked `DecisionOption` values, recommendations, questions, rationale, and assistant state | Forecast calculation, simulation calculation, direct vendor calls, automatic execution | `airport-ops-decision-support` repository package interface |
+| Operational Database | Postgres schema, migrations, persisted operational rows, seed data, immutable snapshot assembly, and database reader APIs | Forecast algorithms, simulation algorithms, monitoring analytics, recommendation ranking, UI rendering | `airport-ops-operational-database` repository package interface |
 
 The application shell is not a bounded context. It composes the public entry points above and is expected at `src/app/index.ts` or the equivalent project composition root.
 
@@ -112,6 +114,7 @@ The implementation language may change the syntax, but not the ownership or sema
 ```text
 External systems
     -> infrastructure adapters
+    -> Operational Database / persisted operational rows
     -> Operational State / OperationalSnapshot
     -> Monitoring analytics / QueueState / CounterUtilization / OperationalAlert
     -> Prediction / FlowForecast
@@ -148,6 +151,7 @@ Adapters may depend on SDKs, HTTP clients, persistence, and vendor types. Domain
 5. `OperationalSnapshot`, `FlowForecast`, `ScenarioProjection`, and `DecisionOption` must carry freshness/confidence where uncertainty can affect a decision.
 6. Simulation decisions are immutable scenario inputs; they must not mutate live operational state.
 7. AI output is explanatory and advisory. It cannot introduce a recommendation that is not traceable to a forecast, projection, rule, or explicit operator input.
+8. Simulation, monitoring, prediction, and decision support must not query Postgres tables directly; they consume `OperationalSnapshot` and other public contracts assembled by the operational-database context.
 
 ## Forbidden Import Policy
 
@@ -164,6 +168,7 @@ Repository-level equivalent (final product):
 - `airport-ops-monitoring` may only depend on `airport-ops-contracts`, `airport-ops-operational-state` public API, and `airport-ops-prediction` public API.
 - `airport-ops-simulation` may only depend on `airport-ops-contracts`, `airport-ops-operational-state` public API, and `airport-ops-prediction` public API.
 - `airport-ops-decision-support` may only depend on `airport-ops-contracts`, `airport-ops-operational-state` public API, `airport-ops-prediction` public API, and `airport-ops-simulation` public API.
+- `airport-ops-operational-database` may only depend on `airport-ops-contracts`, Postgres migrations/seeds it owns, and adapter outputs that have been normalized into operational rows.
 
 ## First Public Interfaces To Implement
 

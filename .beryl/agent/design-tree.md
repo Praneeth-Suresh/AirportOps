@@ -21,6 +21,7 @@ Scalability is the first design priority. The initial build must make the system
 9. Implement the simulation website module: time slider, scenario controls, projected deltas, and clear scenario/live-state labeling.
 10. Implement the assistant website module: visual assistant surface, recommendations, questions, rationale, confidence, freshness, and drill-in details.
 11. Add integration, contract, and browser verification around the full website path: fixture snapshot -> monitoring analytics -> forecast -> monitoring -> simulation -> decision options -> rendered UI.
+12. Add a Postgres-backed operational-database bounded context so simulation and analysis consumers receive contract-shaped snapshots from persisted operational rows rather than database internals.
 
 ## Open Decisions
 
@@ -45,6 +46,7 @@ Scalability is the first design priority. The initial build must make the system
 | Are decisions executed automatically? | No; counter, movement, and shift changes are scenario inputs until explicitly approved and integrated later | 2026-07-11 | [ADR 0002](adr/0002-shared-operational-snapshot.md) |
 | What is the first AI behavior? | Deterministic recommendations first, AI explanation/ranking through an adapter second | 2026-07-11 | [ADR 0002](adr/0002-shared-operational-snapshot.md) |
 | Repository structure for bounded contexts | Independent repositories per bounded context with a shared contracts repository | 2026-07-11 | [ADR 0003](adr/0003-bounded-context-repositories.md) |
+| Operational persistence | Postgres is owned by a separate operational-database bounded context that assembles public contracts | 2026-07-11 | [ADR 0004](adr/0004-postgres-operational-database-context.md) |
 | First public interface | Website app shell composed from bounded-context public APIs | 2026-07-11 | none yet |
 | Primary design priority | Scalability before visual polish or AI sophistication | 2026-07-11 | none yet |
 | Initial website runtime | Dependency-free static ES modules with Node's built-in test runner | 2026-07-11 | none yet |

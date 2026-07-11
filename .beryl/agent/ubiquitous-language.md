@@ -4,6 +4,7 @@
 | --- | --- | --- | --- | --- |
 | Airport zone | `Zone` | A bounded operational area such as departure, arrival, immigration, security, entrance, or exit | Must have a stable identifier and valid inbound/outbound paths | `Area`, `Section` when referring to the domain object |
 | Operational state | `OperationalSnapshot` | A validated point-in-time view of airport topology, passengers, flights, staff, counters, and observations | Immutable; includes `asOf`, freshness, and confidence metadata | `Data`, `CurrentState` |
+| Operational database | `OperationalDatabase` | Postgres-owned persistence boundary that stores operational rows and assembles public contracts for downstream contexts | Must expose reader APIs and must not leak table access into simulation, prediction, monitoring, or decision support | Direct SQL access from feature contexts |
 | Observation | `Observation` | An aggregated measurement or event from a sensor or operational system | Must identify source, timestamp, and confidence; never implies personal identity | `TrackingRecord`, `RawEvent` in domain code |
 | Passenger flow | `PassengerFlow` | Aggregated movement of passengers between zones during a time interval | No individual identity; has origin, destination, interval, and count/estimate | `CustomerPath`, `PersonMovement` |
 | Queue pressure | `QueuePressure` | Estimated operational pressure caused by waiting passengers relative to capacity and service rate | Must carry an estimate and confidence, not an unqualified exact count | `Busy` as the only state |

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createOperationalDatabaseReader, createFixtureOperationalDatabaseRows } from "../src/operational-database/index.js";
 import { createOperationalStateReader } from "../src/operational-state/index.js";
 import { createFixtureSnapshotSeries } from "../src/fixtures/deterministicAdapters.js";
 import { predictionService } from "../src/prediction/index.js";
@@ -20,6 +21,31 @@ test("fixture snapshot drives the full airport operations decision path", () => 
   assert.ok(options.length >= 1);
   assert.equal(monitoring.landingState, "lit-after-landing");
   assert.ok(monitoring.analytics.operationalAlerts.some((alert) => alert.zoneId === "check-in-a"));
+});
+
+test("operational database reader drives the full airport operations decision path", () => {
+  const snapshot = createOperationalDatabaseReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const projection = simulationService.project(snapshot, forecast, defaultScenarioDecisions());
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+  const options = decisionSupportService.options(snapshot, forecast, projection, monitoring.analytics.operationalAlerts);
+
+  assert.equal(snapshot.airport.airportId, "BKK");
+  assert.equal(snapshot.zones.find((zone) => zone.zoneId === "check-in-a").occupancy, 720);
+  assert.ok(forecast.points.some((point) => point.zones.some((zone) => zone.zoneId === "security-north")));
+  assert.ok(projection.deltaFromBaseline.some((delta) => delta.zoneId === "check-in-a"));
+  assert.ok(options.some((option) => option.affectedZones.includes("check-in-a")));
+});
+
+test("operational database reader rejects rows that reference unknown zones", () => {
+  const rows = createFixtureOperationalDatabaseRows();
+  rows.staffStates[0] = { ...rows.staffStates[0], zoneId: "missing-zone" };
+  const reader = createOperationalDatabaseReader(() => rows);
+
+  assert.throws(
+    () => reader.getSnapshot(),
+    /references unknown zone/,
+  );
 });
 
 test("simulation rejects scenario decisions for unknown zones", () => {
