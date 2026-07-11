@@ -1,5 +1,5 @@
-import { createOperationalStateReader } from "../operational-state/index.js";
-import { predictionService } from "../prediction/index.js";
+import { createOperationalDatabaseReader, createOperationalDatabaseRowsFromSnapshot } from "../operational-database/index.js";
+import { DEFAULT_PREDICTION_REFRESH_CADENCE_SECONDS, PredictionRefreshService } from "../prediction/index.js";
 import { MonitoringViewModel } from "../monitoring/index.js";
 import { defaultScenarioDecisions, simulationService } from "../simulation/index.js";
 import { decisionSupportService } from "../decision-support/index.js";
@@ -11,11 +11,14 @@ let snapshotIndex = 1;
 let selectedZoneId = "check-in-a";
 let selectedAlertId;
 let selectedMinute = 60;
+const databaseReader = createOperationalDatabaseReader(() => (
+  createOperationalDatabaseRowsFromSnapshot(snapshotSeries[snapshotIndex], `fixture-snapshot-${snapshotIndex}`)
+));
+const predictionRefreshService = new PredictionRefreshService({ snapshotReader: databaseReader });
 
 function render() {
-  const reader = createOperationalStateReader(() => snapshotSeries[snapshotIndex]);
-  const snapshot = reader.getSnapshot();
-  const forecast = predictionService.forecast(snapshot);
+  const forecast = predictionRefreshService.refreshNow();
+  const snapshot = predictionRefreshService.getLatestSnapshot();
   const monitoring = MonitoringViewModel.from(snapshot, forecast);
   const decisions = defaultScenarioDecisions();
   const projection = simulationService.project(snapshot, forecast, decisions);
@@ -266,7 +269,7 @@ function formatTime(value) {
 
 render();
 
-setInterval(() => {
+globalThis.setInterval(() => {
   snapshotIndex = (snapshotIndex + 1) % snapshotSeries.length;
   render();
-}, 12000);
+}, DEFAULT_PREDICTION_REFRESH_CADENCE_SECONDS * 1000);

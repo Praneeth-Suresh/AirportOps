@@ -94,6 +94,7 @@ OperationalAlert
 
 FlowForecast
   generatedAt: Instant
+  refreshCadenceSeconds: DurationEstimate
   horizon: TimeWindow
   points: ForecastPoint[]
   confidence: Confidence

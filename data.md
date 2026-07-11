@@ -43,7 +43,7 @@ Processed data is product-owned. It is created from ingested data by validation,
 | Counter utilization | `CounterUtilization` contract, optionally persisted later | `zone_id`, `open_counters`, `available_counters`, `busy_counters`, `utilization_ratio`, `status`, `confidence` | Counter state plus observation metric busy counters. |
 | Crowding event | `CrowdingEvent` contract, optionally persisted later | `event_id`, `zone_id`, `type`, `severity`, `threshold`, `current_metric`, `detected_at`, `confidence`, `freshness` | Queue state, density, and threshold rules. |
 | Operational alert | `operational_alerts` | `alert_id`, `snapshot_id`, `zone_id`, `alert_type`, `severity`, `lifecycle_state`, `message`, `evidence`, `detected_at`, `confidence_score`, `confidence_basis`, `freshness` | Crowding events, counter utilization, stale-data checks, staff/capacity rules. |
-| Flow forecast | `flow_forecasts` and future forecast-point table | `forecast_id`, `snapshot_id`, `generated_at`, `horizon_start`, `horizon_minutes`, `resolution_minutes`, `confidence_score`, `confidence_basis`, `assumptions` | Operational snapshot plus prediction model. |
+| Flow forecast | `flow_forecasts` and future forecast-point table | `forecast_id`, `snapshot_id`, `generated_at`, `refresh_cadence_seconds`, `horizon_start`, `horizon_minutes`, `resolution_minutes`, `confidence_score`, `confidence_basis`, `assumptions` | Operational snapshot plus prediction model. |
 | Scenario | `scenarios` | `scenario_id`, `snapshot_id`, `forecast_id`, `name`, `status`, `created_at` | Operator-created simulation request. |
 | Scenario decision | `scenario_decisions` | `scenario_id`, `decision_type`, `decision_payload` | Operator scenario inputs such as counter changes, passenger movement, or shift timing. |
 | Scenario projection | `ScenarioProjection` contract, optionally persisted later | `scenario_id`, `decisions`, `points`, `delta_from_baseline`, `confidence` | Scenario decisions applied to baseline forecast. |
@@ -236,9 +236,10 @@ The simulator should not query these tables directly. It should receive the fiel
 | --- | --- |
 | `forecast_id` | Generate from snapshot ID, forecast request, model version, and generation time. |
 | `generated_at` | Use processing clock time. |
+| `refresh_cadence_seconds` | Use the prediction refresh policy, currently 60 seconds. |
 | `horizon_start` | Usually snapshot `as_of`; may be a requested simulation start time. |
-| `horizon_minutes` | Use forecast request, initially near-term operations horizon. |
-| `resolution_minutes` | Use forecast request interval, such as 15 or 30 minutes. |
+| `horizon_minutes` | Use forecast request, initially 120 minutes for near-term operations. |
+| `resolution_minutes` | Use forecast request interval, currently 15 minutes for crowd-pressure forecasts. |
 | `confidence_score` | Start from the minimum or weighted confidence of input snapshot values, then adjust for model reliability. |
 | `confidence_basis` | Record input and model assumptions. |
 | `assumptions` | Store assumptions such as latest movement continuing or open counters maintaining service rate. |
@@ -315,10 +316,11 @@ The simulator should not query these tables directly. It should receive the fiel
 ### Phase 5: Generate Forecasts
 
 1. Feed the validated `OperationalSnapshot` to the prediction service.
-2. Generate forecast points across the selected horizon and resolution.
-3. Calculate expected occupancy, queue pressure, staffing demand, and status per zone.
-4. Store forecast metadata and assumptions.
-5. Preserve confidence and input snapshot traceability.
+2. Refresh the baseline forecast every 60 seconds from the latest snapshot available through the operational-database public reader.
+3. Generate forecast points across the selected horizon and resolution.
+4. Calculate expected occupancy, queue pressure, staffing demand, and status per zone.
+5. Store forecast metadata and assumptions.
+6. Preserve confidence and input snapshot traceability.
 
 ### Phase 6: Run Simulation Scenarios
 
