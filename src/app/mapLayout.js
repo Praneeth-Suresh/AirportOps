@@ -174,6 +174,18 @@ function arrow(x1, y1, x2, y2) {
   const by = y2 - ah * Math.sin(ang + Math.PI / 6);
   return `<g ${STROKE} stroke-opacity="0.4" stroke-width="1.6" fill="none"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-dasharray="5 6"/><path d="M${ax.toFixed(1)} ${ay.toFixed(1)} L${x2} ${y2} L${bx.toFixed(1)} ${by.toFixed(1)}"/></g>`;
 }
+// Jet bridge: a short covered walkway linking a gate lounge to its aircraft
+// stand on the pier. `xBox` is the lounge edge, `xPier` the stand side.
+function jetBridge(xBox, y, xPier) {
+  const a = Math.min(xBox, xPier);
+  const w = Math.abs(xPier - xBox);
+  return `<rect x="${a}" y="${y - 7}" width="${w}" height="14" rx="3" fill="none" ${INK} stroke-opacity="0.55" stroke-width="1.8"/>`;
+}
+// Gate letter tag, drawn faint in a lounge corner so it reads as wayfinding
+// signage rather than competing with the live zone chip at the lounge centre.
+function gateTag(x, y, label) {
+  return `<text x="${x}" y="${y}" fill="var(--text3)" font-size="18" font-weight="600" font-family="IBM Plex Mono, monospace" opacity="0.6">${label}</text>`;
+}
 
 // --- Departures floor (design image 3) --------------------------------------
 
@@ -196,10 +208,19 @@ function departureFloor() {
   // Left + right gate piers with planes.
   parts.push(wall("M120 330 L60 360 V706 L120 736", 0.45));
   parts.push(wall("M1328 330 L1388 360 V706 L1328 736", 0.45));
+  // Apron taxiway guide lines outside each pier.
+  parts.push(`<line x1="40" y1="360" x2="40" y2="706" ${STROKE} stroke-opacity="0.22" stroke-dasharray="10 12" stroke-width="1.6"/>`);
+  parts.push(`<line x1="1408" y1="360" x2="1408" y2="706" ${STROKE} stroke-opacity="0.22" stroke-dasharray="10 12" stroke-width="1.6"/>`);
   parts.push(plane(78, 410, 2.1, 90), plane(78, 636, 2.1, 90));
   parts.push(plane(1370, 410, 2.1, -90), plane(1370, 636, 2.1, -90));
-  parts.push(box(208, 360, 150, 150, 6, 0.4), box(1090, 360, 150, 150, 6, 0.4));
-  parts.push(escalator(262, 420), escalator(1144, 420));
+  // Four gate lounges — A/C on the left pier, B/D on the right — each a drawn
+  // room tied to its aircraft stand by a jet bridge and tagged with its letter.
+  parts.push(box(208, 360, 150, 150, 6, 0.4), box(208, 561, 150, 150, 6, 0.4));
+  parts.push(box(1090, 360, 150, 150, 6, 0.4), box(1090, 561, 150, 150, 6, 0.4));
+  parts.push(jetBridge(208, 435, 132), jetBridge(208, 636, 132));
+  parts.push(jetBridge(1240, 435, 1316), jetBridge(1240, 636, 1316));
+  parts.push(escalator(304, 468), escalator(304, 669), escalator(1186, 468), escalator(1186, 669));
+  parts.push(gateTag(226, 392, "A"), gateTag(226, 593, "C"), gateTag(1108, 392, "B"), gateTag(1108, 593, "D"));
   // Lower processing pods + landside.
   parts.push(box(360, 760, 300, 150, 6, 0.5), box(788, 760, 300, 150, 6, 0.5));
   parts.push(escalator(408, 800), restroom(478, 800), info(724, 800), restroom(948, 800), escalator(1018, 800));
