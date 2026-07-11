@@ -444,26 +444,11 @@ function renderMap(frame, isSim) {
     .map((z) => `<circle cx="${z.cx}" cy="${z.cy}" r="3.5" fill="${z.color}" filter="url(#glow)"></circle>`)
     .join("");
 
-  const hitAreas = mapZones
-    .map(
-      (z) =>
-        `<rect data-zone-hit="${z.zoneId}" x="${z.hit.hitX}" y="${z.hit.hitY}" width="${z.hit.hitW}" height="${z.hit.hitH}" fill="transparent" style="pointer-events:all; cursor:pointer;"></rect>`,
-    )
-    .join("");
-
   const chips = mapZones
     .map((z) => {
       const statusBorder = z.status === "critical" ? BUSY : z.status === "watch" ? "rgba(245,185,66,.55)" : "var(--border2)";
       const selRing = z.zoneId === state.selected ? "box-shadow:0 0 0 2px " + z.color + ";" : "";
       const base = `position:absolute; left:${z.chipLeft}%; top:${z.chipTop}%; transform:translate(-50%,-50%) scale(${invZoom}); cursor:pointer; z-index:4; background:var(--chip-bg); backdrop-filter:blur(3px); border:1px solid ${statusBorder};`;
-      // Check-in B collapses to an icon-only marker to relieve crowding near the
-      // Departure Hall / Check-in A labels; it stays clickable and hoverable.
-      if (z.zoneId === "check-in-b") {
-        return `
-      <div data-zone-chip="${z.zoneId}" title="${z.label} · ${z.loadPct}%" style="${base} display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; ${selRing}">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${z.color}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V6.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6.5V8"/><path d="M8 8v12M16 8v12"/></svg>
-      </div>`;
-      }
       return `
       <div data-zone-chip="${z.zoneId}" style="${base} display:flex; align-items:center; gap:7px; border-radius:5px; padding:4px 9px; white-space:nowrap; ${selRing}">
         <span style="width:6px; height:6px; border-radius:50%; background:${z.color}; box-shadow:0 0 6px ${z.color};"></span>
@@ -473,14 +458,16 @@ function renderMap(frame, isSim) {
     })
     .join("");
 
-  const hover = state.hover ? mapZones.find((z) => z.zoneId === state.hover) : null;
+  // Layer 2 (hover preview) is suppressed while Layer 3 (a selected zone's
+  // detail panel) is open, so the two cards never stack.
+  const hover = state.hover && !state.selected ? mapZones.find((z) => z.zoneId === state.hover) : null;
   const hoverTip = hover ? renderHoverTip(hover, invZoom) : "";
 
   return `
     <div data-pan style="position:absolute; inset:0; cursor:${grabCursor}; overflow:hidden;">
       <div style="position:absolute; inset:0; background:var(--map-grad);"></div>
       <div style="position:absolute; inset:0; transform:translate(${state.panX}px, ${state.panY}px) scale(${state.zoom}); transform-origin:center center;">
-        ${showPlane ? `<div style="position:absolute; top:9%; left:0; width:100%; pointer-events:none;"><svg width="42" height="42" viewBox="0 0 24 24" style="animation:planefly 11s linear infinite; filter:drop-shadow(0 0 6px rgba(41,163,255,.8));"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" fill="${ACCENT}"></path></svg></div>` : ""}
+        ${showPlane ? `<div style="position:absolute; top:9%; left:0; width:100%; pointer-events:none;"><svg width="42" height="42" viewBox="0 0 24 24" style="animation:planefly 11s linear infinite; filter:drop-shadow(0 0 6px rgba(41,163,255,.8));"><path transform="rotate(90 12 12)" d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" fill="${ACCENT}"></path></svg></div>` : ""}
         <svg viewBox="0 0 ${MAP_VIEWBOX.w} ${MAP_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none;">
           <defs>
             <filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="34"></feGaussianBlur></filter>
@@ -492,7 +479,6 @@ function renderMap(frame, isSim) {
           <g opacity="${state.layers.pax ? 1 : 0}">${passengers}</g>
           <g opacity="${state.layers.staff ? 1 : 0}">${staff}</g>
           ${nodeDots}
-          <g style="pointer-events:all;">${hitAreas}</g>
         </svg>
         ${chips}
         ${hoverTip}
@@ -512,24 +498,20 @@ function renderHoverTip(hover, invZoom) {
       : nearTop
         ? "translate(-50%,18%)"
         : "translate(-50%,-118%)";
+  // Layer 2 — a concise hover preview: title + load, then Wait · Queue.
   return `
-    <div style="position:absolute; left:${hover.chipLeft}%; top:${hover.chipTop}%; transform:${tx} scale(${invZoom}); z-index:10; pointer-events:none; width:210px; background:var(--panel); border:1px solid ${hover.color}; border-radius:8px; box-shadow:0 10px 30px var(--scrim); overflow:hidden;">
-      <div style="padding:9px 11px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px;">
-        <span style="width:8px; height:8px; border-radius:50%; background:${hover.color}; box-shadow:0 0 6px ${hover.color};"></span>
-        <span style="font-size:12px; font-weight:600;">${hover.label}</span>
+    <div style="position:absolute; left:${hover.chipLeft}%; top:${hover.chipTop}%; transform:${tx} scale(${invZoom}); z-index:10; pointer-events:none; width:192px; background:var(--panel); border:1px solid ${hover.color}; border-radius:8px; box-shadow:0 10px 30px var(--scrim); padding:9px 11px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <span style="display:flex; align-items:center; gap:7px; min-width:0;">
+          <span style="width:7px; height:7px; border-radius:50%; background:${hover.color}; box-shadow:0 0 6px ${hover.color}; flex:none;"></span>
+          <span style="font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${hover.label}</span>
+        </span>
+        <span class="mono" style="font-size:15px; font-weight:600; color:${hover.color}; flex:none;">${hover.loadPct}%</span>
       </div>
-      <div style="padding:10px 11px;">
-        <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px;">
-          <span class="mono" style="font-size:22px; font-weight:600; color:${hover.color};">${hover.loadPct}%</span>
-          <span style="font-size:10px; color:var(--text3);">${hover.severity}</span>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 10px;">
-          <div style="display:flex; justify-content:space-between;"><span style="font-size:10px; color:var(--text3);">Wait</span><span class="mono" style="font-size:11px; color:${hover.color};">${hover.wait}m</span></div>
-          <div style="display:flex; justify-content:space-between;"><span style="font-size:10px; color:var(--text3);">Queue</span><span class="mono" style="font-size:11px;">${hover.queueLength}</span></div>
-          <div style="display:flex; justify-content:space-between;"><span style="font-size:10px; color:var(--text3);">Occ</span><span class="mono" style="font-size:11px;">${hover.occupancy}</span></div>
-          <div style="display:flex; justify-content:space-between;"><span style="font-size:10px; color:var(--text3);">Staff</span><span class="mono" style="font-size:11px;">${hover.staffHere.length}</span></div>
-        </div>
-        <div style="font-size:9px; color:var(--text3); margin-top:8px;">Click to inspect · ${hover.freshness.status}</div>
+      <div style="display:flex; align-items:center; gap:8px; margin-top:6px; font-size:11px; color:var(--text3);">
+        <span>Wait <span class="mono" style="color:${hover.color};">${hover.wait}m</span></span>
+        <span style="color:var(--border2);">·</span>
+        <span>Queue <span class="mono" style="color:var(--text);">${hover.queueLength}</span></span>
       </div>
     </div>
   `;
@@ -937,10 +919,13 @@ function describeDecision(decision) {
 // --- event wiring -----------------------------------------------------------
 
 function wireEvents() {
-  app.querySelectorAll("[data-zone-hit]").forEach((el) => {
-    const id = el.getAttribute("data-zone-hit");
-    el.addEventListener("click", () => selectZone(id));
+  // Layer 1 → Layer 2: hover fires only on the visible map chip/icon (scoped to
+  // the map so the drawer's zone list doesn't spawn map tooltips), and never
+  // while a zone is selected (Layer 3 open).
+  app.querySelectorAll("[data-pan] [data-zone-chip]").forEach((el) => {
+    const id = el.getAttribute("data-zone-chip");
     el.addEventListener("mouseenter", () => {
+      if (state.selected || state.hover === id) return;
       state.hover = id;
       render();
     });
@@ -951,6 +936,7 @@ function wireEvents() {
       }
     });
   });
+  // Layer 1 → Layer 3: clicking any chip (map or drawer list) inspects the zone.
   app.querySelectorAll("[data-zone-chip]").forEach((el) => {
     el.addEventListener("click", () => selectZone(el.getAttribute("data-zone-chip")));
   });
@@ -1072,6 +1058,7 @@ function wireEvents() {
 function selectZone(zoneId) {
   state.selected = zoneId;
   state.tool = null;
+  state.hover = null; // Layer 2 disappears the moment Layer 3 opens
   render();
 }
 
