@@ -2,9 +2,10 @@
  * Stratus Digital Twin — Airport Flow Ops app shell.
  *
  * This is the composition root. It reads the live OperationalSnapshot through
- * the operational-database reader (whose schema is defined by
- * database/migrations and populated by database/seeds — mirrored into the
- * deterministic fixtures the browser runs on), then derives:
+ * the operational-database reader. The rows come from the Postgres export
+ * (database/export/operational-rows.json, written by database/export-rows.mjs
+ * from the seeded database) with deterministic fixture rows as the fallback
+ * when the export is absent. From the snapshot it derives:
  *
  *   snapshot  -> monitoring   (queue / counter / staffing / alerts)
  *             -> prediction   (120 min forecast horizon)
@@ -41,17 +42,61 @@ const ROLE_COLOR = {
 };
 
 const SNAPSHOT_VARIANTS = ["normal", "peak", "stale"];
-const snapshotSeries = createFixtureSnapshotSeries();
 const LIVE_REFRESH_MS = 5000; // demo cadence for pulling a fresh live snapshot
 
-// One reader over the whole series; the row source closes over the current
-// live index so getSnapshot() always returns the active snapshot.
-const databaseReader = createOperationalDatabaseReader(() =>
-  createOperationalDatabaseRowsFromSnapshot(
-    snapshotSeries[state.snapshotIndex],
-    `live-${SNAPSHOT_VARIANTS[state.snapshotIndex]}-${snapshotSeries[state.snapshotIndex].asOf}`,
-  ),
-);
+// Live data source: rows exported from Postgres when available (written by
+// database/export-rows.mjs), otherwise fixture-shaped rows. Both are the same
+// contract shape and flow through the same operational-database reader, so
+// nothing downstream changes with the source.
+const EXPORTED_ROWS_URL = new URL("../../database/export/operational-rows.json", import.meta.url);
+
+function createFixtureRowsBundle() {
+  const series = createFixtureSnapshotSeries();
+  const perSnapshot = series.map((snapshot, index) =>
+    createOperationalDatabaseRowsFromSnapshot(snapshot, `live-${SNAPSHOT_VARIANTS[index]}-${snapshot.asOf}`),
+  );
+  const reference = perSnapshot[0];
+  return {
+    ...reference,
+    operationalSnapshots: perSnapshot.flatMap((rows) => rows.operationalSnapshots),
+    zoneStates: perSnapshot.flatMap((rows) => rows.zoneStates),
+    counterStates: perSnapshot.flatMap((rows) => rows.counterStates),
+    staffStates: perSnapshot.flatMap((rows) => rows.staffStates),
+    flightStates: perSnapshot.flatMap((rows) => rows.flightStates),
+    passengerFlows: perSnapshot.flatMap((rows) => rows.passengerFlows),
+    observations: perSnapshot.flatMap((rows) => rows.observations),
+  };
+}
+
+// Synchronous fixture default keeps the node test seam and the no-export run
+// working; loadRowsBundle() swaps in the Postgres export before init().
+let rowsBundle = createFixtureRowsBundle();
+let snapshotIds = rowsBundle.operationalSnapshots.map((row) => row.snapshotId);
+let dataSource = "fixtures";
+
+async function loadRowsBundle() {
+  try {
+    // no-store: the export is live operational data; a cached copy could show
+    // stale numbers after the database is re-exported mid-shift.
+    const response = await fetch(EXPORTED_ROWS_URL, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const bundle = await response.json();
+    if (!Array.isArray(bundle?.operationalSnapshots) || bundle.operationalSnapshots.length === 0) {
+      throw new Error("export contains no operational snapshots");
+    }
+    rowsBundle = bundle;
+    snapshotIds = bundle.operationalSnapshots.map((row) => row.snapshotId);
+    dataSource = "postgres";
+    state.snapshotIndex = Math.min(state.snapshotIndex, snapshotIds.length - 1);
+  } catch (error) {
+    console.warn("Stratus: Postgres export unavailable, staying on fixture rows.", error);
+  }
+}
+
+// One reader over the whole bundle; getSnapshot(id) selects the active
+// snapshot while validation and freezing stay inside the operational-database
+// context exactly as before.
+const databaseReader = createOperationalDatabaseReader(() => rowsBundle);
 
 const app = typeof document !== "undefined" ? document.querySelector("#app") : null;
 
@@ -195,15 +240,20 @@ function applyOption(option) {
   }
 }
 
+function currentSnapshotAsOf() {
+  const activeId = snapshotIds[state.snapshotIndex];
+  const row = rowsBundle.operationalSnapshots.find((candidate) => candidate.snapshotId === activeId);
+  return row?.asOf ?? rowsBundle.operationalSnapshots[0].asOf;
+}
+
 function currentClockMinutes() {
-  const snapshot = snapshotSeries[state.snapshotIndex];
-  return parseClockMinutes(snapshot.asOf) + state.minute;
+  return parseClockMinutes(currentSnapshotAsOf()) + state.minute;
 }
 
 // --- frame computation (pure data from the pipeline) ------------------------
 
 function computeFrame() {
-  const snapshot = databaseReader.getSnapshot();
+  const snapshot = databaseReader.getSnapshot(snapshotIds[state.snapshotIndex]);
   const forecast = predictionService.forecast(snapshot);
   const monitoring = MonitoringViewModel.from(snapshot, forecast);
   const alerts = monitoring.analytics.operationalAlerts;
@@ -380,6 +430,7 @@ function renderCommandBar(frame, clockMinutes, isSim) {
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SNAPSHOT</div><div class="mono" style="font-size:12px;">${hhmm(clockMinutes)}</div></div>
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">OCCUPANCY</div><div class="mono" style="font-size:12px;">${kpiPax.toLocaleString("en")}</div></div>
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">ALERTS</div><div class="mono" style="font-size:12px; color:${alertColor};">${kpiAlerts}</div></div>
+        <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SOURCE</div><div class="mono" style="font-size:12px;" data-source="${dataSource}">${dataSource === "postgres" ? "PG EXPORT" : "FIXTURES"}</div></div>
       </div>
       <div style="flex:1;"></div>
       <div style="display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden;">${viewBtns}</div>
@@ -1105,7 +1156,7 @@ function init() {
       // Each completed horizon loop pulls the next live snapshot, reproducing
       // the seeded normal -> peak -> stale monitoring progression.
       if (state.mode === "live") {
-        state.snapshotIndex = (state.snapshotIndex + 1) % snapshotSeries.length;
+        state.snapshotIndex = (state.snapshotIndex + 1) % snapshotIds.length;
       }
     }
     render();
@@ -1113,7 +1164,9 @@ function init() {
 }
 
 if (app) {
-  init();
+  // Resolve the data source before the first render; on any failure the
+  // fixture bundle already in place keeps the app fully functional.
+  loadRowsBundle().then(init);
 }
 
 // Test seam: these are pure (no DOM) and let the seed / render checks exercise

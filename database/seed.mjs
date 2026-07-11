@@ -25,6 +25,7 @@ import {
   createOperationalDatabaseRowsFromSnapshot,
 } from "../src/operational-database/index.js";
 import { createFixtureSnapshotSeries } from "../src/fixtures/deterministicAdapters.js";
+import { canonicalizeSnapshotForComparison, exportRows } from "./export-rows.mjs";
 import { predictionService } from "../src/prediction/index.js";
 import { MonitoringViewModel } from "../src/monitoring/index.js";
 import { defaultScenarioDecisions, simulationService } from "../src/simulation/index.js";
@@ -42,6 +43,7 @@ const SEEDS = [
   "seeds/0001_fixture_operational_snapshot.sql",
   "seeds/0002_staffing_rearrangement_context.sql",
   "seeds/0003_floor_plan_zones.sql",
+  "seeds/0004_snapshot_variants.sql",
 ];
 
 let failures = 0;
@@ -53,9 +55,14 @@ function assert(label, condition, detail = "") {
 
 // --- 1. Apply the SQL scripts to Postgres when a target is available ---------
 
+function psqlCommand() {
+  return (process.env.PSQL_COMMAND ?? "psql").split(" ").filter(Boolean);
+}
+
 function psqlAvailable() {
+  const command = psqlCommand();
   try {
-    execFileSync("psql", ["--version"], { stdio: "ignore" });
+    execFileSync(command[0], [...command.slice(1), "--version"], { stdio: "ignore" });
     return true;
   } catch {
     return false;
@@ -80,9 +87,47 @@ function applySqlScripts() {
       continue;
     }
     console.log(`  · psql -f ${file}`);
-    execFileSync("psql", [url, "-v", "ON_ERROR_STOP=1", "-f", path], { stdio: "inherit" });
+    const command = psqlCommand();
+    // Stream the file through stdin so psql works even when it runs in a
+    // container without access to the host filesystem.
+    execFileSync(command[0], [...command.slice(1), url, "-v", "ON_ERROR_STOP=1", "-f", "-"], {
+      input: readFileSync(path),
+      stdio: ["pipe", "inherit", "inherit"],
+    });
   }
   console.log("  ✓ SQL migrations + seeds applied.");
+}
+
+// --- 2b. Prove Postgres-assembled snapshots match the fixture snapshots ------
+
+function verifyPostgresParity() {
+  console.log("\n── Postgres ↔ fixture snapshot parity ───────────────────────");
+  if (!process.env.DATABASE_URL || !psqlAvailable()) {
+    console.log("  · DATABASE_URL/psql unavailable — skipping Postgres parity export.");
+    return;
+  }
+
+  const { snapshots, exportPath } = exportRows();
+  console.log(`  · exported ${snapshots.length} snapshot(s) to ${exportPath}`);
+
+  const series = createFixtureSnapshotSeries();
+  assert("Postgres exports one snapshot per fixture variant", snapshots.length === series.length);
+
+  series.forEach((fixtureSnapshot, index) => {
+    const variant = VARIANTS[index];
+    const exported = snapshots.find(({ snapshot }) => snapshot.asOf === fixtureSnapshot.asOf);
+    assert(`Postgres has the ${variant} snapshot (asOf ${fixtureSnapshot.asOf})`, Boolean(exported));
+    if (!exported) return;
+
+    const fixtureReader = createOperationalDatabaseReader(() =>
+      createOperationalDatabaseRowsFromSnapshot(fixtureSnapshot, exported.snapshotId),
+    );
+    const fixtureAssembled = fixtureReader.getSnapshot();
+    const parity =
+      JSON.stringify(canonicalizeSnapshotForComparison(exported.snapshot)) ===
+      JSON.stringify(canonicalizeSnapshotForComparison(fixtureAssembled));
+    assert(`Postgres ${variant} snapshot matches the fixture snapshot exactly`, parity);
+  });
 }
 
 // --- 2. Cross-check the SQL seed against the JS fixture the app reads --------
@@ -166,6 +211,7 @@ function verifyAnimation() {
 
 console.log("Stratus seed runner — creating/verifying operational seed data.");
 applySqlScripts();
+verifyPostgresParity();
 verifyAnimation();
 
 console.log(
