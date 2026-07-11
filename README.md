@@ -1,6 +1,6 @@
 # AirportOps
 
-AirportOps is a dependency-free static ES module application for airport operations decision support. The current repository runs from deterministic fixtures by default, so the frontend and domain systems can be exercised without live airport integrations.
+AirportOps is a dependency-free static ES module application for airport operations decision support. The frontend reads operational rows exported from the Postgres operational database (`database/export/operational-rows.json`) when that export is present, and falls back to deterministic fixtures otherwise — so the frontend and domain systems can always be exercised without live airport integrations. The header of the Stratus surface shows which source is active (`PG EXPORT` or `FIXTURES`).
 
 ## Prerequisites
 
@@ -64,12 +64,14 @@ The operational-database bounded context includes Postgres migrations and determ
 psql "$DATABASE_URL" -f database/migrations/0001_operational_database.sql
 psql "$DATABASE_URL" -f database/migrations/0002_staffing_rearrangement_context.sql
 psql "$DATABASE_URL" -f database/migrations/0003_floor_plan_zones.sql
+psql "$DATABASE_URL" -f database/migrations/0004_prediction_refresh_cadence.sql
 psql "$DATABASE_URL" -f database/seeds/0001_fixture_operational_snapshot.sql
 psql "$DATABASE_URL" -f database/seeds/0002_staffing_rearrangement_context.sql
 psql "$DATABASE_URL" -f database/seeds/0003_floor_plan_zones.sql
+psql "$DATABASE_URL" -f database/seeds/0004_snapshot_variants.sql
 ```
 
-The JavaScript operational database reader currently uses fixture-shaped rows by default, so loading Postgres is optional for local application and test runs.
+The frontend does not connect to Postgres directly (the boundary rule keeps SQL inside the operational-database context). Instead, `database/export-rows.mjs` exports the seeded rows as contract-shaped JSON the browser fetches. Loading Postgres stays optional: without the export, the reader falls back to fixture-shaped rows.
 
 To create/verify the seed data in one step, run:
 
@@ -77,7 +79,27 @@ To create/verify the seed data in one step, run:
 npm run seed
 ```
 
-This applies the migration and seed SQL when `DATABASE_URL` (and `psql`) are available, and always exercises the JavaScript seed path through the operational-database reader — asserting the snapshot series (`normal → peak → stale`) drives the expected monitoring, forecast, and recommendation behaviour the Stratus animation relies on, and cross-checking the SQL seed against the fixtures.
+This applies the migration and seed SQL when `DATABASE_URL` (and `psql`) are available, exports the Postgres rows and asserts each exported snapshot is exactly equal to its fixture counterpart, and always exercises the JavaScript seed path through the operational-database reader — asserting the snapshot series (`normal → peak → stale`) drives the expected monitoring, forecast, and recommendation behaviour the Stratus animation relies on.
+
+### Export Postgres rows for the frontend
+
+```bash
+DATABASE_URL=... npm run export:rows
+```
+
+This writes `database/export/operational-rows.json` (a generated file — never hand-edit it), which the app shell fetches at boot with `cache: no-store`. If `psql` is not on your PATH (for example when Postgres runs in Docker), point the tooling at any psql-compatible command:
+
+```bash
+PSQL_COMMAND="docker exec -i airportops-pg psql" DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres npm run seed
+```
+
+### Regenerate the variant seed
+
+`database/seeds/0004_snapshot_variants.sql` is generated from the fixtures so the SQL and JavaScript data can never drift (a test enforces this). After changing `src/fixtures/deterministicAdapters.js`, run:
+
+```bash
+npm run generate:seeds
+```
 
 ## Full Repository Check
 

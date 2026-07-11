@@ -15,7 +15,11 @@ fail() {
 # - no TAB characters
 # Applies to all markdown files in the repository except .git.
 
-mapfile -t md_files < <(
+# while-read instead of mapfile so the check also runs on macOS bash 3.2.
+md_files=()
+while IFS= read -r line; do
+  md_files+=("${line}")
+done < <(
   cd "${REPO_ROOT}" && find . -type f -name '*.md' -not -path './.git/*' | LC_ALL=C sort
 )
 

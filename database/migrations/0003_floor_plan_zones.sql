@@ -5,6 +5,27 @@
 --   baggage-reclaim-south, customs-hall, arrivals-hall.
 -- Also renames baggage-hall to baggage-reclaim-north for clarity and adds the south hall.
 
+-- The rows below reference the BKK airport row and the base zones that were
+-- previously created only by seed 0001 (seeds run after migrations), so this
+-- migration could never apply on a fresh database. Guarantee the parent rows
+-- exist first; seed 0001 re-applies the same values idempotently afterwards.
+INSERT INTO airport_ops.airports (airport_id, name, map_version)
+VALUES ('BKK', 'Suvarnabhumi Operations Model', 'fixture-2026-07-11')
+ON CONFLICT (airport_id) DO NOTHING;
+
+INSERT INTO airport_ops.zones (zone_id, airport_id, label, zone_type, capacity, service_rate_per_minute)
+VALUES
+  ('terminal-entrance-east', 'BKK', 'Terminal Entrance East', 'entrance', 520, 32),
+  ('check-in-a', 'BKK', 'Check-in A', 'check-in', 760, 36),
+  ('bag-drop-a', 'BKK', 'Bag Drop A', 'check-in', 420, 24),
+  ('arrival-gate-a', 'BKK', 'Arrival Gate A', 'arrival', 620, 34),
+  ('immigration-east', 'BKK', 'Immigration East', 'immigration', 720, 22),
+  ('baggage-hall', 'BKK', 'Baggage Hall', 'arrival', 760, 28),
+  ('departure-hall', 'BKK', 'Departure Hall', 'departure', 900, 40),
+  ('security-north', 'BKK', 'Security North', 'security', 650, 25),
+  ('departure-gate-c', 'BKK', 'Departure Gate C', 'departure', 680, 32)
+ON CONFLICT (zone_id) DO NOTHING;
+
 -- New zones for full floor plan coverage.
 INSERT INTO airport_ops.zones (zone_id, airport_id, label, zone_type, capacity, service_rate_per_minute)
 VALUES

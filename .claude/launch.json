@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "stratus-static",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": [
+        "-c",
+        "cd /private/tmp/claude-501/-Users-tanphat-Desktop-AirportOps/ee97d67f-6892-419b-bc2c-e9f5f2b72d6d/scratchpad/serve && exec /usr/bin/python3 -m http.server 8011"
+      ],
+      "port": 8011
+    }
+  ]
+}

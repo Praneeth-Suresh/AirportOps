@@ -76,21 +76,21 @@ The reader validates the assembled snapshot with the shared contract validator a
 
 ## Current Implementation State
 
-The repo has schema and seed SQL, plus a deterministic row-source reader. It does not yet open a live Postgres connection.
+The repo has schema and seed SQL, a deterministic row-source reader, and an export bridge that carries genuine Postgres rows to the browser without opening a runtime connection.
 
 Implemented:
 
-- `database/migrations/0001_operational_database.sql`
-- `database/seeds/0001_fixture_operational_snapshot.sql`
-- `src/operational-database/index.js`
-- Integration coverage proving the database reader can drive prediction, monitoring, simulation, and decision support.
+- Migrations `0001`–`0004` (idempotent; apply cleanly on a fresh database).
+- Seeds `0001`–`0004`. Seed `0004_snapshot_variants.sql` is GENERATED from the fixtures by `database/generate-variant-seeds.mjs` (`npm run generate:seeds`); a test asserts it stays in sync. It covers all three snapshot variants (normal/peak/stale) authoritatively.
+- `src/operational-database/index.js` reader with injectable row source.
+- `database/export-rows.mjs` (`npm run export:rows`): queries Postgres via `psql` (override with `PSQL_COMMAND`, e.g. for Docker) and writes the contract-shaped rows bundle to `database/export/operational-rows.json` — a generated file the app shell fetches at boot, falling back to fixture rows when absent.
+- `npm run seed` applies SQL when `DATABASE_URL` is set and asserts exported Postgres snapshots are exactly equal (canonicalized) to fixture snapshots.
+- Integration coverage proving the database reader can drive prediction, monitoring, simulation, and decision support, from both fixture rows and the committed export.
 
 Not implemented yet:
 
 - `pg` dependency or connection pool.
-- Migration runner.
-- `DATABASE_URL` configuration.
-- Runtime SQL queries against a live Postgres instance.
+- A long-running API server / runtime SQL queries per request (Path B; the export SQL in `export-rows.mjs` is the starting point).
 - PostGIS or TimescaleDB extensions.
 
 Add those in a separate approved slice so connection management, environment configuration, and migration execution can be tested explicitly.

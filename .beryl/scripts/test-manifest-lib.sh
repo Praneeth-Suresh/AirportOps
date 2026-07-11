@@ -71,9 +71,11 @@ tm_load_manifest_config() {
 }
 
 tm_collect_manifest_files() {
+  # Plain-string accumulation + sort -u instead of an associative array so the
+  # script also works on macOS's default bash 3.2.
   local root_dir="$1"
   local rel
-  local -A seen=()
+  local matches=""
 
   while IFS= read -r -d '' path; do
     rel="${path#${root_dir}/}"
@@ -87,10 +89,10 @@ tm_collect_manifest_files() {
       continue
     fi
 
-    seen["${rel}"]=1
+    matches="${matches}${rel}"$'\n'
   done < <(find "${root_dir}" -type f -not -path "${root_dir}/.git/*" -print0)
 
-  printf "%s\n" "${!seen[@]}" | LC_ALL=C sort
+  printf "%s" "${matches}" | LC_ALL=C sort -u
 }
 
 tm_normalize_manifest() {
