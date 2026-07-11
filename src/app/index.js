@@ -452,14 +452,25 @@ function renderMap(frame, isSim) {
     .join("");
 
   const chips = mapZones
-    .map(
-      (z) => `
-      <div data-zone-chip="${z.zoneId}" style="position:absolute; left:${z.chipLeft}%; top:${z.chipTop}%; transform:translate(-50%,-50%) scale(${invZoom}); cursor:pointer; z-index:4; display:flex; align-items:center; gap:7px; background:var(--chip-bg); backdrop-filter:blur(3px); border:1px solid ${z.status === "critical" ? BUSY : z.status === "watch" ? "rgba(245,185,66,.55)" : "var(--border2)"}; border-radius:5px; padding:4px 9px; white-space:nowrap; ${z.zoneId === state.selected ? "box-shadow:0 0 0 2px " + z.color + ";" : ""}">
+    .map((z) => {
+      const statusBorder = z.status === "critical" ? BUSY : z.status === "watch" ? "rgba(245,185,66,.55)" : "var(--border2)";
+      const selRing = z.zoneId === state.selected ? "box-shadow:0 0 0 2px " + z.color + ";" : "";
+      const base = `position:absolute; left:${z.chipLeft}%; top:${z.chipTop}%; transform:translate(-50%,-50%) scale(${invZoom}); cursor:pointer; z-index:4; background:var(--chip-bg); backdrop-filter:blur(3px); border:1px solid ${statusBorder};`;
+      // Check-in B collapses to an icon-only marker to relieve crowding near the
+      // Departure Hall / Check-in A labels; it stays clickable and hoverable.
+      if (z.zoneId === "check-in-b") {
+        return `
+      <div data-zone-chip="${z.zoneId}" title="${z.label} · ${z.loadPct}%" style="${base} display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; ${selRing}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${z.color}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V6.5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6.5V8"/><path d="M8 8v12M16 8v12"/></svg>
+      </div>`;
+      }
+      return `
+      <div data-zone-chip="${z.zoneId}" style="${base} display:flex; align-items:center; gap:7px; border-radius:5px; padding:4px 9px; white-space:nowrap; ${selRing}">
         <span style="width:6px; height:6px; border-radius:50%; background:${z.color}; box-shadow:0 0 6px ${z.color};"></span>
         <span style="font-size:11px; font-weight:600; color:var(--text);">${z.label}</span>
         <span class="mono" style="font-size:11px; font-weight:600; color:${z.color};">${z.loadPct}%</span>
-      </div>`,
-    )
+      </div>`;
+    })
     .join("");
 
   const hover = state.hover ? mapZones.find((z) => z.zoneId === state.hover) : null;
@@ -491,7 +502,16 @@ function renderMap(frame, isSim) {
 }
 
 function renderHoverTip(hover, invZoom) {
-  const tx = hover.chipLeft > 62 ? "translate(-106%,-50%)" : hover.chipLeft < 22 ? "translate(6%,-50%)" : "translate(-50%,-118%)";
+  // Zones near the top of the floor (e.g. Departure Hall) can't place the tip
+  // above the chip — it would be clipped by the map's overflow. Flip those below.
+  const nearTop = hover.chipTop < 30;
+  const tx = hover.chipLeft > 62
+    ? "translate(-106%,-50%)"
+    : hover.chipLeft < 22
+      ? "translate(6%,-50%)"
+      : nearTop
+        ? "translate(-50%,18%)"
+        : "translate(-50%,-118%)";
   return `
     <div style="position:absolute; left:${hover.chipLeft}%; top:${hover.chipTop}%; transform:${tx} scale(${invZoom}); z-index:10; pointer-events:none; width:210px; background:var(--panel); border:1px solid ${hover.color}; border-radius:8px; box-shadow:0 10px 30px var(--scrim); overflow:hidden;">
       <div style="padding:9px 11px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px;">
