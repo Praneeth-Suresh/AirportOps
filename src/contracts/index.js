@@ -102,6 +102,7 @@ export function assertOperationalSnapshot(snapshot) {
 export function assertFlowForecast(forecast) {
   assertObject(forecast, "FlowForecast");
   assertString(forecast.generatedAt, "FlowForecast.generatedAt");
+  assertNumber(forecast.refreshCadenceSeconds, "FlowForecast.refreshCadenceSeconds");
   assertObject(forecast.horizon, "FlowForecast.horizon");
   assertArray(forecast.points, "FlowForecast.points");
   assertConfidence(forecast.confidence, "FlowForecast.confidence");

@@ -81,7 +81,10 @@ export function assembleOperationalSnapshot(rows, requestedSnapshotId) {
 }
 
 export function createFixtureOperationalDatabaseRows(snapshotId = "fixture-peak") {
-  const snapshot = createFixtureSnapshot(1);
+  return createOperationalDatabaseRowsFromSnapshot(createFixtureSnapshot(1), snapshotId);
+}
+
+export function createOperationalDatabaseRowsFromSnapshot(snapshot, snapshotId = "fixture-peak") {
   const resolvedSnapshotId = snapshotId === "fixture-peak"
     ? "fixture-peak-2026-07-11T09:20:00+07:00"
     : snapshotId;

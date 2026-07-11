@@ -1,9 +1,18 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
-import { createOperationalDatabaseReader, createFixtureOperationalDatabaseRows } from "../src/operational-database/index.js";
+import {
+  createOperationalDatabaseReader,
+  createFixtureOperationalDatabaseRows,
+  createOperationalDatabaseRowsFromSnapshot,
+} from "../src/operational-database/index.js";
 import { createOperationalStateReader } from "../src/operational-state/index.js";
 import { createFixtureSnapshotSeries } from "../src/fixtures/deterministicAdapters.js";
-import { predictionService } from "../src/prediction/index.js";
+import {
+  DEFAULT_PREDICTION_REFRESH_CADENCE_SECONDS,
+  PredictionRefreshService,
+  predictionService,
+} from "../src/prediction/index.js";
 import { defaultScenarioDecisions, simulationService } from "../src/simulation/index.js";
 import { decisionSupportService } from "../src/decision-support/index.js";
 import { MonitoringViewModel, monitoringAnalyticsService } from "../src/monitoring/index.js";
@@ -49,6 +58,75 @@ test("operational database reader preserves staffing and counter feasibility con
   assert.equal(checkInStaff.coverageUnits, 5);
   assert.equal(checkInStaff.confidence.score, 0.88);
   assert.equal(transferRule.transferMinutes, 7);
+});
+
+test("prediction uses 60 second refresh cadence and 15 minute forecast resolution by default", () => {
+  const snapshot = createOperationalDatabaseReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+
+  assert.equal(forecast.refreshCadenceSeconds, DEFAULT_PREDICTION_REFRESH_CADENCE_SECONDS);
+  assert.equal(forecast.refreshCadenceSeconds, 60);
+  assert.equal(forecast.horizon.minutes, 120);
+  assert.equal(forecast.horizon.resolutionMinutes, 15);
+  assert.deepEqual(forecast.points.map((point) => point.minute), [0, 15, 30, 45, 60, 75, 90, 105, 120]);
+});
+
+test("prediction refresh service updates forecasts from the operational database reader", () => {
+  const snapshots = createFixtureSnapshotSeries();
+  let index = 0;
+  const reader = createOperationalDatabaseReader(() => (
+    createOperationalDatabaseRowsFromSnapshot(snapshots[index++], `fixture-refresh-${index}`)
+  ));
+  const refreshService = new PredictionRefreshService({ snapshotReader: reader });
+
+  const firstForecast = refreshService.refreshNow();
+  const secondForecast = refreshService.refreshNow();
+
+  assert.equal(firstForecast.generatedAt, "2026-07-11T09:10:00+07:00");
+  assert.equal(secondForecast.generatedAt, "2026-07-11T09:20:00+07:00");
+  assert.equal(refreshService.getLatestForecast(), secondForecast);
+  assert.equal(refreshService.getLatestSnapshot().asOf, "2026-07-11T09:20:00+07:00");
+});
+
+test("prediction refresh service schedules periodic refreshes every 60 seconds", () => {
+  const snapshots = createFixtureSnapshotSeries();
+  let index = 0;
+  const reader = createOperationalDatabaseReader(() => (
+    createOperationalDatabaseRowsFromSnapshot(snapshots[index++], `fixture-scheduled-${index}`)
+  ));
+  const scheduled = [];
+  const scheduler = {
+    setInterval(callback, delayMs) {
+      scheduled.push({ callback, delayMs });
+      return "prediction-refresh-timer";
+    },
+    clearInterval(timerId) {
+      scheduled.clearedTimerId = timerId;
+    },
+  };
+  const refreshService = new PredictionRefreshService({ snapshotReader: reader, scheduler });
+
+  const timerId = refreshService.start();
+
+  assert.equal(timerId, "prediction-refresh-timer");
+  assert.equal(scheduled[0].delayMs, 60000);
+  assert.equal(refreshService.getLatestForecast().generatedAt, "2026-07-11T09:10:00+07:00");
+
+  scheduled[0].callback();
+
+  assert.equal(refreshService.getLatestForecast().generatedAt, "2026-07-11T09:20:00+07:00");
+
+  refreshService.stop();
+
+  assert.equal(scheduled.clearedTimerId, "prediction-refresh-timer");
+});
+
+test("prediction slice does not import simulation or decision support internals", () => {
+  const source = readFileSync(new URL("../src/prediction/index.js", import.meta.url), "utf8");
+
+  assert.equal(source.includes("../simulation"), false);
+  assert.equal(source.includes("../decision-support"), false);
+  assert.equal(source.includes("DecisionSupportService"), false);
 });
 
 test("operational database reader rejects rows that reference unknown zones", () => {
