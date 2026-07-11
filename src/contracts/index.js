@@ -83,6 +83,51 @@ export function assertDecisionOptions(options) {
   }
 }
 
+export function assertMonitoringAnalytics(analytics) {
+  assertObject(analytics, "MonitoringAnalytics");
+  assertString(analytics.generatedAt, "MonitoringAnalytics.generatedAt");
+  assertArray(analytics.queueStates, "MonitoringAnalytics.queueStates");
+  assertArray(analytics.counterUtilizations, "MonitoringAnalytics.counterUtilizations");
+  assertArray(analytics.crowdingEvents, "MonitoringAnalytics.crowdingEvents");
+  assertArray(analytics.operationalAlerts, "MonitoringAnalytics.operationalAlerts");
+
+  for (const queue of analytics.queueStates) {
+    assertString(queue.zoneId, "QueueState.zoneId");
+    assertNumber(queue.queueLength, "QueueState.queueLength");
+    assertNumber(queue.estimatedWaitMinutes, "QueueState.estimatedWaitMinutes");
+    assertNumber(queue.serviceRatePerMinute, "QueueState.serviceRatePerMinute");
+    assertString(queue.observedAt, "QueueState.observedAt");
+    assertConfidence(queue.confidence, "QueueState.confidence");
+  }
+
+  for (const utilization of analytics.counterUtilizations) {
+    assertString(utilization.zoneId, "CounterUtilization.zoneId");
+    assertNumber(utilization.openCounters, "CounterUtilization.openCounters");
+    assertNumber(utilization.availableCounters, "CounterUtilization.availableCounters");
+    assertNumber(utilization.utilizationRatio, "CounterUtilization.utilizationRatio");
+    assertString(utilization.status, "CounterUtilization.status");
+    assertConfidence(utilization.confidence, "CounterUtilization.confidence");
+  }
+
+  for (const event of analytics.crowdingEvents) {
+    assertString(event.eventId, "CrowdingEvent.eventId");
+    assertString(event.zoneId, "CrowdingEvent.zoneId");
+    assertString(event.severity, "CrowdingEvent.severity");
+    assertString(event.detectedAt, "CrowdingEvent.detectedAt");
+    assertConfidence(event.confidence, "CrowdingEvent.confidence");
+  }
+
+  for (const alert of analytics.operationalAlerts) {
+    assertString(alert.alertId, "OperationalAlert.alertId");
+    assertString(alert.zoneId, "OperationalAlert.zoneId");
+    assertString(alert.type, "OperationalAlert.type");
+    assertString(alert.severity, "OperationalAlert.severity");
+    assertString(alert.lifecycleState, "OperationalAlert.lifecycleState");
+    assertString(alert.message, "OperationalAlert.message");
+    assertConfidence(alert.confidence, "OperationalAlert.confidence");
+  }
+}
+
 function assertObject(value, label) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error(`${label} must be an object`);

@@ -15,7 +15,7 @@ Each bounded context in `.beryl/agent` maps to an independent repository in the 
 - `airport-ops-decision-support`
 - `airport-ops-app-shell`
 
-Shared contracts for these repositories live in `airport-ops-contracts` and include `OperationalSnapshot`, `FlowForecast`, `ScenarioProjection`, `DecisionOption`, and all shared value-object schemas.
+Shared contracts for these repositories live in `airport-ops-contracts` and include `OperationalSnapshot`, `QueueState`, `CounterUtilization`, `CrowdingEvent`, `OperationalAlert`, `FlowForecast`, `ScenarioProjection`, `DecisionOption`, and all shared value-object schemas.
 
 The current monorepo folder structure (`src/operational-state`, etc.) is treated as staging layout only; implementation boundaries must remain compatible with eventual repo separation.
 
@@ -25,7 +25,7 @@ The current monorepo folder structure (`src/operational-state`, etc.) is treated
 | --- | --- | --- | --- |
 | Operational State | Airport topology, zones, counters, staff, flights, observations, freshness, confidence, and validated `OperationalSnapshot` | Forecast algorithms, UI state, vendor records, recommendation text | `airport-ops-operational-state` repository package interface |
 | Prediction | Baseline passenger-flow, queue-pressure, and staffing-demand forecasts; forecast confidence | Raw vendor payloads, scenario decisions, UI rendering, AI prose | `airport-ops-prediction` repository package interface |
-| Monitoring | Live map read model, zone status, movement display, landing transition state, and detail selection | Canonical operational data, forecast calculation, scenario mutation | `airport-ops-monitoring` repository package interface |
+| Monitoring | Live map read model, queue states, counter utilization, crowding events, operational alerts, zone status, movement display, landing transition state, and detail selection | Canonical operational data, forecast calculation, scenario mutation | `airport-ops-monitoring` repository package interface |
 | Simulation | Scenario decision validation, short-horizon projections, baseline comparison, and time-slider data | Live-state ingestion, recommendation ranking, external command execution | `airport-ops-simulation` repository package interface |
 | Decision Support | Ranked `DecisionOption` values, recommendations, questions, rationale, and assistant state | Forecast calculation, simulation calculation, direct vendor calls, automatic execution | `airport-ops-decision-support` repository package interface |
 
@@ -45,6 +45,41 @@ OperationalSnapshot
   flights: FlightState[]
   passengerFlows: PassengerFlow[]
   observations: ObservationMetadata[]
+
+QueueState
+  zoneId: ZoneId
+  queueLength: CountEstimate
+  estimatedWaitMinutes: DurationEstimate
+  serviceRatePerMinute: ServiceRate
+  observedAt: Instant
+  freshness: Freshness
+  confidence: Confidence
+
+CounterUtilization
+  zoneId: ZoneId
+  openCounters: Count
+  availableCounters: Count
+  busyCounters: CountEstimate
+  utilizationRatio: Ratio
+  status: underused | normal | saturated | overloaded
+  confidence: Confidence
+
+CrowdingEvent
+  eventId: EventId
+  zoneId: ZoneId
+  severity: watch | critical
+  threshold: ThresholdDescription
+  detectedAt: Instant
+  confidence: Confidence
+
+OperationalAlert
+  alertId: AlertId
+  zoneId: ZoneId
+  type: AlertType
+  severity: watch | critical
+  lifecycleState: new | acknowledged | escalated | resolved | stale
+  evidence: Evidence[]
+  confidence: Confidence
 
 FlowForecast
   generatedAt: Instant
@@ -78,6 +113,7 @@ The implementation language may change the syntax, but not the ownership or sema
 External systems
     -> infrastructure adapters
     -> Operational State / OperationalSnapshot
+    -> Monitoring analytics / QueueState / CounterUtilization / OperationalAlert
     -> Prediction / FlowForecast
     -> Monitoring read model
     -> Simulation / ScenarioProjection
@@ -85,7 +121,7 @@ External systems
     -> application shell and UI modules
 ```
 
-Monitoring may read `OperationalSnapshot` and `FlowForecast`. Simulation may read `OperationalSnapshot` and `FlowForecast`. Decision Support may read `OperationalSnapshot`, `FlowForecast`, and `ScenarioProjection`. No feature context imports another context's internal files, and Monitoring, Simulation, and Decision Support do not call one another directly.
+Monitoring may read `OperationalSnapshot`, monitoring analytics values, and `FlowForecast`. Simulation may read `OperationalSnapshot` and `FlowForecast`. Decision Support may read `OperationalSnapshot`, `FlowForecast`, `ScenarioProjection`, and explicit `OperationalAlert` values passed through public interfaces. No feature context imports another context's internal files, and Monitoring, Simulation, and Decision Support do not call one another directly.
 
 Repository boundary: each arrow crossing a bounded-context line must pass through a stable public package contract and optional API surface published by that repository. No repository may depend on another repository’s internals or test fixtures.
 
@@ -135,6 +171,6 @@ Repository-level equivalent (final product):
 2. `PredictionService.forecast(snapshot, request)`
 3. `MonitoringViewModel.from(snapshot, forecast)`
 4. `SimulationService.project(snapshot, forecast, decisions)`
-5. `DecisionSupportService.options(snapshot, forecast, projections)`
+5. `DecisionSupportService.options(snapshot, forecast, projections, operationalAlerts)`
 
 These interfaces should be backed by deterministic fixture adapters before live integrations or AI providers are added.

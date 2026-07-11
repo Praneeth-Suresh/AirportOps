@@ -13,13 +13,14 @@ Scalability is the first design priority. The initial build must make the system
 1. Establish the shared contracts repository shape for `OperationalSnapshot`, `FlowForecast`, `ScenarioProjection`, and `DecisionOption`.
 2. Build deterministic fixture adapters for flights, manpower, airport layout, occupancy, clock, and AI fallback so the whole website can run without live integrations.
 3. Implement the operational-state context first, including snapshot validation, freshness, confidence, airport topology, zones, counters, staff, flights, and passenger-flow observations.
-4. Implement the prediction context behind `PredictionService.forecast(snapshot, request)` with a deterministic baseline for flow, queue pressure, and staffing demand.
-5. Implement the simulation context behind `SimulationService.project(snapshot, forecast, decisions)` with counter, movement, and shift-timing scenario inputs.
-6. Implement the decision-support context behind `DecisionSupportService.options(snapshot, forecast, projections)` using rule-based ranked options before any AI provider.
-7. Implement the monitoring website module as the first visible screen: airport map, staff dots, passenger-flow treatment, landing transition, zone status, and details drawer.
-8. Implement the simulation website module: time slider, scenario controls, projected deltas, and clear scenario/live-state labeling.
-9. Implement the assistant website module: visual assistant surface, recommendations, questions, rationale, confidence, freshness, and drill-in details.
-10. Add integration, contract, and browser verification around the full website path: fixture snapshot -> forecast -> monitoring -> simulation -> decision options -> rendered UI.
+4. Implement a monitoring analytics slice that derives queue length, estimated wait time, check-in counter utilization, abnormal crowding events, operational bottlenecks, and real-time alert candidates from the snapshot.
+5. Implement the prediction context behind `PredictionService.forecast(snapshot, request)` with a deterministic baseline for flow, queue pressure, wait-time trend, and staffing demand.
+6. Implement the monitoring website module as the first visible screen: airport map, staff dots, passenger-flow treatment, landing transition, zone status, queue/wait/counter-utilization metrics, alerts, and details drawer.
+7. Implement the simulation context behind `SimulationService.project(snapshot, forecast, decisions)` with counter, movement, and shift-timing scenario inputs.
+8. Implement the decision-support context behind `DecisionSupportService.options(snapshot, forecast, projections)` using rule-based ranked options before any AI provider.
+9. Implement the simulation website module: time slider, scenario controls, projected deltas, and clear scenario/live-state labeling.
+10. Implement the assistant website module: visual assistant surface, recommendations, questions, rationale, confidence, freshness, and drill-in details.
+11. Add integration, contract, and browser verification around the full website path: fixture snapshot -> monitoring analytics -> forecast -> monitoring -> simulation -> decision options -> rendered UI.
 
 ## Open Decisions
 
@@ -63,11 +64,13 @@ Scalability is the first design priority. The initial build must make the system
 
 1. Contracts repository shape, ports, validators, deterministic fixtures, and the snapshot read path.
 2. Operational-state context with scalable snapshot validation and read access.
-3. Baseline flow, queue-pressure, and staffing-demand predictions.
-4. Scenario projection and comparison.
-5. Rule-based decision options, followed by AI-assisted explanations.
-6. Website app shell that composes monitoring, simulation, and assistant views through public interfaces only.
-7. Browser-visible monitoring, simulation, and assistant workflows backed by fixture data before live integrations.
+3. Monitoring analytics for queue length, estimated wait time, check-in counter utilization, abnormal crowding events, bottleneck classification, and real-time alert candidates.
+4. Baseline flow, queue-pressure, wait-time trend, and staffing-demand predictions.
+5. Browser-visible monitoring workflow backed by fixture data before simulation or AI assistant polish.
+6. Scenario projection and comparison.
+7. Rule-based decision options, followed by AI-assisted explanations.
+8. Website app shell that composes monitoring, simulation, and assistant views through public interfaces only.
+9. Browser-visible simulation and assistant workflows backed by fixture data before live integrations.
 
 ## Recording Rule (Design Tree vs ADR)
 

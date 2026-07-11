@@ -7,12 +7,15 @@ The first tests protect connections between modules before any external integrat
 ### Contract tests
 
 - Validate `OperationalSnapshot` completeness, immutability, zone paths, role constraints, timestamps, freshness, and confidence.
+- Validate `QueueState`, `CounterUtilization`, `CrowdingEvent`, and `OperationalAlert` shapes at monitoring public entry points.
 - Validate `FlowForecast`, `ScenarioProjection`, and `DecisionOption` schemas at public entry points.
 - Verify that scenario decisions cannot mutate the live snapshot.
 
 ### Deterministic domain tests
 
 - Prediction produces stable flow and queue-pressure results from the same fixture snapshot and clock.
+- Monitoring analytics produces stable queue length, estimated wait time, check-in counter utilization, crowding events, bottleneck classifications, and operational alerts from fixture snapshots.
+- Stale camera or edge observations lower confidence and produce a data-quality operational alert.
 - Simulation changes projections when counters, staff movement, or shift timing changes.
 - Invalid movement, role mismatch, rest-period violations, and impossible counter capacity are rejected.
 - Decision support ranks options using measurable impact and includes rationale and confidence.
@@ -23,6 +26,7 @@ The first tests protect connections between modules before any external integrat
 - A fixture adapter can produce a snapshot consumed by prediction, monitoring, simulation, and decision support without vendor services.
 - The application shell can compose the public module interfaces without importing internal files.
 - Monitoring distinguishes live state from forecast and scenario state.
+- Monitoring exposes alert-led queue length, wait time, counter utilization, bottleneck reason, freshness, confidence, and evidence.
 - The assistant can render deterministic recommendations when the intelligence adapter is unavailable.
 
 ### Browser tests
@@ -30,6 +34,8 @@ The first tests protect connections between modules before any external integrat
 When the web runtime exists, use Microsoft Playwright MCP for user-visible behavior:
 
 - The map renders zones, staff dots, blue passenger flow, and red critical states.
+- The alert list renders queue/crowding/counter/data-quality alerts before simulation and assistant surfaces.
+- Queue length, estimated wait time, and counter utilization are visible for selected check-in zones.
 - The landing transition changes from dark pre-landing to active post-landing state.
 - The time slider changes displayed simulation points without changing live state.
 - Selecting a zone or recommendation exposes details, freshness, confidence, and rationale.

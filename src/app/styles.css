@@ -32,6 +32,10 @@ input {
   font: inherit;
 }
 
+button {
+  color: inherit;
+}
+
 .operations-surface {
   width: min(1480px, calc(100vw - 28px));
   margin: 0 auto;
@@ -104,6 +108,19 @@ h2 {
 .status-pill.live { box-shadow: inset 5px 0 0 var(--staff); }
 .status-pill.forecast { box-shadow: inset 5px 0 0 var(--passenger); }
 .status-pill.scenario { box-shadow: inset 5px 0 0 var(--amber); }
+.status-pill.critical { box-shadow: inset 5px 0 0 var(--alert); }
+.status-pill.watch { box-shadow: inset 5px 0 0 var(--amber); }
+
+.icon-button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  background: var(--panel);
+  cursor: pointer;
+}
 
 .workspace {
   display: grid;
@@ -111,6 +128,7 @@ h2 {
   gap: 14px;
 }
 
+.alert-panel,
 .map-panel,
 .details-panel,
 .simulation-panel,
@@ -126,10 +144,57 @@ h2 {
   padding: 18px;
 }
 
+.alert-panel,
 .details-panel,
 .simulation-panel,
 .assistant-panel {
   padding: 16px;
+}
+
+.alert-panel {
+  grid-column: 1 / -1;
+  border-color: var(--alert);
+}
+
+.alert-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.alert-card {
+  display: grid;
+  gap: 6px;
+  min-height: 86px;
+  padding: 12px;
+  border: 2px solid var(--line);
+  border-radius: 6px;
+  background: #fffdf6;
+  text-align: left;
+  cursor: pointer;
+}
+
+.alert-card.critical {
+  border-color: var(--alert);
+  background: linear-gradient(180deg, #fff6ed, rgba(217, 71, 53, 0.18));
+}
+
+.alert-card.watch {
+  border-color: var(--amber);
+  background: linear-gradient(180deg, #fff8e8, rgba(214, 161, 58, 0.2));
+}
+
+.alert-card.selected {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.alert-card span,
+.supporting-note,
+.bottleneck {
+  color: #5d574b;
+  font-size: 0.84rem;
 }
 
 .airport-map {
@@ -172,7 +237,8 @@ h2 {
 }
 
 .zone strong,
-.zone span {
+.zone span,
+.zone small {
   position: relative;
   z-index: 1;
 }
@@ -180,6 +246,11 @@ h2 {
 .zone span {
   font-size: 1.6rem;
   font-weight: 900;
+}
+
+.zone small {
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .zone.critical {
@@ -195,11 +266,14 @@ h2 {
   outline-offset: 3px;
 }
 
-.zone-arrival-gate-a { left: 5%; top: 10%; width: 23%; }
-.zone-immigration-east { left: 34%; top: 15%; width: 25%; }
-.zone-baggage-hall { left: 69%; top: 10%; width: 24%; }
-.zone-departure-hall { left: 6%; bottom: 13%; width: 28%; }
-.zone-security-north { left: 42%; bottom: 18%; width: 25%; }
+.zone-terminal-entrance-east { left: 4%; top: 8%; width: 19%; }
+.zone-check-in-a { left: 26%; top: 9%; width: 22%; }
+.zone-bag-drop-a { left: 51%; top: 9%; width: 18%; }
+.zone-arrival-gate-a { left: 74%; top: 8%; width: 21%; }
+.zone-immigration-east { left: 70%; top: 34%; width: 24%; }
+.zone-baggage-hall { left: 71%; bottom: 10%; width: 23%; }
+.zone-departure-hall { left: 5%; bottom: 12%; width: 25%; }
+.zone-security-north { left: 36%; bottom: 16%; width: 25%; }
 .zone-departure-gate-c { right: 5%; bottom: 12%; width: 24%; }
 
 .flow {
@@ -210,6 +284,9 @@ h2 {
   animation: move-flow 1.5s linear infinite;
 }
 
+.flow-terminal-entrance-east-to-check-in-a { left: 22%; top: 22%; width: 7%; transform: rotate(2deg); }
+.flow-check-in-a-to-bag-drop-a { left: 47%; top: 22%; width: 6%; transform: rotate(1deg); }
+.flow-bag-drop-a-to-security-north { left: 56%; top: 32%; width: 17%; transform: rotate(72deg); }
 .flow-arrival-a-to-immigration-east { left: 28%; top: 25%; width: 9%; transform: rotate(7deg); }
 .flow-immigration-east-to-baggage { left: 58%; top: 27%; width: 12%; transform: rotate(-6deg); }
 .flow-departure-to-security-north { left: 33%; bottom: 31%; width: 10%; transform: rotate(-3deg); }
@@ -229,6 +306,8 @@ h2 {
 .staff-sec-04 { left: 58%; bottom: 26%; }
 .staff-sec-09 { left: 27%; bottom: 25%; }
 .staff-ops-21 { left: 15%; bottom: 21%; }
+.staff-ops-33 { left: 38%; top: 24%; }
+.staff-ops-38 { left: 59%; top: 24%; }
 
 .metric-grid {
   display: grid;
@@ -262,6 +341,12 @@ h2 {
   font-size: 0.84rem;
 }
 
+.bottleneck {
+  margin-bottom: 8px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
 .simulation-panel {
   grid-column: 1 / 2;
 }
@@ -270,6 +355,10 @@ h2 {
   width: 100%;
   margin: 22px 0;
   accent-color: var(--amber);
+}
+
+.supporting-note {
+  margin-bottom: 12px;
 }
 
 .decision-list,
@@ -322,6 +411,10 @@ h2 {
   }
 
   .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .alert-list {
     grid-template-columns: 1fr;
   }
 

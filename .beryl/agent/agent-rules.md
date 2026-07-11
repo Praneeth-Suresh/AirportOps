@@ -21,8 +21,9 @@
 7. Preserve data freshness and confidence through every prediction, projection, and recommendation.
 8. Implement deterministic rule-based behavior before adding an AI/LLM provider.
 9. Keep passenger visibility aggregated and avoid personally identifying analytics.
-10. Use terms from `.beryl/agent/ubiquitous-language.md` in code, tests, and documentation.
-11. In the final product, each bounded context is a separate repository and must be independently buildable and testable. Cross-context communication must use public APIs and shared contracts only.
+10. For P2 pilot-scoped work, build monitoring primitives for queue length, estimated wait time, check-in counter utilization, abnormal crowding, and operational alerts before advanced AI explanation or assistant polish.
+11. Use terms from `.beryl/agent/ubiquitous-language.md` in code, tests, and documentation.
+12. In the final product, each bounded context is a separate repository and must be independently buildable and testable. Cross-context communication must use public APIs and shared contracts only.
 
 ## Before Coding
 

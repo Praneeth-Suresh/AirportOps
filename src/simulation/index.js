@@ -61,6 +61,7 @@ export class SimulationService {
 
 export function defaultScenarioDecisions() {
   return [
+    { type: "counter-capacity", zoneId: "check-in-a", openDelta: 2 },
     { type: "counter-capacity", zoneId: "immigration-east", openDelta: 2 },
     { type: "counter-capacity", zoneId: "security-north", openDelta: 1 },
     { type: "passenger-movement", fromZoneId: "security-north", toZoneId: "departure-hall", passengers: 55 },

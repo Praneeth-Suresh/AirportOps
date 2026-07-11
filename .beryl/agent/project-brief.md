@@ -4,6 +4,8 @@
 
 Build an airport operations decision-support application for airport managers and duty operators so they can visualise passenger movement, understand current and predicted pressure, and make informed staffing and counter decisions.
 
+The first pilot is a real-time monitoring deployment for selected check-in areas and operational zones within one terminal. It must explicitly surface queue length, estimated wait time, check-in counter utilization, abnormal crowding events, and real-time operational alerts before advanced simulation or AI explanation is treated as complete.
+
 The application is decision support, not autonomous control. Operators remain responsible for approving changes to counters, passenger routing, and staff shifts.
 
 ## Delivery Topology Requirement (Hard Constraint)
@@ -105,27 +107,29 @@ These are initially simulation inputs. Applying a decision to an external workfo
 All modules connect through explicit public contracts. No feature module reads another module's internal state.
 
 1. External adapters normalize flight, manpower, camera, map, and clock data into an `OperationalSnapshot`.
-2. The prediction module consumes the snapshot and produces a `FlowForecast` with confidence and data freshness.
-3. The monitoring module consumes the snapshot and forecast to build the live map view.
-4. The simulation module consumes the snapshot and forecast plus scenario decisions to produce a `ScenarioProjection`.
-5. The decision-support module consumes the snapshot, forecast, and scenario projections to produce ranked `DecisionOption` values, recommendations, and questions.
-6. The application shell composes the monitoring, simulation, and assistant modules and owns navigation and presentation state only.
+2. The monitoring module derives `QueueState`, `CounterUtilization`, `CrowdingEvent`, bottleneck, and `OperationalAlert` values from the snapshot.
+3. The prediction module consumes the snapshot and produces a `FlowForecast` with confidence and data freshness.
+4. The monitoring module consumes the snapshot, monitoring analytics, and forecast to build the live map view.
+5. The simulation module consumes the snapshot and forecast plus scenario decisions to produce a `ScenarioProjection`.
+6. The decision-support module consumes the snapshot, forecast, scenario projections, and operational alerts to produce ranked `DecisionOption` values, recommendations, and questions.
+7. The application shell composes the monitoring, simulation, and assistant modules and owns navigation and presentation state only.
 
 When this architecture is split to repositories, the same sequence applies across repository boundaries:
 
 1. `app-shell` requests latest `OperationalSnapshot` and `FlowForecast`.
 2. `app-shell` renders monitoring from those values and passes scenario requests to `simulation`.
-3. `app-shell` requests options from `decision-support` using snapshot + forecast + projections.
+3. `app-shell` requests options from `decision-support` using snapshot + forecast + projections + operational alerts.
 
 The first implementation slice is the contracts, ports, validation, fixture data, and deterministic fallback path. The visual screens and AI provider are built on those connections rather than defining their own data models.
 
 ## Technical Delivery Order
 
-1. **Prediction foundation:** define the operational snapshot, normalized event/observation inputs, time windows, confidence model, ports, deterministic fixtures, and snapshot storage/read access.
-2. **Prediction features:** implement baseline passenger-flow, queue-pressure, and staffing-demand predictions behind the prediction public interface.
-3. **Simulation:** implement short-horizon scenario projection and comparison against the baseline forecast.
-4. **Decision support:** implement rule-based options first, then add an AI adapter that explains and ranks options using prediction and simulation outputs.
-5. **Application modules:** connect monitoring, simulation controls, and the visual assistant to the shared public contracts.
+1. **Operational monitoring foundation:** define the operational snapshot, normalized event/observation inputs, camera/edge analytics port, confidence model, deterministic fixtures, and snapshot storage/read access.
+2. **Monitoring analytics:** implement queue length, estimated wait time, check-in counter utilization, crowding events, bottleneck classification, and operational alerts behind the monitoring public interface.
+3. **Prediction features:** implement baseline passenger-flow, queue-pressure, wait-time trend, and staffing-demand predictions behind the prediction public interface.
+4. **Simulation:** implement short-horizon scenario projection and comparison against the baseline forecast.
+5. **Decision support:** implement rule-based options that can cite operational alerts first, then add an AI adapter that explains and ranks options using prediction, simulation, and alert outputs.
+6. **Application modules:** connect monitoring, simulation controls, and the visual assistant to the shared public contracts.
 
 ## External Systems
 

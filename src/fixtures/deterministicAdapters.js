@@ -1,6 +1,75 @@
-export function createFixtureSnapshot() {
+export function createFixtureSnapshot(step = 1) {
+  const snapshots = createFixtureSnapshotSeries();
+  return snapshots[Math.min(Math.max(step, 0), snapshots.length - 1)];
+}
+
+export function createFixtureSnapshotSeries() {
+  return [createSnapshotVariant("normal"), createSnapshotVariant("peak"), createSnapshotVariant("stale")];
+}
+
+export function createEdgeAnalyticsObservationAdapter(rawObservation) {
   return {
-    asOf: "2026-07-11T09:20:00+07:00",
+    source: "edge-queue-analytics",
+    observedAt: rawObservation.observedAt,
+    confidence: rawObservation.confidence,
+    metrics: rawObservation.metrics.map((metric) => ({
+      zoneId: metric.zoneId,
+      queueLength: metric.queueLength,
+      densityPerSquareMeter: metric.densityPerSquareMeter,
+      activeServiceLoadPerMinute: metric.activeServiceLoadPerMinute,
+      busyCounters: metric.busyCounters,
+    })),
+  };
+}
+
+function createSnapshotVariant(variant) {
+  const variantConfig = {
+    normal: {
+      asOf: "2026-07-11T09:10:00+07:00",
+      checkInOccupancy: 360,
+      bagDropOccupancy: 180,
+      checkInQueueLength: 54,
+      bagDropQueueLength: 18,
+      checkInDensity: 1.6,
+      bagDropDensity: 1.1,
+      checkInBusyCounters: 5,
+      bagDropBusyCounters: 2,
+      observedAt: "2026-07-11T09:09:00+07:00",
+      freshnessStatus: "fresh",
+      confidenceScore: 0.9,
+    },
+    peak: {
+      asOf: "2026-07-11T09:20:00+07:00",
+      checkInOccupancy: 720,
+      bagDropOccupancy: 310,
+      checkInQueueLength: 138,
+      bagDropQueueLength: 46,
+      checkInDensity: 3.2,
+      bagDropDensity: 1.9,
+      checkInBusyCounters: 6,
+      bagDropBusyCounters: 3,
+      observedAt: "2026-07-11T09:19:00+07:00",
+      freshnessStatus: "fresh",
+      confidenceScore: 0.88,
+    },
+    stale: {
+      asOf: "2026-07-11T09:30:00+07:00",
+      checkInOccupancy: 730,
+      bagDropOccupancy: 330,
+      checkInQueueLength: 142,
+      bagDropQueueLength: 52,
+      checkInDensity: 3.3,
+      bagDropDensity: 2.1,
+      checkInBusyCounters: 6,
+      bagDropBusyCounters: 4,
+      observedAt: "2026-07-11T09:18:00+07:00",
+      freshnessStatus: "stale",
+      confidenceScore: 0.62,
+    },
+  }[variant];
+
+  return {
+    asOf: variantConfig.asOf,
     airport: {
       airportId: "BKK",
       name: "Suvarnabhumi Operations Model",
@@ -8,11 +77,44 @@ export function createFixtureSnapshot() {
       paths: [
         ["arrival-gate-a", "immigration-east"],
         ["immigration-east", "baggage-hall"],
+        ["terminal-entrance-east", "check-in-a"],
+        ["check-in-a", "bag-drop-a"],
+        ["bag-drop-a", "security-north"],
         ["departure-hall", "security-north"],
         ["security-north", "departure-gate-c"],
       ],
     },
     zones: [
+      {
+        zoneId: "terminal-entrance-east",
+        label: "Terminal Entrance East",
+        type: "entrance",
+        occupancy: 190,
+        capacity: 520,
+        serviceRatePerMinute: 32,
+        confidence: { score: 0.88, basis: "entrance camera aggregate" },
+        freshness: { observedAt: variantConfig.observedAt, status: variantConfig.freshnessStatus },
+      },
+      {
+        zoneId: "check-in-a",
+        label: "Check-in A",
+        type: "check-in",
+        occupancy: variantConfig.checkInOccupancy,
+        capacity: 760,
+        serviceRatePerMinute: 36,
+        confidence: { score: variantConfig.confidenceScore, basis: "edge queue analytics and counter activity" },
+        freshness: { observedAt: variantConfig.observedAt, status: variantConfig.freshnessStatus },
+      },
+      {
+        zoneId: "bag-drop-a",
+        label: "Bag Drop A",
+        type: "check-in",
+        occupancy: variantConfig.bagDropOccupancy,
+        capacity: 420,
+        serviceRatePerMinute: 24,
+        confidence: { score: Number((variantConfig.confidenceScore - 0.03).toFixed(2)), basis: "edge queue analytics" },
+        freshness: { observedAt: variantConfig.observedAt, status: variantConfig.freshnessStatus },
+      },
       {
         zoneId: "arrival-gate-a",
         label: "Arrival Gate A",
@@ -75,6 +177,8 @@ export function createFixtureSnapshot() {
       },
     ],
     counters: [
+      { counterId: "chk-a-01", zoneId: "check-in-a", open: 6, available: 10, roleRequired: "ground-staff" },
+      { counterId: "bag-a-01", zoneId: "bag-drop-a", open: 4, available: 6, roleRequired: "ground-staff" },
       { counterId: "imm-e-01", zoneId: "immigration-east", open: 9, available: 12, roleRequired: "immigration-officer" },
       { counterId: "sec-n-01", zoneId: "security-north", open: 7, available: 10, roleRequired: "security" },
       { counterId: "dep-h-01", zoneId: "departure-hall", open: 8, available: 14, roleRequired: "ground-staff" },
@@ -85,6 +189,8 @@ export function createFixtureSnapshot() {
       { staffId: "sec-04", role: "security", zoneId: "security-north", availability: "active", restMinutesDue: 55 },
       { staffId: "sec-09", role: "security", zoneId: "departure-hall", availability: "available", restMinutesDue: 90 },
       { staffId: "ops-21", role: "ground-staff", zoneId: "departure-hall", availability: "active", restMinutesDue: 120 },
+      { staffId: "ops-33", role: "ground-staff", zoneId: "check-in-a", availability: "active", restMinutesDue: 65 },
+      { staffId: "ops-38", role: "ground-staff", zoneId: "bag-drop-a", availability: "active", restMinutesDue: 85 },
     ],
     flights: [
       {
@@ -105,12 +211,35 @@ export function createFixtureSnapshot() {
       },
     ],
     passengerFlows: [
+      { fromZoneId: "terminal-entrance-east", toZoneId: "check-in-a", intervalMinutes: 15, estimatedCount: variant === "normal" ? 88 : 210 },
+      { fromZoneId: "check-in-a", toZoneId: "bag-drop-a", intervalMinutes: 15, estimatedCount: variant === "normal" ? 62 : 130 },
+      { fromZoneId: "bag-drop-a", toZoneId: "security-north", intervalMinutes: 15, estimatedCount: variant === "normal" ? 48 : 105 },
       { fromZoneId: "arrival-gate-a", toZoneId: "immigration-east", intervalMinutes: 15, estimatedCount: 260 },
       { fromZoneId: "immigration-east", toZoneId: "baggage-hall", intervalMinutes: 15, estimatedCount: 180 },
       { fromZoneId: "departure-hall", toZoneId: "security-north", intervalMinutes: 15, estimatedCount: 230 },
       { fromZoneId: "security-north", toZoneId: "departure-gate-c", intervalMinutes: 15, estimatedCount: 160 },
     ],
     observations: [
+      createEdgeAnalyticsObservationAdapter({
+        observedAt: variantConfig.observedAt,
+        confidence: { score: variantConfig.confidenceScore, basis: "deterministic edge analytics fixture" },
+        metrics: [
+          {
+            zoneId: "check-in-a",
+            queueLength: variantConfig.checkInQueueLength,
+            densityPerSquareMeter: variantConfig.checkInDensity,
+            activeServiceLoadPerMinute: 34,
+            busyCounters: variantConfig.checkInBusyCounters,
+          },
+          {
+            zoneId: "bag-drop-a",
+            queueLength: variantConfig.bagDropQueueLength,
+            densityPerSquareMeter: variantConfig.bagDropDensity,
+            activeServiceLoadPerMinute: 20,
+            busyCounters: variantConfig.bagDropBusyCounters,
+          },
+        ],
+      }),
       { source: "camera-aggregate", observedAt: "2026-07-11T09:18:00+07:00", confidence: { score: 0.86, basis: "fixture" } },
       { source: "floor-plate", observedAt: "2026-07-11T09:11:00+07:00", confidence: { score: 0.78, basis: "fixture" } },
       { source: "roster", observedAt: "2026-07-11T08:45:00+07:00", confidence: { score: 0.9, basis: "fixture" } },
