@@ -63,8 +63,10 @@ The operational-database bounded context includes Postgres migrations and determ
 ```bash
 psql "$DATABASE_URL" -f database/migrations/0001_operational_database.sql
 psql "$DATABASE_URL" -f database/migrations/0002_staffing_rearrangement_context.sql
+psql "$DATABASE_URL" -f database/migrations/0003_floor_plan_zones.sql
 psql "$DATABASE_URL" -f database/seeds/0001_fixture_operational_snapshot.sql
 psql "$DATABASE_URL" -f database/seeds/0002_staffing_rearrangement_context.sql
+psql "$DATABASE_URL" -f database/seeds/0003_floor_plan_zones.sql
 ```
 
 The JavaScript operational database reader currently uses fixture-shaped rows by default, so loading Postgres is optional for local application and test runs.

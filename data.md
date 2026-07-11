@@ -342,6 +342,101 @@ The simulator should not query these tables directly. It should receive the fiel
 3. Reprocess affected snapshots when source mapping, thresholds, or model versions change.
 4. Store model version and contract version with processed outputs.
 
+## Floor Plan Zone Reference
+
+The following zones represent the full Suvarnabhumi terminal layout as identified from the operational floor plan. Every zone must exist in the `zones` table, the fixture snapshot, and the operational database seed to allow the simulation to retrieve crowd data across the entire airport.
+
+### Departure Level (Level 4)
+
+| Zone ID | Label | Type | Capacity | Service Rate/min | Purpose |
+| --- | --- | --- | --- | --- | --- |
+| `terminal-entrance-east` | Terminal Entrance East | entrance | 520 | 32 | East landside entrance for departing passengers |
+| `terminal-entrance-west` | Terminal Entrance West | entrance | 520 | 32 | West landside entrance for departing passengers |
+| `check-in-a` | Check-in A | check-in | 760 | 36 | Check-in island A (east wing) |
+| `check-in-b` | Check-in B | check-in | 760 | 36 | Check-in island B (west wing) |
+| `bag-drop-a` | Bag Drop A | check-in | 420 | 24 | Self-service bag drop east |
+| `departure-hall` | Departure Hall | departure | 900 | 40 | Central departure concourse above check-in |
+| `security-north` | Security North | security | 650 | 25 | North security screening checkpoint |
+| `security-south` | Security South | security | 650 | 25 | South security screening checkpoint |
+| `departure-gate-a` | Departure Gate A | departure | 680 | 32 | Concourse A gate area |
+| `departure-gate-b` | Departure Gate B | departure | 680 | 32 | Concourse B gate area |
+| `departure-gate-c` | Departure Gate C | departure | 680 | 32 | Concourse C gate area |
+| `departure-gate-d` | Departure Gate D | departure | 680 | 32 | Concourse D gate area |
+| `transfer-corridor` | Transfer Corridor | departure | 400 | 30 | Airside transfer passage between concourses |
+
+### Arrival Level (Level 2)
+
+| Zone ID | Label | Type | Capacity | Service Rate/min | Purpose |
+| --- | --- | --- | --- | --- | --- |
+| `arrival-gate-a` | Arrival Gate A | arrival | 620 | 34 | Arrival gate area east |
+| `arrival-gate-b` | Arrival Gate B | arrival | 620 | 34 | Arrival gate area west |
+| `immigration-east` | Immigration East | immigration | 720 | 22 | East immigration passport control |
+| `immigration-west` | Immigration West | immigration | 720 | 22 | West immigration passport control |
+| `baggage-reclaim-north` | Baggage Reclaim North | arrival | 480 | 28 | North baggage carousel hall |
+| `baggage-reclaim-south` | Baggage Reclaim South | arrival | 480 | 28 | South baggage carousel hall |
+| `customs-hall` | Customs Hall | arrival | 400 | 35 | Customs inspection area |
+| `arrivals-hall` | Arrivals Hall | arrival | 600 | 40 | Meeters and greeters hall |
+
+### Passenger Flow Paths (Departure)
+
+```text
+terminal-entrance-east -> check-in-a
+terminal-entrance-west -> check-in-b
+terminal-entrance-east -> departure-hall
+terminal-entrance-west -> departure-hall
+check-in-a -> bag-drop-a
+check-in-b -> bag-drop-a
+bag-drop-a -> security-north
+departure-hall -> security-north
+departure-hall -> security-south
+security-north -> departure-gate-a
+security-north -> departure-gate-c
+security-south -> departure-gate-b
+security-south -> departure-gate-d
+departure-gate-a -> transfer-corridor
+departure-gate-b -> transfer-corridor
+departure-gate-c -> transfer-corridor
+departure-gate-d -> transfer-corridor
+```
+
+### Passenger Flow Paths (Arrival)
+
+```text
+arrival-gate-a -> immigration-east
+arrival-gate-b -> immigration-west
+immigration-east -> baggage-reclaim-north
+immigration-west -> baggage-reclaim-south
+baggage-reclaim-north -> customs-hall
+baggage-reclaim-south -> customs-hall
+customs-hall -> arrivals-hall
+```
+
+### Zone Type Classification
+
+| Zone type | Description | Crowd monitoring priority |
+| --- | --- | --- |
+| `entrance` | Terminal landside entry point | Medium — flow volume tracking |
+| `check-in` | Check-in counters and bag drop | High — queue pressure and counter utilization |
+| `security` | Security screening checkpoint | High — queue pressure and throughput |
+| `immigration` | Passport control (arrival or departure) | High — queue pressure and officer utilization |
+| `departure` | Departure gate, hall, or transfer area | Medium — boarding readiness and crowding |
+| `arrival` | Arrival gate, baggage, customs, or meeters hall | Medium — flow tracking and crowding events |
+
+### Crowd Data Points Per Zone
+
+Every zone supports the following crowd data through the existing schema:
+
+- `occupancy` — current estimated passenger count (zone_states)
+- `capacity` — safe maximum occupancy (zones reference table)
+- `queue_length` — estimated queue size (observation_metrics)
+- `density_per_square_meter` — crowding density (observation_metrics)
+- `active_service_load_per_minute` — throughput rate (observation_metrics)
+- `busy_counters` — active service points (observation_metrics)
+- `confidence_score` — trust in the measurement (zone_states)
+- `freshness_status` — data currency (zone_states)
+- `service_rate_per_minute` — configured throughput (zones reference table)
+- Incoming and outgoing `passenger_flows` (passenger_flows table)
+
 ## Minimum Acceptance Checks For Future Implementation
 
 When this processing plan becomes executable code, the smallest useful checks are:
