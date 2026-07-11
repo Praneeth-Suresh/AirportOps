@@ -52,6 +52,8 @@ Scalability is the first design priority. The initial build must make the system
 | Primary design priority | Scalability before visual polish or AI sophistication | 2026-07-11 | none yet |
 | Initial website runtime | Dependency-free static ES modules with Node's built-in test runner | 2026-07-11 | none yet |
 | How the website consumes Postgres data | Export bridge: `database/export-rows.mjs` (psql, zero npm deps) writes a contract-shaped rows bundle to `database/export/operational-rows.json`; the app shell fetches it (`cache: no-store`) before first render and falls back to fixture rows when absent. SQL never leaves the operational-database context; a live API server is a possible follow-up slice reusing the same export SQL | 2026-07-12 | none yet |
+| How hackathon public-web context enters the system | TinyFish-style browser-rendered public updates enter through an operational-database adapter as `tinyfish-public-web` observations with freshness, confidence, evidence, zone, and flight references. Monitoring may surface them as advisory public-web alerts; downstream contexts consume only normalized observations and alerts, not TinyFish/vendor internals | 2026-07-12 | none yet |
+| How live TinyFish demo calls are made | `npm run demo:tinyfish` starts a local app-shell/demo server. The browser button calls `/api/tinyfish/public-context`; the server reads `TINYFISH_API_KEY`, calls TinyFish Search API, and returns normalized public updates. The browser never receives the API key and still enriches rows through `tinyfish-public-web` observations | 2026-07-12 | none yet |
 
 ## Pressure Points
 

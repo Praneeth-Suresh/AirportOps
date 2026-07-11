@@ -6,6 +6,10 @@ import {
   createFixtureOperationalDatabaseRows,
   createOperationalDatabaseRowsFromSnapshot,
 } from "../src/operational-database/index.js";
+import {
+  TINYFISH_PUBLIC_CONTEXT_SOURCE,
+  createTinyFishPublicContextAdapter,
+} from "../src/operational-database/tinyfishPublicContext.js";
 import { createOperationalStateReader } from "../src/operational-state/index.js";
 import { createFixtureSnapshotSeries } from "../src/fixtures/deterministicAdapters.js";
 import {
@@ -215,6 +219,38 @@ test("stale edge observations lower confidence and generate data-quality alerts"
   assert.equal(queue.freshness.status, "stale");
   assert.equal(alert.lifecycleState, "stale");
   assert.equal(alert.confidence.score, 0.62);
+});
+
+test("tinyfish public-web context becomes advisory monitoring context", () => {
+  const snapshotId = "fixture-tinyfish-peak";
+  const rows = createOperationalDatabaseRowsFromSnapshot(createFixtureSnapshotSeries()[1], snapshotId);
+  const enrichedRows = createTinyFishPublicContextAdapter(() => [
+    {
+      snapshotId,
+      observedAt: "2026-07-11T09:19:30+07:00",
+      zoneId: "check-in-a",
+      flightId: "SQ-981",
+      severity: "watch",
+      title: "SQ-981 public gate advisory",
+      summary: "Public airline status page reports SQ-981 boarding demand building near Check-in A.",
+      url: "https://airline.example.test/status/SQ-981",
+      evidence: ["browser-rendered airline page updated at 09:19"],
+      confidence: { score: 0.74, basis: "TinyFish browser-rendered public airline page" },
+    },
+  ]).enrichRowsBundle(rows);
+
+  const snapshot = createOperationalDatabaseReader(() => enrichedRows).getSnapshot(snapshotId);
+  const analytics = monitoringAnalyticsService.analyze(snapshot);
+  const publicContext = analytics.publicContext.find((update) => update.flightId === "SQ-981");
+  const alert = analytics.operationalAlerts.find((candidate) => candidate.type === "public-web-context");
+
+  assert.equal(publicContext.source, TINYFISH_PUBLIC_CONTEXT_SOURCE);
+  assert.equal(publicContext.zoneId, "check-in-a");
+  assert.equal(publicContext.confidence.score, 0.74);
+  assert.equal(alert.zoneId, "check-in-a");
+  assert.equal(alert.severity, "watch");
+  assert.equal(alert.source, TINYFISH_PUBLIC_CONTEXT_SOURCE);
+  assert.ok(alert.evidence.some((item) => item.includes("browser-rendered airline page")));
 });
 
 test("fixture snapshot series simulates changing real-time monitoring state", () => {

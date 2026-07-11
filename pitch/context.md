@@ -47,6 +47,7 @@ Pilot deployment focuses on **selected check-in areas and operational zones with
 - Edge AI
 - Multi-Camera Tracking
 - Real-Time Operations Dashboards
+- Live public-web operational context via TinyFish, kept behind the same adapter boundary as other external feeds.
 
 ## Build Direction
 
@@ -97,4 +98,21 @@ Build an AI-powered operations monitoring platform that:
 
 _Space for context to be layered in as it comes. Add supporting points, framing, stats, demo talking points, and differentiation below._
 
--
+### Point 2 Vendor Framing: Data Integration
+
+Use **TinyFish** as the hackathon-facing data integration story.
+
+- Core operational inputs remain cameras, flight schedules, and staff rosters.
+- TinyFish adds live public-web operational context when official feeds are delayed, incomplete, or need corroboration.
+- Best demo examples: airline flight-status pages, airport advisories, gate disruption notices, and browser-rendered public pages that normal feed polling may miss.
+- Vendor data must enter through adapters and become normalized observations with freshness and confidence before it can affect forecasts or Otto AI.
+- Do not position TinyFish as owning camera ingestion, roster integration, decision ranking, or operational execution.
+
+Use **Bright Data** as the production-scale answer if judges ask how this expands beyond one terminal.
+
+- Bright Data is the stronger framing for broad, resilient public-source acquisition across many airline, airport, weather, and disruption pages.
+- The production story is that the same adapter boundary can swap TinyFish-style demo enrichment for Bright Data-style large-scale acquisition without changing decision support.
+
+Recommended talk track:
+
+> "Point two is data integration. We fuse internal airport signals with fresh public operational context. In the hackathon demo, TinyFish helps read browser-rendered airline or airport pages when official feeds lag. In production, the same adapter pattern can scale through Bright Data."
