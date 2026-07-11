@@ -120,12 +120,43 @@ export function assertDecisionOptions(options) {
   assertArray(options, "DecisionOption[]");
   for (const option of options) {
     assertString(option.optionId, "DecisionOption.optionId");
+    assertNumber(option.rank, "DecisionOption.rank");
     assertObject(option.decision, "DecisionOption.decision");
+    assertString(option.decision.type, "DecisionOption.decision.type");
     assertArray(option.affectedZones, "DecisionOption.affectedZones");
     assertObject(option.timeWindow, "DecisionOption.timeWindow");
     assertObject(option.expectedImpact, "DecisionOption.expectedImpact");
+    assertNumber(option.expectedImpact.queuePressureDrop, "DecisionOption.expectedImpact.queuePressureDrop");
+    assertNumber(option.expectedImpact.passengersRelieved, "DecisionOption.expectedImpact.passengersRelieved");
+    assertNumber(option.expectedImpact.estimatedWaitMinutesReduced, "DecisionOption.expectedImpact.estimatedWaitMinutesReduced");
+    assertString(option.expectedImpact.label, "DecisionOption.expectedImpact.label");
     assertArray(option.rationale, "DecisionOption.rationale");
     assertConfidence(option.confidence, "DecisionOption.confidence");
+    assertString(option.confidence.basis, "DecisionOption.confidence.basis");
+    if (option.relatedAlertId !== undefined && option.relatedAlertId !== null) {
+      assertString(option.relatedAlertId, "DecisionOption.relatedAlertId");
+    }
+  }
+}
+
+export function assertDecisionSupportRequest(request) {
+  assertObject(request, "DecisionSupportRequest");
+  assertObject(request.snapshot, "DecisionSupportRequest.snapshot");
+  assertObject(request.forecast, "DecisionSupportRequest.forecast");
+  if (request.projections !== undefined) {
+    assertArray(request.projections, "DecisionSupportRequest.projections");
+  }
+  if (request.operationalAlerts !== undefined) {
+    assertArray(request.operationalAlerts, "DecisionSupportRequest.operationalAlerts");
+  }
+  if (request.queueStates !== undefined) {
+    assertArray(request.queueStates, "DecisionSupportRequest.queueStates");
+  }
+  if (request.counterUtilizations !== undefined) {
+    assertArray(request.counterUtilizations, "DecisionSupportRequest.counterUtilizations");
+  }
+  if (request.staffingContexts !== undefined) {
+    assertArray(request.staffingContexts, "DecisionSupportRequest.staffingContexts");
   }
 }
 

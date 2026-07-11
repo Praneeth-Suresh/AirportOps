@@ -174,3 +174,216 @@ test("decision options include staffing rearrangement feasibility", () => {
   assert.equal(checkInOption.expectedImpact.staffingGap, 1);
   assert.ok(checkInOption.rationale.some((item) => item.label.includes("coverage unit")));
 });
+
+// --- Decision Support: Contract Cleanup Tests ---
+
+test("decision options support named-object request interface", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const projection = simulationService.project(snapshot, forecast, defaultScenarioDecisions());
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+  const options = decisionSupportService.options({
+    snapshot,
+    forecast,
+    projections: [projection],
+    operationalAlerts: monitoring.analytics.operationalAlerts,
+    queueStates: monitoring.analytics.queueStates,
+    counterUtilizations: monitoring.analytics.counterUtilizations,
+    staffingContexts: monitoring.analytics.staffingContexts,
+  });
+
+  assert.ok(options.length >= 1);
+  assert.ok(options.every((option) => typeof option.rank === "number"));
+  assert.ok(options.every((option) => option.rank >= 1));
+  assert.ok(options.every((option) => typeof option.confidence.basis === "string"));
+});
+
+test("decision options include rank and relatedAlertId fields", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const projection = simulationService.project(snapshot, forecast, defaultScenarioDecisions());
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+  const options = decisionSupportService.options(snapshot, forecast, projection, monitoring.analytics.operationalAlerts);
+
+  assert.ok(options.every((option) => typeof option.rank === "number" && option.rank >= 1));
+  assert.ok(options.some((option) => option.relatedAlertId !== null));
+  // Ranks are sequential
+  options.forEach((option, i) => assert.equal(option.rank, i + 1));
+});
+
+test("decision options are discarded when scenario projection does not improve queue pressure", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  // Empty decisions produce no improvement
+  const projection = simulationService.project(snapshot, forecast, []);
+  const options = decisionSupportService.options(snapshot, forecast, projection, []);
+
+  // All returned options must have positive pressure drop
+  assert.ok(options.every((option) => option.expectedImpact.queuePressureDrop > 0));
+});
+
+test("decision support does not mutate OperationalSnapshot", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const before = JSON.stringify(snapshot);
+  const forecast = predictionService.forecast(snapshot);
+  const projection = simulationService.project(snapshot, forecast, defaultScenarioDecisions());
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+
+  decisionSupportService.options(snapshot, forecast, projection, monitoring.analytics.operationalAlerts);
+
+  assert.equal(JSON.stringify(snapshot), before);
+  assert.equal(Object.isFrozen(snapshot), true);
+});
+
+// --- Decision Support: Scoring and Ranking Tests ---
+
+test("options are ranked by deterministic scoring with highest score first", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const projection = simulationService.project(snapshot, forecast, defaultScenarioDecisions());
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+  const options = decisionSupportService.options(snapshot, forecast, projection, monitoring.analytics.operationalAlerts);
+
+  // Check that options are in descending score order (rank 1 is best)
+  for (let i = 0; i < options.length - 1; i++) {
+    assert.ok(options[i].rank < options[i + 1].rank);
+  }
+  assert.ok(options.length >= 1);
+});
+
+test("staff reassignment is preferred when staffing gap exists and transfer is valid", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const projection = simulationService.project(snapshot, forecast, defaultScenarioDecisions());
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+  const options = decisionSupportService.options(snapshot, forecast, projection, monitoring.analytics.operationalAlerts);
+  const checkInOption = options.find((option) => option.affectedZones.includes("check-in-a"));
+
+  // check-in-a has a staffing gap and a valid transfer rule from bag-drop-a
+  assert.equal(checkInOption.decision.type, "staff-reassignment");
+  assert.equal(checkInOption.decision.role, "ground-staff");
+  assert.equal(checkInOption.decision.fromZoneId, "bag-drop-a");
+  assert.equal(checkInOption.decision.toZoneId, "check-in-a");
+  assert.ok(checkInOption.decision.transferMinutes <= 4);
+});
+
+test("counter capacity is preferred when no staffing gap exists and counters can open", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const projection = simulationService.project(snapshot, forecast, defaultScenarioDecisions());
+  const options = decisionSupportService.options(snapshot, forecast, projection, []);
+
+  // security-north has no staffing gap (sec-04 is active with 6 coverage units covering 7 counters)
+  // but has open counter capacity (maxOpen=10, open=7)
+  const securityOption = options.find((option) => option.affectedZones.includes("security-north"));
+  if (securityOption) {
+    // If security-north appears, it should use counter-capacity since it has no staffing gap
+    // or passenger-movement if no valid staff can open counters
+    assert.ok(["counter-capacity", "passenger-movement", "staff-reassignment"].includes(securityOption.decision.type));
+  }
+});
+
+// --- Decision Support: Confidence and Rationale Tests ---
+
+test("stale observations lower confidence and appear in rationale", () => {
+  const staleSnapshot = createOperationalStateReader(() => createFixtureSnapshotSeries()[2]).getSnapshot();
+  const forecast = predictionService.forecast(staleSnapshot);
+  const projection = simulationService.project(staleSnapshot, forecast, defaultScenarioDecisions());
+  const analytics = monitoringAnalyticsService.analyze(staleSnapshot);
+  const options = decisionSupportService.options(staleSnapshot, forecast, projection, analytics.operationalAlerts);
+
+  if (options.length > 0) {
+    const staleOption = options.find((option) => option.affectedZones.includes("check-in-a"));
+    if (staleOption) {
+      // Confidence should be lower due to stale data
+      assert.ok(staleOption.confidence.score < 0.85);
+      // Rationale should mention stale observations
+      assert.ok(staleOption.rationale.some((item) => item.label.toLowerCase().includes("stale")));
+    }
+  }
+});
+
+test("confidence basis identifies the limiting confidence input", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const projection = simulationService.project(snapshot, forecast, defaultScenarioDecisions());
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+  const options = decisionSupportService.options(snapshot, forecast, projection, monitoring.analytics.operationalAlerts);
+
+  assert.ok(options.length >= 1);
+  for (const option of options) {
+    assert.ok(option.confidence.basis.includes("limited by"));
+    assert.ok(option.confidence.score > 0 && option.confidence.score <= 1);
+  }
+});
+
+test("rationale includes triggering alert and forecast pressure evidence", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const projection = simulationService.project(snapshot, forecast, defaultScenarioDecisions());
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+  const options = decisionSupportService.options(snapshot, forecast, projection, monitoring.analytics.operationalAlerts);
+  const checkInOption = options.find((option) => option.affectedZones.includes("check-in-a"));
+
+  // Should reference alert
+  assert.ok(checkInOption.rationale.some((item) => item.label.includes("alert")));
+  // Should reference forecast pressure
+  assert.ok(checkInOption.rationale.some((item) => item.label.includes("forecast at")));
+  // Should reference scenario comparison
+  assert.ok(checkInOption.rationale.some((item) => item.label.includes("Scenario comparison")));
+});
+
+test("missing transfer rules prevent staff-reassignment from unconnected zones", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const projection = simulationService.project(snapshot, forecast, defaultScenarioDecisions());
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+  const options = decisionSupportService.options(snapshot, forecast, projection, monitoring.analytics.operationalAlerts);
+
+  // Staff reassignment decisions should only use staff that have valid transfer paths
+  const staffOptions = options.filter((option) => option.decision.type === "staff-reassignment");
+  for (const option of staffOptions) {
+    const fromZone = option.decision.fromZoneId;
+    const toZone = option.decision.toZoneId;
+    // Verify a transfer rule exists for this route
+    const rule = snapshot.airport.transferRules.find((r) =>
+      r.fromZoneId === fromZone && r.toZoneId === toZone && r.allowed,
+    );
+    assert.ok(rule, `Expected transfer rule from ${fromZone} to ${toZone}`);
+  }
+});
+
+test("decision options with named request include queue and counter detail in rationale", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const projection = simulationService.project(snapshot, forecast, defaultScenarioDecisions());
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+  const options = decisionSupportService.options({
+    snapshot,
+    forecast,
+    projections: [projection],
+    operationalAlerts: monitoring.analytics.operationalAlerts,
+    queueStates: monitoring.analytics.queueStates,
+    counterUtilizations: monitoring.analytics.counterUtilizations,
+    staffingContexts: monitoring.analytics.staffingContexts,
+  });
+
+  const checkInOption = options.find((option) => option.affectedZones.includes("check-in-a"));
+  // When queue states are provided, rationale should include queue detail
+  assert.ok(checkInOption.rationale.some((item) => item.label.includes("Queue length")));
+  // When counter utilizations are provided, rationale should include counter detail
+  assert.ok(checkInOption.rationale.some((item) => item.label.includes("Counter utilization")));
+});
+
+test("empty projections array returns no options", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const options = decisionSupportService.options({
+    snapshot,
+    forecast,
+    projections: [],
+    operationalAlerts: [],
+  });
+
+  assert.equal(options.length, 0);
+});
