@@ -22,7 +22,7 @@ Then open:
 http://localhost:8000/
 ```
 
-The frontend entrypoint is `index.html`, which loads `src/app/index.js` and `src/app/styles.css`. The app shell composes the operational state, monitoring, prediction, simulation, and decision-support modules from deterministic fixture data.
+The frontend entrypoint is `index.html`, which loads `src/app/index.js` and `src/app/styles.css`. The app shell renders the **Stratus digital-twin surface** — a flow map, timeline scrubber over the 120-minute forecast horizon, zone-inspection panel, live-vs-simulate modes, and the Beagle decision copilot. Every value it shows is composed from the operational-database reader plus the monitoring, prediction, simulation, and decision-support modules; the flow map is laid out from the seeded zone/path graph (`src/app/mapLayout.js`), so it reflects whatever the migrations and seeds contain.
 
 If port `8000` is already in use, choose another port:
 
@@ -70,6 +70,14 @@ psql "$DATABASE_URL" -f database/seeds/0003_floor_plan_zones.sql
 ```
 
 The JavaScript operational database reader currently uses fixture-shaped rows by default, so loading Postgres is optional for local application and test runs.
+
+To create/verify the seed data in one step, run:
+
+```bash
+npm run seed
+```
+
+This applies the migration and seed SQL when `DATABASE_URL` (and `psql`) are available, and always exercises the JavaScript seed path through the operational-database reader — asserting the snapshot series (`normal → peak → stale`) drives the expected monitoring, forecast, and recommendation behaviour the Stratus animation relies on, and cross-checking the SQL seed against the fixtures.
 
 ## Full Repository Check
 

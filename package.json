@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "check": "npm test"
+    "check": "npm test",
+    "seed": "node database/seed.mjs"
   }
 }
