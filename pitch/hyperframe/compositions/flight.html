@@ -11,15 +11,21 @@
     <link rel="stylesheet" href="assets/dash.css" />
   </head>
   <body>
-    <div id="root" data-composition-id="opener" data-start="0" data-duration="8" data-width="1920" data-height="1080">
-      <div class="dash clip hide-rail hide-timeline hide-copilot" id="dash" data-start="0" data-duration="8" data-track-index="0"></div>
+    <div id="root" data-composition-id="flight" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+      <div class="dash clip hide-rail hide-timeline hide-copilot" id="dash" data-start="0" data-duration="10" data-track-index="0"></div>
 
       <script src="assets/dash.js"></script>
+      <script src="assets/dashfx.js"></script>
       <script>
         window.__timelines = window.__timelines || {};
-        document.getElementById("dash").innerHTML = window.SentinelDash.variants.min0;
+        const dash = document.getElementById("dash");
+        dash.innerHTML = window.SentinelDash.variants.min0;
         const tl = gsap.timeline({ paused: true });
-        window.__timelines["opener"] = tl;
+        const fx = window.DashFX.overlay(dash);
+        // A plane taxis in from the left apron and docks at Gate A.
+        const p = window.DashFX.plane(fx, "#29a3ff");
+        window.DashFX.dock(tl, p, [[-170, 540], [-30, 505], [55, 450], [104, 410]], 118, 2.5, 0.5);
+        window.__timelines["flight"] = tl;
       </script>
     </div>
   </body>

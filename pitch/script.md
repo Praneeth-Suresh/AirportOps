@@ -10,7 +10,7 @@ Running tally in the right margin. Spoken lines are in `> quotes` — read them 
 
 ## 1 · Opener — *~15s*
 
-> "Hi, I'm [name]. This is my team. We built Sentinel — a real-time 3D dashboard for airport operations. The entire terminal in one live view."
+> "Hi, I'm [name]. This is my team. We built Sentinel — a real-time dashboard for airport operations. The entire terminal in one live view."
 
 **Show:** The 3D airport dashboard, live.
 

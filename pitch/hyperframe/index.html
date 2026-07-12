@@ -7,23 +7,26 @@
     <link rel="stylesheet" href="assets/theme.css" />
   </head>
   <body>
-    <!-- Master reel: sequences all 7 beats. Each beat is also a standalone
-         composition in compositions/ that can be rendered to its own MP4. -->
+    <!-- Master reel: cover + 9 slides. Each also renders standalone to its own MP4
+         for the click-through presenter. -->
     <div
       id="root"
       data-composition-id="main"
       data-start="0"
-      data-duration="76"
+      data-duration="104"
       data-width="1920"
       data-height="1080"
     >
-      <div class="clip" id="s-opener"    data-composition-id="s-opener"    data-composition-src="compositions/opener.html"    data-start="0"  data-duration="8"  data-track-index="0"></div>
-      <div class="clip" id="s-problem"   data-composition-id="s-problem"   data-composition-src="compositions/problem.html"   data-start="8"  data-duration="8"  data-track-index="0"></div>
-      <div class="clip" id="s-dashboard" data-composition-id="s-dashboard" data-composition-src="compositions/dashboard.html" data-start="16" data-duration="20" data-track-index="0"></div>
-      <div class="clip" id="s-vj882"     data-composition-id="s-vj882"     data-composition-src="compositions/vj882.html"     data-start="36" data-duration="10" data-track-index="0"></div>
-      <div class="clip" id="s-otto"      data-composition-id="s-otto"      data-composition-src="compositions/otto.html"      data-start="46" data-duration="10" data-track-index="0"></div>
-      <div class="clip" id="s-hood"      data-composition-id="s-hood"      data-composition-src="compositions/hood.html"      data-start="56" data-duration="10" data-track-index="0"></div>
-      <div class="clip" id="s-closing"   data-composition-id="s-closing"   data-composition-src="compositions/closing.html"   data-start="66" data-duration="10" data-track-index="0"></div>
+      <div class="clip" id="s-cover"      data-composition-id="s-cover"      data-composition-src="compositions/cover.html"      data-start="0"   data-duration="6"  data-track-index="0"></div>
+      <div class="clip" id="s-opener"     data-composition-id="s-opener"     data-composition-src="compositions/opener.html"     data-start="6"   data-duration="8"  data-track-index="0"></div>
+      <div class="clip" id="s-flight"     data-composition-id="s-flight"     data-composition-src="compositions/flight.html"     data-start="14"  data-duration="10" data-track-index="0"></div>
+      <div class="clip" id="s-passengers" data-composition-id="s-passengers" data-composition-src="compositions/passengers.html" data-start="24"  data-duration="12" data-track-index="0"></div>
+      <div class="clip" id="s-staff"      data-composition-id="s-staff"      data-composition-src="compositions/staff.html"      data-start="36"  data-duration="12" data-track-index="0"></div>
+      <div class="clip" id="s-realtime"   data-composition-id="s-realtime"   data-composition-src="compositions/realtime.html"   data-start="48"  data-duration="12" data-track-index="0"></div>
+      <div class="clip" id="s-otto"       data-composition-id="s-otto"       data-composition-src="compositions/otto.html"       data-start="60"  data-duration="12" data-track-index="0"></div>
+      <div class="clip" id="s-hood"       data-composition-id="s-hood"       data-composition-src="compositions/hood.html"       data-start="72"  data-duration="10" data-track-index="0"></div>
+      <div class="clip" id="s-closing"    data-composition-id="s-closing"    data-composition-src="compositions/closing.html"    data-start="82"  data-duration="12" data-track-index="0"></div>
+      <div class="clip" id="s-team"       data-composition-id="s-team"       data-composition-src="compositions/team.html"       data-start="94"  data-duration="10" data-track-index="0"></div>
     </div>
 
     <script>

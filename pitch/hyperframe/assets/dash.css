@@ -1,0 +1,48 @@
+/* Design tokens + keyframes for the embedded real Sentinel dashboard.
+   Scoped to [data-theme] / .dash so it never affects the other pitch beats. */
+[data-theme="dark"] {
+  --bg-app: #0b1015;
+  --panel: #121920;
+  --panel2: #0e141a;
+  --hover: #182129;
+  --border: #25303a;
+  --border2: #34414d;
+  --text: #f3f6f8;
+  --text2: #98a6b3;
+  --text3: #687683;
+  --map-grad: radial-gradient(120% 90% at 50% 42%, #16212b 0%, #0e141a 68%, #0b1015 100%);
+  --map-stroke: rgba(152, 166, 179, 0.16);
+  --chip-bg: rgba(14, 20, 26, 0.85);
+  --staff-officer: #d3dce4;
+  --scrim: rgba(0, 0, 0, 0.5);
+  --accent: #29a3ff;
+  --ok: #32c783;
+  --warn: #f5b942;
+  --busy: #f05b61;
+  --teal: #27d3d1;
+}
+
+.dash { position: absolute; inset: 0; overflow: hidden; font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; }
+.dash > [data-theme] { height: 100% !important; }
+.dash .mono { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace; }
+.dash input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 3px; background: var(--border); border-radius: 2px; }
+.dash input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg-app); box-shadow: 0 0 0 1px var(--accent), 0 0 8px rgba(41, 163, 255, 0.6); }
+
+@keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.08); } }
+@keyframes wag { 0%, 100% { transform: rotate(10deg); } 50% { transform: rotate(-16deg); } }
+@keyframes softpulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.85; } }
+@keyframes dashflow { to { stroke-dashoffset: -32; } }
+@keyframes planefly { 0% { transform: translateX(-6vw); opacity: 0; } 8% { opacity: 0.9; } 92% { opacity: 0.9; } 100% { transform: translateX(104vw); opacity: 0; } }
+@keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(1400%); } }
+@keyframes livedot { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+@keyframes drawin { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+@keyframes panelin { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
+@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes draftpulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+@keyframes flowdash { to { stroke-dashoffset: -24; } }
+
+/* Reveal helpers — a beat sets one of these classes on the .dash wrapper. */
+.dash.hide-rail [data-hf="rail"] { display: none !important; }
+.dash.hide-timeline [data-hf="timeline"] { display: none !important; }
+.dash.hide-copilot [data-hf="copilot"] { display: none !important; }
+.dash.hide-panel [data-hf="panel"] { display: none !important; }

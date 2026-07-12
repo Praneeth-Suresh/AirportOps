@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/theme.css" />
+    <link rel="stylesheet" href="assets/dash.css" />
+    <style>
+      .stafflegend { position: absolute; left: 46px; bottom: 60px; display: flex; flex-direction: column; gap: 12px; background: rgba(11, 16, 21, 0.82); border: 1px solid #25303a; border-radius: 12px; padding: 18px 22px; font-family: "IBM Plex Sans", sans-serif; }
+      .stafflegend .r { display: flex; align-items: center; gap: 12px; }
+      .stafflegend .sw { width: 15px; height: 15px; border-radius: 4px; }
+      .stafflegend .lb { color: #f3f6f8; font-size: 21px; font-weight: 500; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="staff" data-start="0" data-duration="12" data-width="1920" data-height="1080">
+      <div class="dash clip hide-rail hide-timeline hide-copilot" id="dash" data-start="0" data-duration="12" data-track-index="0"></div>
+
+      <div class="stafflegend clip" id="legend" data-start="0" data-duration="12" data-track-index="1" data-layout-allow-occlusion>
+        <div class="r"><span class="sw" style="background:#f5b942"></span><span class="lb">Ground crew</span></div>
+        <div class="r"><span class="sw" style="background:#8fd0ff"></span><span class="lb">Immigration officers</span></div>
+        <div class="r"><span class="sw" style="background:#27d3d1"></span><span class="lb">Security staff</span></div>
+        <div class="r"><span class="sw" style="background:#32c783"></span><span class="lb">Airline staff</span></div>
+      </div>
+
+      <script src="assets/dash.js"></script>
+      <script src="assets/dashfx.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+        const dash = document.getElementById("dash");
+        dash.innerHTML = window.SentinelDash.variants.min0;
+        const tl = gsap.timeline({ paused: true });
+        const fx = window.DashFX.overlay(dash);
+        const p = window.DashFX.plane(fx, "#29a3ff");
+        gsap.set(p, { x: 104, y: 410, rotation: 118, scale: 2.5, transformOrigin: "0px 0px" });
+        window.DashFX.pax(tl, fx, [[150, 418], [300, 445], [450, 492], [600, 522], [720, 545]], { count: 8, at: 0.2, stagger: 1.3, color: "#29a3ff" });
+        // Staff pop in, colour-coded by role.
+        const G = "#f5b942", I = "#8fd0ff", S = "#27d3d1", A = "#32c783";
+        window.DashFX.staff(tl, fx, [
+          [232, 476, G], [1150, 476, G], [520, 946, G],
+          [724, 306, I], [724, 764, I],
+          [432, 764, S], [1018, 764, S],
+          [542, 566, A], [904, 566, A], [1150, 700, A],
+        ], 1.6);
+        // reveal legend rows
+        tl.fromTo("#legend .r", { opacity: 0, x: -22 }, { opacity: 1, x: 0, duration: 0.5, stagger: 0.18, ease: "power2.out" }, 1.4);
+        window.__timelines["staff"] = tl;
+      </script>
+    </div>
+  </body>
+</html>

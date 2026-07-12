@@ -3,57 +3,60 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
     <link rel="stylesheet" href="assets/theme.css" />
+    <link rel="stylesheet" href="assets/dash.css" />
+    <style>
+      /* "Otto AI" + otter, sits over the app's Beagle header in the copilot card */
+      #relabel { position: absolute; left: 1606px; top: 486px; display: flex; align-items: center; gap: 9px; background: #121920; padding: 3px 12px 3px 3px; border-radius: 9px; font-family: "IBM Plex Sans", sans-serif; z-index: 30; }
+      #relabel .ott { width: 32px; height: 36px; }
+      #relabel .nm { color: #f3f6f8; font-size: 20px; font-weight: 700; }
+      #pillrelabel { position: absolute; left: 1760px; top: 950px; display: flex; align-items: center; gap: 8px; background: #121920; border: 1px solid rgba(240, 91, 97, 0.5); padding: 7px 15px; border-radius: 20px; font-family: "IBM Plex Sans", sans-serif; z-index: 30; }
+      #pillrelabel .ott2 { width: 22px; height: 24px; }
+      #pillrelabel .nm2 { color: #f3f6f8; font-size: 15px; font-weight: 600; }
+    </style>
   </head>
   <body>
-    <div id="root" data-composition-id="otto" data-start="0" data-duration="10" data-width="1920" data-height="1080">
-      <div class="clip" id="scene" data-start="0" data-duration="10" data-track-index="0">
-        <div class="stage"></div>
-        <div class="grid"></div>
-        <div class="dotfield"></div>
-        <div class="scrim"></div>
-        <div class="placeholder-tag">▶ PLACEHOLDER · Dashboard state (V5/V6)</div>
+    <div id="root" data-composition-id="otto" data-start="0" data-duration="12" data-width="1920" data-height="1080">
+      <div class="dash clip" id="dash" data-start="0" data-duration="12" data-track-index="0"></div>
+
+      <div id="relabel" class="clip" data-start="0.8" data-duration="11.2" data-track-index="1" data-layout-allow-occlusion>
+        <svg class="ott" viewBox="0 0 130 140" fill="none">
+          <path d="M40 116 q-2 -34 25 -34 q27 0 25 34 q0 20 -25 20 q-25 0 -25 -20 z" fill="#182129" stroke="#98a6b3" stroke-width="2.4" stroke-linejoin="round" />
+          <path d="M24 64 A41 41 0 0 1 106 64" fill="none" stroke="#98a6b3" stroke-width="3.4" stroke-linecap="round" />
+          <rect x="14" y="52" width="21" height="32" rx="10" fill="#0e141a" stroke="#98a6b3" stroke-width="2.6" />
+          <rect x="95" y="52" width="21" height="32" rx="10" fill="#0e141a" stroke="#98a6b3" stroke-width="2.6" />
+          <circle cx="65" cy="60" r="34" fill="#182129" stroke="#98a6b3" stroke-width="2.6" />
+          <circle cx="52" cy="57" r="4.6" fill="#f3f6f8" />
+          <circle cx="78" cy="57" r="4.6" fill="#f3f6f8" />
+          <path d="M46 76 q-7 17 9 21 q10 3 10 -6 q0 9 10 6 q16 -4 9 -21 q-6 -9 -19 -5 q-13 -4 -19 5 z" fill="#0e141a" stroke="#98a6b3" stroke-width="2.2" stroke-linejoin="round" />
+          <path d="M59 72 q6 -4 12 0 q1 6 -6 8 q-7 -2 -6 -8 z" fill="#f3f6f8" />
+        </svg>
+        <span class="nm">Otto AI</span>
       </div>
 
-      <div class="wordmark clip" id="wordmark" data-start="0" data-duration="10" data-track-index="1">
-        <div class="mark">S</div>
-        <div class="name">Sentinel</div>
+      <div id="pillrelabel" class="clip" data-start="0.8" data-duration="11.2" data-track-index="2" data-layout-allow-occlusion>
+        <svg class="ott2" viewBox="0 0 130 140" fill="none">
+          <circle cx="65" cy="60" r="34" fill="#182129" stroke="#98a6b3" stroke-width="3" />
+          <rect x="14" y="52" width="21" height="32" rx="10" fill="#0e141a" stroke="#98a6b3" stroke-width="3" />
+          <rect x="95" y="52" width="21" height="32" rx="10" fill="#0e141a" stroke="#98a6b3" stroke-width="3" />
+          <circle cx="52" cy="57" r="5" fill="#f3f6f8" />
+          <circle cx="78" cy="57" r="5" fill="#f3f6f8" />
+          <path d="M46 76 q-7 17 9 21 q10 3 10 -6 q0 9 10 6 q16 -4 9 -21 q-6 -9 -19 -5 q-13 -4 -19 5 z" fill="#0e141a" stroke="#98a6b3" stroke-width="2.6" stroke-linejoin="round" />
+        </svg>
+        <span class="nm2">Otto AI · 1 action</span>
       </div>
 
-      <div class="beat-label clip" data-start="0" data-duration="10" data-track-index="2" id="ol">
-        <div class="beat-kicker">Meet Otto</div>
-        <div class="beat-title">AI on watch</div>
-      </div>
-
-      <div class="otto-card clip" id="otto-card" data-start="0.8" data-duration="9.2" data-track-index="3">
-        <div class="otto-inner">
-          <div class="otto-head">
-            <div class="otto-avatar">O</div>
-            <div>
-              <div class="otto-name">Otto AI</div>
-              <div class="otto-sub">4:00 PM · Staffing alert</div>
-            </div>
-            <div class="otto-dot" id="otto-dot"></div>
-          </div>
-          <div class="otto-body">
-            <span class="red">Gate 5 understaffed</span> for <b>VJ882</b> — landing 4:30 PM.<br />
-            Recommend: move <b>3 staff</b> from Gate 10 → Gate 5.
-          </div>
-          <div class="otto-actions">
-            <div class="btn-primary">View details →</div>
-            <div class="btn-ghost">Dismiss</div>
-          </div>
-        </div>
-      </div>
-
-      <script src="assets/stage.js"></script>
+      <script src="assets/dash.js"></script>
       <script>
         window.__timelines = window.__timelines || {};
+        document.getElementById("dash").innerHTML = window.SentinelDash.variants.otto;
         const tl = gsap.timeline({ paused: true });
-        tl.fromTo("#ol", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.2);
-        tl.fromTo("#otto-card", { opacity: 0, x: 460 }, { opacity: 1, x: 0, duration: 0.7, ease: "back.out(1.4)" }, 0.8);
-        tl.to("#otto-dot", { opacity: 0.35, duration: 0.5, yoyo: true, repeat: 8, ease: "sine.inOut" }, 1.6);
+        tl.fromTo("#relabel", { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4 }, 0.8);
+        tl.fromTo("#pillrelabel", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.8);
         window.__timelines["otto"] = tl;
       </script>
     </div>
