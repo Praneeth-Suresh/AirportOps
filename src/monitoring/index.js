@@ -1,10 +1,13 @@
 import { assertMonitoringAnalytics, deepFreeze } from "../contracts/index.js";
 
+const PUBLIC_WEB_CONTEXT_SOURCE = "tinyfish-public-web";
+
 export class MonitoringAnalyticsService {
   analyze(snapshot) {
     const queueStates = snapshot.zones.map((zone) => buildQueueState(snapshot, zone));
     const counterUtilizations = snapshot.counters.map((counter) => buildCounterUtilization(snapshot, counter));
     const staffingContexts = snapshot.counters.map((counter) => buildStaffingContext(snapshot, counter, counterUtilizations));
+    const publicContext = buildPublicContext(snapshot);
     const crowdingEvents = queueStates
       .filter((queue) => queue.severity !== "normal")
       .map((queue) => buildCrowdingEvent(snapshot, queue));
@@ -16,6 +19,7 @@ export class MonitoringAnalyticsService {
       ...queueStates
         .filter((queue) => queue.freshness.status === "stale")
         .map((queue) => buildDataQualityAlert(snapshot, queue)),
+      ...publicContext.map((update) => buildPublicContextAlert(snapshot, update)),
     ];
 
     const analytics = {
@@ -24,6 +28,7 @@ export class MonitoringAnalyticsService {
       queueStates,
       counterUtilizations,
       staffingContexts,
+      publicContext,
       crowdingEvents,
       operationalAlerts: dedupeAlerts(operationalAlerts),
       bottlenecks: queueStates.map((queue) => classifyBottleneck(queue, counterUtilizations)),
@@ -239,6 +244,46 @@ function buildDataQualityAlert(snapshot, queue) {
     detectedAt: snapshot.asOf,
     confidence: { score: Math.min(queue.confidence.score, 0.62), basis: "stale edge analytics" },
     freshness: queue.freshness,
+  };
+}
+
+function buildPublicContext(snapshot) {
+  return snapshot.observations
+    .filter((observation) => observation.source === PUBLIC_WEB_CONTEXT_SOURCE)
+    .flatMap((observation) => (observation.publicUpdates ?? []).map((update, index) => ({
+      updateId: update.updateId ?? `public-web-${index + 1}`,
+      source: observation.source,
+      provider: update.provider ?? "public web",
+      title: update.title,
+      summary: update.summary,
+      url: update.url,
+      zoneId: update.zoneId,
+      flightId: update.flightId,
+      severity: update.severity ?? "watch",
+      evidence: update.evidence ?? [],
+      observedAt: observation.observedAt,
+      freshness: update.freshness ?? { observedAt: observation.observedAt, status: "fresh" },
+      confidence: update.confidence ?? observation.confidence,
+    })));
+}
+
+function buildPublicContextAlert(snapshot, update) {
+  return {
+    alertId: `alert-public-web-${update.updateId}`,
+    zoneId: update.zoneId,
+    type: "public-web-context",
+    severity: update.severity,
+    lifecycleState: update.freshness.status === "stale" ? "stale" : "new",
+    message: `${labelForZone(snapshot, update.zoneId)} public update: ${update.summary}`,
+    evidence: [
+      update.title,
+      ...update.evidence,
+      update.url ? `Source ${update.url}` : "Source public web",
+    ],
+    detectedAt: update.observedAt,
+    confidence: update.confidence,
+    freshness: update.freshness,
+    source: update.source,
   };
 }
 

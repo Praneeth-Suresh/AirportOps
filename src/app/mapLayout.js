@@ -130,11 +130,15 @@ function bank(x, y, count, cw, ch, gap, vertical = false) {
   }
   return items.join("");
 }
-// All wayfinding icons share one 26x26 rounded frame and a single stroke weight
-// so they read as a consistent set (drawn in a local 0..26 coordinate space).
+// All wayfinding icons share one rounded frame and a single stroke weight so
+// they read as a consistent set. Inner glyphs are drawn in a local 0..26 space
+// then scaled up about their centre so they stay legible on the wide floor;
+// stroke-width is divided by the scale so line weight stays constant.
 const ICON = 26;
+const ICON_SCALE = 1.5;
 function iconBox(x, y, inner, opacity = 0.7) {
-  return `<g transform="translate(${x} ${y})" fill="none" ${STROKE} stroke-opacity="${opacity}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="0.5" y="0.5" width="${ICON - 1}" height="${ICON - 1}" rx="5"/>${inner}</g>`;
+  const c = ICON / 2;
+  return `<g transform="translate(${x} ${y}) translate(${c} ${c}) scale(${ICON_SCALE}) translate(${-c} ${-c})" fill="none" ${STROKE} stroke-opacity="${opacity}" stroke-width="${(1.7 / ICON_SCALE).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round"><rect x="0.5" y="0.5" width="${ICON - 1}" height="${ICON - 1}" rx="5"/>${inner}</g>`;
 }
 function escalator(x, y) {
   return iconBox(x, y, '<path d="M6 20 L18 8"/><path d="M13.5 8 H18 V12.5"/><path d="M8.6 18.4 l1.5 -1.5 M11.5 15.5 l1.5 -1.5 M14.4 12.6 l1.5 -1.5"/>');
@@ -149,7 +153,7 @@ function info(x, y) {
   return iconBox(x, y, '<circle cx="13" cy="8.4" r="1.4" fill="var(--text3)" stroke="none"/><path d="M13 12 V20"/>');
 }
 function baggage(x, y) {
-  return `<g transform="translate(${x} ${y})" fill="none" ${STROKE} stroke-opacity="0.7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="13" width="28" height="17" rx="3"/><path d="M11 13 V9.5 a2.5 2.5 0 0 1 2.5 -2.5 h9 a2.5 2.5 0 0 1 2.5 2.5 V13"/><path d="M13 13 V30 M23 13 V30"/></g>`;
+  return `<g transform="translate(${x} ${y}) translate(18 17) scale(1.35) translate(-18 -17)" fill="none" ${STROKE} stroke-opacity="0.7" stroke-width="${(1.8 / 1.35).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="13" width="28" height="17" rx="3"/><path d="M11 13 V9.5 a2.5 2.5 0 0 1 2.5 -2.5 h9 a2.5 2.5 0 0 1 2.5 2.5 V13"/><path d="M13 13 V30 M23 13 V30"/></g>`;
 }
 function diamond(x, y) {
   return `<path d="M${x + 13} ${y + 5} L${x + 20} ${y + 13} L${x + 13} ${y + 21} L${x + 6} ${y + 13} Z" fill="none" ${STROKE} stroke-opacity="0.5" stroke-width="1.6"/>`;
@@ -163,7 +167,7 @@ function transport(x, y, kind) {
     : kind === "bus"
       ? `<rect x="${x + 5}" y="${y + 6}" width="18" height="14" rx="2"/><path d="M${x + 5} ${y + 15} h18 M${x + 9} ${y + 6} v9 M${x + 14} ${y + 6} v9 M${x + 19} ${y + 6} v9"/><circle cx="${x + 10}" cy="${y + 21}" r="1.8"/><circle cx="${x + 18}" cy="${y + 21}" r="1.8"/>`
       : `<path d="M${x + 5} ${y + 17} l2 -5 h14 l2 5 v3 h-18 z"/><path d="M${x + 8} ${y + 12} l1 -4 h10 l1 4"/><circle cx="${x + 10}" cy="${y + 20}" r="1.8"/><circle cx="${x + 18}" cy="${y + 20}" r="1.8"/>`;
-  return `<g fill="none" ${STROKE} stroke-opacity="0.75" stroke-width="1.6"><rect x="${x}" y="${y}" width="28" height="28" rx="5" stroke-dasharray="4 4" stroke-opacity="0.4"/>${glyph}</g>`;
+  return `<g transform="translate(${x + 14} ${y + 14}) scale(1.3) translate(${-(x + 14)} ${-(y + 14)})" fill="none" ${STROKE} stroke-opacity="0.75" stroke-width="${(1.6 / 1.3).toFixed(2)}"><rect x="${x}" y="${y}" width="28" height="28" rx="5" stroke-dasharray="4 4" stroke-opacity="0.4"/>${glyph}</g>`;
 }
 function arrow(x1, y1, x2, y2) {
   const ang = Math.atan2(y2 - y1, x2 - x1);
@@ -172,7 +176,48 @@ function arrow(x1, y1, x2, y2) {
   const ay = y2 - ah * Math.sin(ang - Math.PI / 6);
   const bx = x2 - ah * Math.cos(ang + Math.PI / 6);
   const by = y2 - ah * Math.sin(ang + Math.PI / 6);
-  return `<g ${STROKE} stroke-opacity="0.4" stroke-width="1.6" fill="none"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-dasharray="5 6"/><path d="M${ax.toFixed(1)} ${ay.toFixed(1)} L${x2} ${y2} L${bx.toFixed(1)} ${by.toFixed(1)}"/></g>`;
+  return `<g ${STROKE} stroke-opacity="0.5" stroke-width="1.7" fill="none"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-dasharray="5 6"/><path d="M${ax.toFixed(1)} ${ay.toFixed(1)} L${x2} ${y2} L${bx.toFixed(1)} ${by.toFixed(1)}"/></g>`;
+}
+// Gate pier: a solid jet-bridge finger from a gate lounge out to its aircraft
+// stand, ending in an arrowhead that marks the boarding direction (out to the
+// apron, toward the parked plane).
+function gatePier(x1, y1, x2, y2) {
+  const ang = Math.atan2(y2 - y1, x2 - x1);
+  const ah = 9;
+  const ax = x2 - ah * Math.cos(ang - Math.PI / 6);
+  const ay = y2 - ah * Math.sin(ang - Math.PI / 6);
+  const bx = x2 - ah * Math.cos(ang + Math.PI / 6);
+  const by = y2 - ah * Math.sin(ang + Math.PI / 6);
+  return `<g ${INK} stroke-opacity="0.6" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/><path d="M${ax.toFixed(1)} ${ay.toFixed(1)} L${x2} ${y2} L${bx.toFixed(1)} ${by.toFixed(1)}"/></g>`;
+}
+// Gate letter tag, drawn faint in a lounge corner so it reads as wayfinding
+// signage rather than competing with the live zone chip at the lounge centre.
+function gateTag(x, y, label) {
+  return `<text x="${x}" y="${y}" fill="var(--text3)" font-size="18" font-weight="600" font-family="IBM Plex Mono, monospace" opacity="0.6">${label}</text>`;
+}
+// Immigration desk booth: a rounded counter capsule with a marked officer
+// position, drawn in rows across each arrivals immigration hall.
+function immigrationDesk(x, y, w = 122, h = 40) {
+  const midY = y + h / 2;
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${h / 2}" fill="none" ${INK} stroke-opacity="0.7" stroke-width="1.8"/>`
+    + `<rect x="${x + w / 2 - 6}" y="${midY - 6}" width="12" height="12" rx="2" fill="var(--text2)" fill-opacity="0.5"/>`;
+}
+// Staircase glyph (descent to the ground floor).
+function stairs(x, y) {
+  return iconBox(x, y, '<path d="M6.5 20 h3.5 v-3.5 h3.5 v-3.5 h3.5 v-3.5 h1.5"/>');
+}
+// Customs / baggage-inspection check: a small case under a magnifier.
+function customs(x, y) {
+  return iconBox(x, y, '<rect x="5.5" y="11" width="8" height="6" rx="1"/><path d="M7.5 11 V9.2 a1.8 1.8 0 0 1 3.6 0 V11"/><circle cx="16.5" cy="14.5" r="3"/><path d="M18.7 16.7 L21 19"/>');
+}
+// Circled currency-exchange marker.
+function exchange(x, y, r = 12.5) {
+  return `<circle cx="${x}" cy="${y}" r="${r}" fill="none" ${STROKE} stroke-opacity="0.7" stroke-width="1.6"/>`
+    + `<text x="${x}" y="${y + 5}" text-anchor="middle" font-size="15" font-weight="600" font-family="IBM Plex Mono, monospace" fill="var(--text3)">$</text>`;
+}
+// Circled first-aid marker.
+function firstAid(x, y, r = 12.5) {
+  return `<g fill="none" ${STROKE} stroke-opacity="0.7" stroke-width="1.6"><circle cx="${x}" cy="${y}" r="${r}"/><path d="M${x} ${y - 6} v12 M${x - 6} ${y} h12"/></g>`;
 }
 
 // --- Departures floor (design image 3) --------------------------------------
@@ -196,10 +241,20 @@ function departureFloor() {
   // Left + right gate piers with planes.
   parts.push(wall("M120 330 L60 360 V706 L120 736", 0.45));
   parts.push(wall("M1328 330 L1388 360 V706 L1328 736", 0.45));
-  parts.push(plane(78, 410, 2.1, 90), plane(78, 636, 2.1, 90));
-  parts.push(plane(1370, 410, 2.1, -90), plane(1370, 636, 2.1, -90));
-  parts.push(box(208, 360, 150, 150, 6, 0.4), box(1090, 360, 150, 150, 6, 0.4));
-  parts.push(escalator(262, 420), escalator(1144, 420));
+  // Apron taxiway guide lines outside each pier.
+  parts.push(`<line x1="40" y1="360" x2="40" y2="706" ${STROKE} stroke-opacity="0.22" stroke-dasharray="10 12" stroke-width="1.6"/>`);
+  parts.push(`<line x1="1408" y1="360" x2="1408" y2="706" ${STROKE} stroke-opacity="0.22" stroke-dasharray="10 12" stroke-width="1.6"/>`);
+  // Parked aircraft, nose out to the apron, splayed off each gate stand.
+  parts.push(plane(80, 400, 2.0, -90), plane(80, 672, 2.0, -90));
+  parts.push(plane(1368, 400, 2.0, 90), plane(1368, 672, 2.0, 90));
+  // Four gate lounges — A/C on the left pier, B/D on the right — each linked to
+  // its aircraft stand by a jet-bridge arrow pointing out, tagged with its letter.
+  parts.push(box(208, 360, 150, 150, 6, 0.4), box(208, 561, 150, 150, 6, 0.4));
+  parts.push(box(1090, 360, 150, 150, 6, 0.4), box(1090, 561, 150, 150, 6, 0.4));
+  parts.push(gatePier(210, 452, 122, 410), gatePier(210, 620, 122, 662));
+  parts.push(gatePier(1238, 452, 1326, 410), gatePier(1238, 620, 1326, 662));
+  parts.push(escalator(304, 468), escalator(304, 669), escalator(1186, 468), escalator(1186, 669));
+  parts.push(gateTag(226, 392, "A"), gateTag(226, 593, "C"), gateTag(1108, 392, "B"), gateTag(1108, 593, "D"));
   // Lower processing pods + landside.
   parts.push(box(360, 760, 300, 150, 6, 0.5), box(788, 760, 300, 150, 6, 0.5));
   parts.push(escalator(408, 800), restroom(478, 800), info(724, 800), restroom(948, 800), escalator(1018, 800));
@@ -216,41 +271,75 @@ function departureFloor() {
 
 function arrivalFloor() {
   const parts = [];
-  // Top air-bridge / gate line with jet bridges.
-  parts.push(wall("M120 96 H540 L580 128 H868 L908 96 H1328", 0.5));
-  for (const x of [250, 330, 980, 1060]) {
-    parts.push(`<rect x="${x}" y="82" width="26" height="26" rx="3" fill="none" ${STROKE} stroke-opacity="0.5" stroke-width="1.8"/>`);
+
+  // --- 1F arrivals concourse (top) with the central descent notch to GF ----
+  parts.push(wall("M120 96 H560 L600 132 H848 L888 96 H1328", 0.5));
+  // Jet-bridge gate stands along the top wall, each with a boarding door and a
+  // down-arrow into the concourse.
+  const topGates = [188, 300, 412, 524, 924, 1036, 1148, 1260];
+  for (const x of topGates) {
+    parts.push(`<rect x="${x}" y="80" width="26" height="26" rx="3" fill="none" ${STROKE} stroke-opacity="0.5" stroke-width="1.8"/>`);
+    parts.push(arrow(x + 13, 118, x + 13, 148));
   }
-  parts.push(arrow(300, 150, 300, 210), arrow(1010, 150, 1010, 210));
-  // Landing-side outer walk.
+  // Directional flow converging on the central descent.
+  parts.push(arrow(320, 210, 470, 210), arrow(1128, 210, 978, 210));
+
+  // Landing-side outer walk (angled corridor) with up-flow toward the halls.
   parts.push(wall("M120 96 V300 H60 V690 H150", 0.4));
   parts.push(wall("M40 300 V690", 0.3));
-  // Two immigration halls (counter banks) + center core.
+  parts.push(arrow(88, 470, 88, 356), arrow(150, 250, 214, 250));
+
+  // Central descent core: escalator + stairs + escalator down to the ground
+  // floor, with information desks below.
+  parts.push(escalator(632, 150), stairs(724, 150), escalator(790, 150));
+  parts.push(info(676, 232), info(746, 232));
+
+  // --- Immigration halls (IMM-A left, IMM-B right) + centre customs core ----
   parts.push(box(150, 300, 470, 360, 8, 0.55)); // IMM-A hall
   parts.push(box(828, 300, 470, 360, 8, 0.55)); // IMM-B hall
-  parts.push(box(640, 300, 168, 360, 8, 0.5)); // center core
-  // Counter booths (rounded) in each hall.
-  parts.push(bank(210, 336, 3, 118, 40, 22));
-  parts.push(bank(858, 336, 3, 118, 40, 22));
-  // Officer / gate glyphs + downward arrows through halls.
-  parts.push(elevator(711, 352), info(711, 456)); // center core
-  parts.push(escalator(432, 356), escalator(990, 356)); // hall escalators
-  parts.push(restroom(300, 600), restroom(1122, 600)); // hall restrooms
-  parts.push(arrow(392, 560, 392, 700), arrow(1056, 560, 1056, 700));
-  parts.push(arrow(724, 470, 724, 632));
-  // Baggage carousel loop.
-  parts.push(`<rect x="300" y="780" width="848" height="180" rx="90" fill="none" ${STROKE} stroke-opacity="0.55" stroke-width="2.4"/>`);
-  parts.push(`<rect x="360" y="838" width="728" height="64" rx="32" fill="none" ${INK} stroke-opacity="0.5" stroke-width="1.8"/>`);
-  for (let i = 1; i < 6; i += 1) {
-    const x = 360 + i * (728 / 6);
-    parts.push(`<line x1="${x.toFixed(0)}" y1="838" x2="${x.toFixed(0)}" y2="902" ${INK} stroke-opacity="0.4" stroke-width="1.5"/>`);
+  parts.push(box(640, 300, 168, 360, 8, 0.5)); // centre core
+
+  // Immigration desk booths — three per hall, each with a marked officer.
+  parts.push(immigrationDesk(176, 338), immigrationDesk(314, 338), immigrationDesk(452, 338));
+  parts.push(immigrationDesk(854, 338), immigrationDesk(992, 338), immigrationDesk(1130, 338));
+  // Baggage-claim tag at each hall's landing edge.
+  parts.push(baggage(160, 396), baggage(1240, 396));
+  // Service-band divider splitting each hall's immigration area from services.
+  parts.push(`<line x1="168" y1="548" x2="602" y2="548" ${STROKE} stroke-opacity="0.3" stroke-width="1.5"/>`);
+  parts.push(`<line x1="846" y1="548" x2="1280" y2="548" ${STROKE} stroke-opacity="0.3" stroke-width="1.5"/>`);
+  // Long processing-flow lines the length of each hall (desks → services → exit).
+  parts.push(arrow(300, 398, 300, 640), arrow(1120, 398, 1120, 640));
+
+  // Hall service rows: currency exchange, first-aid, restroom, car service.
+  parts.push(exchange(214, 600), firstAid(300, 600), restroom(348, 588), transport(452, 574, "car"));
+  parts.push(exchange(1234, 600), firstAid(1148, 600), restroom(1076, 588), transport(968, 574, "car"));
+
+  // Centre core: customs office, hall inspection points, lift, restroom, info.
+  parts.push(box(662, 452, 124, 92, 6, 0.45)); // customs office
+  parts.push(customs(586, 466), customs(834, 466)); // hall → customs inspection
+  parts.push(elevator(658, 306), restroom(750, 306));
+  parts.push(info(712, 566));
+  parts.push(arrow(724, 306, 724, 452), arrow(724, 452, 724, 640));
+
+  // --- Baggage carousel (GF) ----------------------------------------------
+  parts.push(`<rect x="300" y="784" width="848" height="184" rx="92" fill="none" ${STROKE} stroke-opacity="0.55" stroke-width="2.4"/>`);
+  parts.push(`<rect x="356" y="836" width="736" height="76" rx="38" fill="none" ${INK} stroke-opacity="0.5" stroke-width="1.8"/>`);
+  // Belt spine + slats so the carousel reads as a moving reclaim belt.
+  parts.push(`<line x1="374" y1="874" x2="1074" y2="874" ${INK} stroke-opacity="0.28" stroke-width="1.4" stroke-dasharray="3 7"/>`);
+  for (let i = 1; i < 10; i += 1) {
+    const x = 356 + i * (736 / 10);
+    parts.push(`<line x1="${x.toFixed(0)}" y1="838" x2="${x.toFixed(0)}" y2="910" ${INK} stroke-opacity="0.3" stroke-width="1.4"/>`);
   }
-  // Customs band + arrivals hall / curbside.
-  parts.push(box(560, 662, 328, 60, 6, 0.45)); // customs
-  parts.push(arrow(724, 722, 724, 780));
-  parts.push(arrow(560, 902, 560, 662), arrow(888, 902, 888, 662));
-  // Curbside transport at the corners + bottom.
-  parts.push(transport(150, 660, "bus"), transport(1270, 660, "car"));
-  parts.push(transport(556, 998, "taxi"), transport(864, 998, "car"));
+  // Routing lines from each hall down and inward to the carousel feed points.
+  parts.push(`<path d="M300 640 V702 H560" fill="none" ${STROKE} stroke-opacity="0.32" stroke-width="1.5" stroke-dasharray="5 7"/>`);
+  parts.push(`<path d="M1120 640 V702 H888" fill="none" ${STROKE} stroke-opacity="0.32" stroke-width="1.5" stroke-dasharray="5 7"/>`);
+  // Down-flow from customs into the reclaim hall + curbside exit.
+  parts.push(arrow(560, 700, 560, 784), arrow(888, 700, 888, 784));
+  parts.push(arrow(724, 700, 724, 784), arrow(724, 968, 724, 1012));
+
+  // Curbside transport: bus + car at the corners, taxi + car at the exit.
+  parts.push(transport(150, 700, "bus"), transport(1270, 700, "car"));
+  parts.push(transport(556, 1006, "taxi"), transport(864, 1006, "car"));
+
   return `<g>${parts.join("")}</g>`;
 }

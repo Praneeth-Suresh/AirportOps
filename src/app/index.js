@@ -22,6 +22,7 @@ import {
   createOperationalDatabaseReader,
   createOperationalDatabaseRowsFromSnapshot,
 } from "../operational-database/index.js";
+import { createTinyFishPublicContextAdapter } from "../operational-database/tinyfishPublicContext.js";
 import { DEFAULT_PREDICTION_REFRESH_CADENCE_SECONDS, predictionService } from "../prediction/index.js";
 import { MonitoringViewModel } from "../monitoring/index.js";
 import { defaultScenarioDecisions, simulationService } from "../simulation/index.js";
@@ -43,6 +44,7 @@ const ROLE_COLOR = {
 
 const SNAPSHOT_VARIANTS = ["normal", "peak", "stale"];
 const LIVE_REFRESH_MS = 5000; // demo cadence for pulling a fresh live snapshot
+const TINYFISH_PUBLIC_CONTEXT_API = "/api/tinyfish/public-context";
 
 // Live data source, most-informed first: edge-CV-fed rows when an ingest run
 // has produced them (database/ingest-edge-observations.mjs), then rows
@@ -52,6 +54,7 @@ const LIVE_REFRESH_MS = 5000; // demo cadence for pulling a fresh live snapshot
 const EDGE_ROWS_URL = new URL("../../database/export/edge-operational-rows.json", import.meta.url);
 const EXPORTED_ROWS_URL = new URL("../../database/export/operational-rows.json", import.meta.url);
 const SOURCE_LABELS = { edge: "EDGE CV", postgres: "PG EXPORT", fixtures: "FIXTURES" };
+const tinyFishPublicContextAdapter = createTinyFishPublicContextAdapter();
 
 function createFixtureRowsBundle() {
   const series = createFixtureSnapshotSeries();
@@ -71,11 +74,32 @@ function createFixtureRowsBundle() {
   };
 }
 
+function enrichRowsBundleWithPublicContext(bundle, updates) {
+  const adapter = updates
+    ? createTinyFishPublicContextAdapter(() => updates)
+    : tinyFishPublicContextAdapter;
+  return adapter.enrichRowsBundle(bundle);
+}
+
+function labelForDataSource() {
+  if (dataSource === "postgres+tinyfish+live") return "PG + LIVE TINYFISH";
+  if (dataSource === "fixtures+tinyfish+live") return "FIX + LIVE TINYFISH";
+  if (dataSource === "postgres+tinyfish") return "PG + TINYFISH";
+  if (dataSource === "fixtures+tinyfish") return "FIX + TINYFISH";
+  return dataSource === "postgres" ? "PG EXPORT" : "FIXTURES";
+}
+
+function markDataSourceLive() {
+  if (!dataSource.endsWith("+live")) {
+    dataSource = `${dataSource}+live`;
+  }
+}
+
 // Synchronous fixture default keeps the node test seam and the no-export run
 // working; loadRowsBundle() swaps in the Postgres export before init().
-let rowsBundle = createFixtureRowsBundle();
+let rowsBundle = enrichRowsBundleWithPublicContext(createFixtureRowsBundle());
 let snapshotIds = rowsBundle.operationalSnapshots.map((row) => row.snapshotId);
-let dataSource = "fixtures";
+let dataSource = "fixtures+tinyfish";
 
 async function fetchRowsBundle(url) {
   // no-store: exports are live operational data; a cached copy could show
@@ -108,6 +132,21 @@ async function loadRowsBundle() {
     } catch (error) {
       console.warn(`Stratus: ${source} rows unavailable, trying next source.`, error);
     }
+  try {
+    // no-store: the export is live operational data; a cached copy could show
+    // stale numbers after the database is re-exported mid-shift.
+    const response = await fetch(EXPORTED_ROWS_URL, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const bundle = enrichRowsBundleWithPublicContext(await response.json());
+    if (!Array.isArray(bundle?.operationalSnapshots) || bundle.operationalSnapshots.length === 0) {
+      throw new Error("export contains no operational snapshots");
+    }
+    rowsBundle = bundle;
+    snapshotIds = bundle.operationalSnapshots.map((row) => row.snapshotId);
+    dataSource = "postgres+tinyfish";
+    state.snapshotIndex = Math.min(state.snapshotIndex, snapshotIds.length - 1);
+  } catch (error) {
+    console.warn("Stratus: Postgres export unavailable, staying on fixture rows.", error);
   }
   console.warn("Stratus: no export available, staying on fixture rows.");
 }
@@ -144,6 +183,11 @@ const state = {
   booted: false,
   tick: 0,
   lastRefresh: 0,
+  liveTinyFish: {
+    status: "idle",
+    message: "Ready for live public-web search",
+    receivedAt: null,
+  },
   log: [],
 };
 
@@ -361,6 +405,7 @@ function computeFrame() {
     projection,
     projectionPoint,
     options,
+    publicContext: monitoring.analytics.publicContext,
     layout,
     mapZones,
     alerts,
@@ -408,11 +453,64 @@ function render() {
   wireEvents();
 }
 
+async function fetchTinyFishLiveUpdates(fetcher = globalThis.fetch) {
+  if (state.liveTinyFish.status === "loading") return;
+  const snapshotId = snapshotIds[state.snapshotIndex];
+  state.liveTinyFish = {
+    status: "loading",
+    message: "Fetching TinyFish Search API",
+    receivedAt: null,
+  };
+  render();
+
+  try {
+    const url = `${TINYFISH_PUBLIC_CONTEXT_API}?snapshotId=${encodeURIComponent(snapshotId)}&zoneId=check-in-a`;
+    const response = await fetcher(url, { cache: "no-store" });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.message || `TinyFish live update failed with HTTP ${response.status}`);
+    }
+    if (!Array.isArray(payload.updates)) {
+      throw new Error("TinyFish live update response did not include updates");
+    }
+
+    rowsBundle = enrichRowsBundleWithPublicContext(rowsBundle, payload.updates);
+    markDataSourceLive();
+    const count = payload.updates.length;
+    const receivedAt = new Date().toISOString();
+    state.liveTinyFish = {
+      status: "ready",
+      message: count > 0 ? `${count} live update${count > 1 ? "s" : ""} applied` : "No live updates returned",
+      receivedAt,
+    };
+    state.log = [
+      { time: hhmm(parseClockMinutes(receivedAt)), txt: `TinyFish live search applied · ${count} update${count === 1 ? "" : "s"}`, dot: TEAL },
+      ...state.log,
+    ].slice(0, 4);
+  } catch (error) {
+    state.liveTinyFish = {
+      status: "error",
+      message: error.message,
+      receivedAt: null,
+    };
+  }
+
+  render();
+}
+
 function renderCommandBar(frame, clockMinutes, isSim) {
   const { snapshot, kpiPax, kpiAlerts, mapZones } = frame;
   const allFresh = frame.freshCount === mapZones.length;
   const freshColor = allFresh ? OK : WARN;
   const alertColor = kpiAlerts > 0 ? BUSY : OK;
+  const liveColor = state.liveTinyFish.status === "ready"
+    ? TEAL
+    : state.liveTinyFish.status === "error"
+      ? BUSY
+      : state.liveTinyFish.status === "loading"
+        ? WARN
+        : ACCENT;
+  const liveLabel = state.liveTinyFish.status === "loading" ? "Fetching..." : "Fetch live updates";
   const viewLabel = state.view === "arrival" ? "Arrivals" : "Departures";
   const viewBtns = [
     { key: "departure", label: "Departures" },
@@ -454,6 +552,9 @@ function renderCommandBar(frame, clockMinutes, isSim) {
       <div style="flex:1;"></div>
       <div style="display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden;">${viewBtns}</div>
       <div style="display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden;">${modeBtns}</div>
+      <button data-action="fetch-tinyfish" data-live-api="${TINYFISH_PUBLIC_CONTEXT_API}" title="${escapeHtml(state.liveTinyFish.message)}" style="display:flex; align-items:center; gap:7px; padding:7px 12px; border:1px solid rgba(39,211,209,.45); border-radius:6px; background:${state.liveTinyFish.status === "loading" ? "rgba(245,185,66,.15)" : "var(--hover)"}; color:${liveColor}; cursor:${state.liveTinyFish.status === "loading" ? "default" : "pointer"}; font-size:11px; font-weight:600;">
+        <span style="width:6px; height:6px; border-radius:50%; background:${liveColor}; box-shadow:0 0 6px ${liveColor};"></span>${liveLabel}
+      </button>
       <div style="display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid ${allFresh ? "rgba(50,199,131,.4)" : "rgba(245,185,66,.4)"}; border-radius:6px; font-size:11px; color:${freshColor};">
         <span style="width:6px; height:6px; border-radius:50%; background:${freshColor};"></span>${allFresh ? "All fresh" : `${frame.freshCount}/${mapZones.length} fresh`}
       </div>
@@ -514,32 +615,30 @@ function renderMap(frame, isSim) {
     .map((z) => `<circle cx="${z.cx}" cy="${z.cy}" r="3.5" fill="${z.color}" filter="url(#glow)"></circle>`)
     .join("");
 
-  const hitAreas = mapZones
-    .map(
-      (z) =>
-        `<rect data-zone-hit="${z.zoneId}" x="${z.hit.hitX}" y="${z.hit.hitY}" width="${z.hit.hitW}" height="${z.hit.hitH}" fill="transparent" style="pointer-events:all; cursor:pointer;"></rect>`,
-    )
-    .join("");
-
   const chips = mapZones
-    .map(
-      (z) => `
-      <div data-zone-chip="${z.zoneId}" style="position:absolute; left:${z.chipLeft}%; top:${z.chipTop}%; transform:translate(-50%,-50%) scale(${invZoom}); cursor:pointer; z-index:4; display:flex; align-items:center; gap:7px; background:var(--chip-bg); backdrop-filter:blur(3px); border:1px solid ${z.status === "critical" ? BUSY : z.status === "watch" ? "rgba(245,185,66,.55)" : "var(--border2)"}; border-radius:5px; padding:4px 9px; white-space:nowrap; ${z.zoneId === state.selected ? "box-shadow:0 0 0 2px " + z.color + ";" : ""}">
+    .map((z) => {
+      const statusBorder = z.status === "critical" ? BUSY : z.status === "watch" ? "rgba(245,185,66,.55)" : "var(--border2)";
+      const selRing = z.zoneId === state.selected ? "box-shadow:0 0 0 2px " + z.color + ";" : "";
+      const base = `position:absolute; left:${z.chipLeft}%; top:${z.chipTop}%; transform:translate(-50%,-50%) scale(${invZoom}); cursor:pointer; z-index:4; background:var(--chip-bg); backdrop-filter:blur(3px); border:1px solid ${statusBorder};`;
+      return `
+      <div data-zone-chip="${z.zoneId}" style="${base} display:flex; align-items:center; gap:7px; border-radius:5px; padding:4px 9px; white-space:nowrap; ${selRing}">
         <span style="width:6px; height:6px; border-radius:50%; background:${z.color}; box-shadow:0 0 6px ${z.color};"></span>
         <span style="font-size:11px; font-weight:600; color:var(--text);">${z.label}</span>
         <span class="mono" style="font-size:11px; font-weight:600; color:${z.color};">${z.loadPct}%</span>
-      </div>`,
-    )
+      </div>`;
+    })
     .join("");
 
-  const hover = state.hover ? mapZones.find((z) => z.zoneId === state.hover) : null;
+  // Layer 2 (hover preview) is suppressed while Layer 3 (a selected zone's
+  // detail panel) is open, so the two cards never stack.
+  const hover = state.hover && !state.selected ? mapZones.find((z) => z.zoneId === state.hover) : null;
   const hoverTip = hover ? renderHoverTip(hover, invZoom) : "";
 
   return `
     <div data-pan style="position:absolute; inset:0; cursor:${grabCursor}; overflow:hidden;">
       <div style="position:absolute; inset:0; background:var(--map-grad);"></div>
       <div style="position:absolute; inset:0; transform:translate(${state.panX}px, ${state.panY}px) scale(${state.zoom}); transform-origin:center center;">
-        ${showPlane ? `<div style="position:absolute; top:9%; left:0; width:100%; pointer-events:none;"><svg width="42" height="42" viewBox="0 0 24 24" style="animation:planefly 11s linear infinite; filter:drop-shadow(0 0 6px rgba(41,163,255,.8));"><path d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" fill="${ACCENT}"></path></svg></div>` : ""}
+        ${showPlane ? `<div style="position:absolute; top:9%; left:0; width:100%; pointer-events:none;"><svg width="42" height="42" viewBox="0 0 24 24" style="animation:planefly 11s linear infinite; filter:drop-shadow(0 0 6px rgba(41,163,255,.8));"><path transform="rotate(90 12 12)" d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" fill="${ACCENT}"></path></svg></div>` : ""}
         <svg viewBox="0 0 ${MAP_VIEWBOX.w} ${MAP_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none;">
           <defs>
             <filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="34"></feGaussianBlur></filter>
@@ -551,7 +650,6 @@ function renderMap(frame, isSim) {
           <g opacity="${state.layers.pax ? 1 : 0}">${passengers}</g>
           <g opacity="${state.layers.staff ? 1 : 0}">${staff}</g>
           ${nodeDots}
-          <g style="pointer-events:all;">${hitAreas}</g>
         </svg>
         ${chips}
         ${hoverTip}
@@ -561,25 +659,30 @@ function renderMap(frame, isSim) {
 }
 
 function renderHoverTip(hover, invZoom) {
-  const tx = hover.chipLeft > 62 ? "translate(-106%,-50%)" : hover.chipLeft < 22 ? "translate(6%,-50%)" : "translate(-50%,-118%)";
+  // Zones near the top of the floor (e.g. Departure Hall) can't place the tip
+  // above the chip — it would be clipped by the map's overflow. Flip those below.
+  const nearTop = hover.chipTop < 30;
+  const tx = hover.chipLeft > 62
+    ? "translate(-106%,-50%)"
+    : hover.chipLeft < 22
+      ? "translate(6%,-50%)"
+      : nearTop
+        ? "translate(-50%,18%)"
+        : "translate(-50%,-118%)";
+  // Layer 2 — a concise hover preview: title + load, then Wait · Queue.
   return `
-    <div style="position:absolute; left:${hover.chipLeft}%; top:${hover.chipTop}%; transform:${tx} scale(${invZoom}); z-index:10; pointer-events:none; width:210px; background:var(--panel); border:1px solid ${hover.color}; border-radius:8px; box-shadow:0 10px 30px var(--scrim); overflow:hidden;">
-      <div style="padding:9px 11px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px;">
-        <span style="width:8px; height:8px; border-radius:50%; background:${hover.color}; box-shadow:0 0 6px ${hover.color};"></span>
-        <span style="font-size:12px; font-weight:600;">${hover.label}</span>
+    <div style="position:absolute; left:${hover.chipLeft}%; top:${hover.chipTop}%; transform:${tx} scale(${invZoom}); z-index:10; pointer-events:none; width:192px; background:var(--panel); border:1px solid ${hover.color}; border-radius:8px; box-shadow:0 10px 30px var(--scrim); padding:9px 11px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <span style="display:flex; align-items:center; gap:7px; min-width:0;">
+          <span style="width:7px; height:7px; border-radius:50%; background:${hover.color}; box-shadow:0 0 6px ${hover.color}; flex:none;"></span>
+          <span style="font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${hover.label}</span>
+        </span>
+        <span class="mono" style="font-size:15px; font-weight:600; color:${hover.color}; flex:none;">${hover.loadPct}%</span>
       </div>
-      <div style="padding:10px 11px;">
-        <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px;">
-          <span class="mono" style="font-size:22px; font-weight:600; color:${hover.color};">${hover.loadPct}%</span>
-          <span style="font-size:10px; color:var(--text3);">${hover.severity}</span>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 10px;">
-          <div style="display:flex; justify-content:space-between;"><span style="font-size:10px; color:var(--text3);">Wait</span><span class="mono" style="font-size:11px; color:${hover.color};">${hover.wait}m</span></div>
-          <div style="display:flex; justify-content:space-between;"><span style="font-size:10px; color:var(--text3);">Queue</span><span class="mono" style="font-size:11px;">${hover.queueLength}</span></div>
-          <div style="display:flex; justify-content:space-between;"><span style="font-size:10px; color:var(--text3);">Occ</span><span class="mono" style="font-size:11px;">${hover.occupancy}</span></div>
-          <div style="display:flex; justify-content:space-between;"><span style="font-size:10px; color:var(--text3);">Staff</span><span class="mono" style="font-size:11px;">${hover.staffHere.length}</span></div>
-        </div>
-        <div style="font-size:9px; color:var(--text3); margin-top:8px;">Click to inspect · ${hover.freshness.status}</div>
+      <div style="display:flex; align-items:center; gap:8px; margin-top:6px; font-size:11px; color:var(--text3);">
+        <span>Wait <span class="mono" style="color:${hover.color};">${hover.wait}m</span></span>
+        <span style="color:var(--border2);">·</span>
+        <span>Queue <span class="mono" style="color:var(--text);">${hover.queueLength}</span></span>
       </div>
     </div>
   `;
@@ -874,6 +977,7 @@ function renderTerminalStatus(frame) {
         </div>
         ${nextFlight ? `<div style="font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">Next Movement</div>
         <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:var(--panel2); border:1px solid var(--border); border-radius:7px; margin-bottom:16px;"><div><div class="mono" style="font-size:13px; font-weight:600;">${nextFlight.flightId}</div><div style="font-size:10px; color:var(--text3);">${labelize(nextFlight.gateZoneId)} · ${nextFlight.estimatedPassengers} pax</div></div><div class="mono" style="font-size:15px; color:${ACCENT};">${hhmm(parseClockMinutes(nextFlight.scheduledAt))}</div></div>` : ""}
+        ${renderPublicContext(frame)}
         <div style="font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">Recent Events</div>
         <div style="display:flex; flex-direction:column; gap:8px;">${feed
           .map((f) => `<div style="display:flex; gap:8px; align-items:baseline; font-size:11px; line-height:1.35;"><span class="mono" style="color:var(--text3); flex:none;">${f.time}</span><span style="width:5px; height:5px; border-radius:50%; background:${f.dot}; flex:none; margin-top:5px;"></span><span style="color:var(--text2);">${escapeHtml(f.txt)}</span></div>`)
@@ -883,9 +987,23 @@ function renderTerminalStatus(frame) {
   `;
 }
 
+function renderPublicContext(frame) {
+  const updates = frame.publicContext ?? [];
+  if (updates.length === 0) return "";
+  return `
+    <div style="font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">TinyFish Public Context</div>
+    <div style="display:flex; flex-direction:column; gap:7px; margin-bottom:16px;">${updates.slice(0, 2)
+      .map((update) => `<div style="padding:9px 11px; background:var(--panel2); border:1px solid rgba(39,211,209,.38); border-left:3px solid ${TEAL}; border-radius:7px;"><div style="display:flex; align-items:center; justify-content:space-between; gap:8px;"><span style="font-size:12px; font-weight:600;">${escapeHtml(update.title)}</span><span class="mono" style="font-size:9px; color:${TEAL};">${update.severity}</span></div><div style="font-size:10px; color:var(--text2); line-height:1.35; margin-top:4px;">${escapeHtml(update.summary)}</div><div style="font-size:9px; color:var(--text3); margin-top:5px;">${labelize(update.zoneId)} · confidence <span class="mono">${pct(update.confidence.score)}</span></div></div>`)
+      .join("")}</div>
+  `;
+}
+
 function buildFeed(frame) {
   const clock = hhmm(currentClockMinutes());
   const feed = [...state.log];
+  frame.publicContext.forEach((update) => {
+    feed.push({ time: hhmm(parseClockMinutes(update.observedAt)), txt: `TinyFish · ${update.title}`, dot: TEAL });
+  });
   frame.alerts.forEach((a) => {
     feed.push({ time: clock, txt: `${labelize(a.zoneId)} ${a.severity === "critical" ? "abnormal crowding" : "queue build-up"}`, dot: a.severity === "critical" ? BUSY : WARN });
   });
@@ -1061,10 +1179,13 @@ function describeDecision(decision) {
 // --- event wiring -----------------------------------------------------------
 
 function wireEvents() {
-  app.querySelectorAll("[data-zone-hit]").forEach((el) => {
-    const id = el.getAttribute("data-zone-hit");
-    el.addEventListener("click", () => selectZone(id));
+  // Layer 1 → Layer 2: hover fires only on the visible map chip/icon (scoped to
+  // the map so the drawer's zone list doesn't spawn map tooltips), and never
+  // while a zone is selected (Layer 3 open).
+  app.querySelectorAll("[data-pan] [data-zone-chip]").forEach((el) => {
+    const id = el.getAttribute("data-zone-chip");
     el.addEventListener("mouseenter", () => {
+      if (state.selected || state.hover === id) return;
       state.hover = id;
       render();
     });
@@ -1075,6 +1196,7 @@ function wireEvents() {
       }
     });
   });
+  // Layer 1 → Layer 3: clicking any chip (map or drawer list) inspects the zone.
   app.querySelectorAll("[data-zone-chip]").forEach((el) => {
     el.addEventListener("click", () => selectZone(el.getAttribute("data-zone-chip")));
   });
@@ -1157,6 +1279,9 @@ function wireEvents() {
     "zoom-reset": () => resetView(),
     "toggle-play": () => (state.playing = !state.playing),
     "cycle-speed": () => (state.speed = state.speed === 1 ? 2 : state.speed === 2 ? 4 : 1),
+    "fetch-tinyfish": () => {
+      void fetchTinyFishLiveUpdates();
+    },
     confirm: () => {
       if (draftCount() > 0) confirmDecisions();
     },
@@ -1196,6 +1321,7 @@ function wireEvents() {
 function selectZone(zoneId) {
   state.selected = zoneId;
   state.tool = null;
+  state.hover = null; // Layer 2 disappears the moment Layer 3 opens
   render();
 }
 
@@ -1264,4 +1390,4 @@ if (app) {
 
 // Test seam: these are pure (no DOM) and let the seed / render checks exercise
 // the full data path and template output under node --test without a browser.
-export { state, computeFrame, renderToString };
+export { state, computeFrame, fetchTinyFishLiveUpdates, renderToString };

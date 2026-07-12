@@ -52,9 +52,9 @@ Running tally in the right margin. Spoken lines are in `> quotes` — read them 
 
 **Show:** Cute Otto AI avatar animates in at the side of the dashboard.
 
-> "Otto AI reads the same real-time data, detects when a zone is about to be understaffed, and recommends the fix. Same example — but now Otto AI catches it at 4:00pm, half an hour early. It pings: 'Gate 5 understaffed for VJ882 — move 3 staff from Gate 10.' Click 'View details,' and it jumps the dashboard to 4:30pm, so you see exactly why."
+> "Otto AI reads the same real-time data, detects when a zone is about to be understaffed, and recommends the fix. Same example — but now Otto AI catches it at 4:00pm, half an hour early. It sees the flight schedule, roster, camera flow, and a live public gate update before the terminal gets crowded. It pings: 'Gate 5 understaffed for VJ882 — move 3 staff from Gate 10.' Click 'View details,' and it jumps the dashboard to 4:30pm, so you see exactly why."
 
-**Show:** At 4:00pm, Otto AI fires an alert: *"Move 3 staff, Gate 10 → Gate 5 for VJ882."* A **View details** button opens the 4:30pm dashboard state.
+**Show:** At 4:00pm, a TinyFish-backed public update appears in the data layer, then Otto AI fires an alert: *"Move 3 staff, Gate 10 → Gate 5 for VJ882."* A **View details** button opens the 4:30pm dashboard state.
 
 ---
 
@@ -66,7 +66,7 @@ Running tally in the right margin. Spoken lines are in `> quotes` — read them 
 
 > "One — multi-camera tracking. Computer vision that holds a single identity for each person as they cross dozens of camera views, backed by GPS tags for precise staff location."
 
-> "Two — data integration. Cameras, flight schedules, and staff rosters, fused into one live operational picture."
+> "Two — data integration. Cameras, flight schedules, staff rosters, and live public operational signals, fused into one operational snapshot. For the demo, TinyFish reads browser-rendered airline and airport pages when official feeds lag, then our adapters attach freshness and confidence before Otto AI uses the data."
 
 > "Three — AI and machine learning. Forecasting passenger flow, and powering Otto AI's recommendations."
 
