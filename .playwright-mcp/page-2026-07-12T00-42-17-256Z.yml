@@ -1,0 +1,172 @@
+- main [ref=f4e2]:
+  - generic [ref=f4e232]:
+    - generic [ref=f4e233]:
+      - generic [ref=f4e234]:
+        - generic [ref=f4e237]: Stratus
+        - generic [ref=f4e238]: Digital Twin
+      - generic [ref=f4e240]:
+        - generic [ref=f4e241]:
+          - generic [ref=f4e242]: TERMINAL
+          - generic [ref=f4e243]: BKK · T1 Departures
+        - generic [ref=f4e244]:
+          - generic [ref=f4e245]: SNAPSHOT
+          - generic [ref=f4e246]: 09:20
+        - generic [ref=f4e247]:
+          - generic [ref=f4e248]: OCCUPANCY
+          - generic [ref=f4e249]: 8,430
+        - generic [ref=f4e250]:
+          - generic [ref=f4e251]: ALERTS
+          - generic [ref=f4e252]: "18"
+        - generic [ref=f4e253]:
+          - generic [ref=f4e254]: SOURCE
+          - generic [ref=f4e255]: PG + LIVE TINYFISH
+      - generic [ref=f4e256]:
+        - button "Departures" [ref=f4e257] [cursor=pointer]
+        - button "Arrivals" [ref=f4e258] [cursor=pointer]
+      - generic [ref=f4e259]:
+        - button "Live" [ref=f4e260] [cursor=pointer]
+        - button "Simulate" [ref=f4e262] [cursor=pointer]
+      - button "Fetch live updates" [ref=f4e264] [cursor=pointer]
+      - generic "3 live updates applied" [ref=f4e266]
+      - generic [ref=f4e267]: 10/13 fresh
+    - main [ref=f4e269]:
+      - generic [ref=f4e272]:
+        - img:
+          - generic:
+            - generic: A
+            - generic: C
+            - generic: B
+            - generic: D
+        - generic [ref=f4e273] [cursor=pointer]:
+          - generic [ref=f4e275]: Bag Drop A
+          - generic [ref=f4e276]: 74%
+        - generic [ref=f4e277] [cursor=pointer]:
+          - generic [ref=f4e279]: Check-in A
+          - generic [ref=f4e280]: 95%
+        - generic [ref=f4e281] [cursor=pointer]:
+          - generic [ref=f4e283]: Check-in B
+          - generic [ref=f4e284]: 76%
+        - generic [ref=f4e285] [cursor=pointer]:
+          - generic [ref=f4e287]: Departure Gate A
+          - generic [ref=f4e288]: 46%
+        - generic [ref=f4e289] [cursor=pointer]:
+          - generic [ref=f4e291]: Departure Gate B
+          - generic [ref=f4e292]: 35%
+        - generic [ref=f4e293] [cursor=pointer]:
+          - generic [ref=f4e295]: Departure Gate C
+          - generic [ref=f4e296]: 38%
+        - generic [ref=f4e297] [cursor=pointer]:
+          - generic [ref=f4e299]: Departure Gate D
+          - generic [ref=f4e300]: 41%
+        - generic [ref=f4e301] [cursor=pointer]:
+          - generic [ref=f4e303]: Departure Hall
+          - generic [ref=f4e304]: 60%
+        - generic [ref=f4e305] [cursor=pointer]:
+          - generic [ref=f4e307]: Security North
+          - generic [ref=f4e308]: 94%
+        - generic [ref=f4e309] [cursor=pointer]:
+          - generic [ref=f4e311]: Security South
+          - generic [ref=f4e312]: 80%
+        - generic [ref=f4e313] [cursor=pointer]:
+          - generic [ref=f4e315]: Terminal Entrance East
+          - generic [ref=f4e316]: 37%
+        - generic [ref=f4e317] [cursor=pointer]:
+          - generic [ref=f4e319]: Terminal Entrance West
+          - generic [ref=f4e320]: 33%
+        - generic [ref=f4e321] [cursor=pointer]:
+          - generic [ref=f4e323]: Transfer Corridor
+          - generic [ref=f4e324]: 38%
+      - generic [ref=f4e326]:
+        - button "Overview" [ref=f4e327] [cursor=pointer]
+        - button "Zones" [ref=f4e334] [cursor=pointer]
+        - button "Layers" [ref=f4e340] [cursor=pointer]
+        - button "Staffing" [ref=f4e344] [cursor=pointer]
+        - button "Flights" [ref=f4e351] [cursor=pointer]
+        - button "CCTV" [ref=f4e355] [cursor=pointer]
+        - button "Incidents" [ref=f4e361] [cursor=pointer]
+        - button "+" [ref=f4e367] [cursor=pointer]
+        - generic [ref=f4e368]: 100%
+        - button "−" [ref=f4e369] [cursor=pointer]
+        - button "Reset view" [ref=f4e370] [cursor=pointer]
+        - button "Toggle theme" [ref=f4e374] [cursor=pointer]
+      - generic [ref=f4e378]:
+        - generic [ref=f4e379]:
+          - generic [ref=f4e380]:
+            - generic [ref=f4e381]: Terminal Status
+            - generic [ref=f4e382]: Degraded
+          - generic [ref=f4e384]:
+            - generic [ref=f4e385]:
+              - generic [ref=f4e386]: 8,430
+              - generic [ref=f4e387]: in terminal
+            - generic [ref=f4e388]:
+              - generic [ref=f4e389]: 17m
+              - generic [ref=f4e390]: max wait
+            - generic [ref=f4e391]:
+              - generic [ref=f4e392]: "13"
+              - generic [ref=f4e393]: on shift
+        - generic [ref=f4e394]:
+          - generic [ref=f4e395]: Hover any zone on the map for live queue stats, or click to inspect.
+          - generic [ref=f4e400]: Next Movement
+          - generic [ref=f4e401]:
+            - generic [ref=f4e402]:
+              - generic [ref=f4e403]: AX-417
+              - generic [ref=f4e404]: arrival gate a · 312 pax
+            - generic [ref=f4e405]: 09:10
+          - generic [ref=f4e406]: TinyFish Public Context
+          - generic [ref=f4e407]:
+            - generic [ref=f4e408]:
+              - generic [ref=f4e409]:
+                - generic [ref=f4e410]: Vietnam Airlines Commences Direct Ho Chi Minh City to Phuket Flight Service Linking Key Southeast Asian Hubs
+                - generic [ref=f4e411]: watch
+              - generic [ref=f4e412]: Vietnam Airlines launches its first direct flight connecting Ho Chi Minh City and Phuket using an Airbus A321 to bypass hub transits.
+              - generic [ref=f4e413]: check in a · confidence 82%
+            - generic [ref=f4e414]:
+              - generic [ref=f4e415]:
+                - generic [ref=f4e416]: Vietnam's top leader orders plan to cut HCMC - Long Thanh Airport travel time to 30 minutes
+                - generic [ref=f4e417]: watch
+              - generic [ref=f4e418]: Vietnam's top leader To Lam wants travel time from Ho Chi Minh City to Long Thanh International Airport cut to about 30 minutes,...
+              - generic [ref=f4e419]: check in a · confidence 82%
+          - generic [ref=f4e420]: Recent Events
+          - generic [ref=f4e421]:
+            - generic [ref=f4e422]:
+              - generic [ref=f4e423]: 00:42
+              - generic [ref=f4e425]: TinyFish live search applied · 3 updates
+            - generic [ref=f4e426]:
+              - generic [ref=f4e427]: 00:42
+              - generic [ref=f4e429]: TinyFish · Vietnam Airlines Commences Direct Ho Chi Minh City to Phuket Flight Service Linking Key Southeast Asian Hubs
+            - generic [ref=f4e430]:
+              - generic [ref=f4e431]: 00:42
+              - generic [ref=f4e433]: TinyFish · Vietnam's top leader orders plan to cut HCMC - Long Thanh Airport travel time to 30 minutes
+            - generic [ref=f4e434]:
+              - generic [ref=f4e435]: 00:42
+              - generic [ref=f4e437]: TinyFish · Vietnam Airlines Long Delay Refund Rules to Reshape Air Travel Across Hanoi, Ho Chi Minh City and Da Nang from July 2026 Under New Civil Aviation Law Reform
+            - generic [ref=f4e438]:
+              - generic [ref=f4e439]: 09:20
+              - generic [ref=f4e441]: arrival gate a abnormal crowding
+            - generic [ref=f4e442]:
+              - generic [ref=f4e443]: 09:20
+              - generic [ref=f4e445]: arrival gate b queue build-up
+      - button [ref=f4e447] [cursor=pointer]
+      - generic:
+        - generic:
+          - generic: ACQUIRING SIGNAL
+          - generic: FLOOR SENSORS · GATES LIVE
+    - generic [ref=f4e457]:
+      - generic [ref=f4e458]:
+        - button "▶" [ref=f4e459] [cursor=pointer]
+        - button "1×" [ref=f4e460] [cursor=pointer]
+      - generic [ref=f4e461]:
+        - generic [ref=f4e462]: 09:20
+        - generic [ref=f4e463]: MORNING
+      - generic [ref=f4e464]:
+        - generic [ref=f4e465]: Forecast horizon · T+0 min
+        - slider [ref=f4e466] [cursor=pointer]: "0"
+        - generic [ref=f4e467]:
+          - generic [ref=f4e468]: 09:20
+          - generic [ref=f4e469]: 09:50
+          - generic [ref=f4e470]: 10:20
+          - generic [ref=f4e471]: 10:50
+          - generic [ref=f4e472]: 11:20
+      - generic [ref=f4e473]:
+        - generic [ref=f4e474]: Next movement
+        - generic [ref=f4e475]: AX-417 · 09:10 · 312p

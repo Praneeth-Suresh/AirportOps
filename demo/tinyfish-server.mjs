@@ -30,9 +30,11 @@ export function createTinyFishDemoApiHandler({
   return async function handleTinyFishDemoApi(url) {
     const apiKey = env.TINYFISH_API_KEY;
     if (!apiKey) {
-      return jsonResponse(503, {
+      return jsonResponse(200, {
         error: "missing-tinyfish-api-key",
         message: "Set TINYFISH_API_KEY before starting npm run demo:tinyfish.",
+        unavailable: true,
+        updates: [],
       });
     }
 
@@ -130,6 +132,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT || DEFAULT_PORT);
   const server = createTinyFishDemoServer();
   server.listen(port, () => {
-    console.log(`Stratus TinyFish demo server listening on http://localhost:${port}/`);
+    console.log(`sentinel TinyFish demo server listening on http://localhost:${port}/`);
   });
 }

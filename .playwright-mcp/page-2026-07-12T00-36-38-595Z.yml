@@ -1,0 +1,157 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e8]: Stratus
+        - generic [ref=e9]: Digital Twin
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - generic [ref=e13]: TERMINAL
+          - generic [ref=e14]: BKK · T1 Departures
+        - generic [ref=e15]:
+          - generic [ref=e16]: SNAPSHOT
+          - generic [ref=e17]: 09:20
+        - generic [ref=e18]:
+          - generic [ref=e19]: OCCUPANCY
+          - generic [ref=e20]: 8,430
+        - generic [ref=e21]:
+          - generic [ref=e22]: ALERTS
+          - generic [ref=e23]: "15"
+        - generic [ref=e24]:
+          - generic [ref=e25]: SOURCE
+          - generic [ref=e26]: PG EXPORT
+      - generic [ref=e27]:
+        - button "Departures" [ref=e28] [cursor=pointer]
+        - button "Arrivals" [ref=e29] [cursor=pointer]
+      - generic [ref=e30]:
+        - button "Live" [ref=e31] [cursor=pointer]
+        - button "Simulate" [ref=e33] [cursor=pointer]
+      - button "Fetch live updates" [ref=e35] [cursor=pointer]
+      - generic [ref=e37]: 10/13 fresh
+    - main [ref=e39]:
+      - generic [ref=e42]:
+        - img:
+          - generic:
+            - generic: A
+            - generic: C
+            - generic: B
+            - generic: D
+        - generic [ref=e43] [cursor=pointer]:
+          - generic [ref=e45]: Bag Drop A
+          - generic [ref=e46]: 74%
+        - generic [ref=e47] [cursor=pointer]:
+          - generic [ref=e49]: Check-in A
+          - generic [ref=e50]: 95%
+        - generic [ref=e51] [cursor=pointer]:
+          - generic [ref=e53]: Check-in B
+          - generic [ref=e54]: 76%
+        - generic [ref=e55] [cursor=pointer]:
+          - generic [ref=e57]: Departure Gate A
+          - generic [ref=e58]: 46%
+        - generic [ref=e59] [cursor=pointer]:
+          - generic [ref=e61]: Departure Gate B
+          - generic [ref=e62]: 35%
+        - generic [ref=e63] [cursor=pointer]:
+          - generic [ref=e65]: Departure Gate C
+          - generic [ref=e66]: 38%
+        - generic [ref=e67] [cursor=pointer]:
+          - generic [ref=e69]: Departure Gate D
+          - generic [ref=e70]: 41%
+        - generic [ref=e71] [cursor=pointer]:
+          - generic [ref=e73]: Departure Hall
+          - generic [ref=e74]: 60%
+        - generic [ref=e75] [cursor=pointer]:
+          - generic [ref=e77]: Security North
+          - generic [ref=e78]: 94%
+        - generic [ref=e79] [cursor=pointer]:
+          - generic [ref=e81]: Security South
+          - generic [ref=e82]: 80%
+        - generic [ref=e83] [cursor=pointer]:
+          - generic [ref=e85]: Terminal Entrance East
+          - generic [ref=e86]: 37%
+        - generic [ref=e87] [cursor=pointer]:
+          - generic [ref=e89]: Terminal Entrance West
+          - generic [ref=e90]: 33%
+        - generic [ref=e91] [cursor=pointer]:
+          - generic [ref=e93]: Transfer Corridor
+          - generic [ref=e94]: 38%
+      - generic [ref=e96]:
+        - button "Overview" [ref=e97] [cursor=pointer]
+        - button "Zones" [ref=e104] [cursor=pointer]
+        - button "Layers" [ref=e110] [cursor=pointer]
+        - button "Staffing" [ref=e114] [cursor=pointer]
+        - button "Flights" [ref=e121] [cursor=pointer]
+        - button "CCTV" [ref=e125] [cursor=pointer]
+        - button "Incidents" [ref=e131] [cursor=pointer]
+        - button "+" [ref=e137] [cursor=pointer]
+        - generic [ref=e138]: 100%
+        - button "−" [ref=e139] [cursor=pointer]
+        - button "Reset view" [ref=e140] [cursor=pointer]
+        - button "Toggle theme" [ref=e144] [cursor=pointer]
+      - generic [ref=e148]:
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - generic [ref=e151]: Terminal Status
+            - generic [ref=e152]: Degraded
+          - generic [ref=e154]:
+            - generic [ref=e155]:
+              - generic [ref=e156]: 8,430
+              - generic [ref=e157]: in terminal
+            - generic [ref=e158]:
+              - generic [ref=e159]: 17m
+              - generic [ref=e160]: max wait
+            - generic [ref=e161]:
+              - generic [ref=e162]: "13"
+              - generic [ref=e163]: on shift
+        - generic [ref=e164]:
+          - generic [ref=e165]: Hover any zone on the map for live queue stats, or click to inspect.
+          - generic [ref=e170]: Next Movement
+          - generic [ref=e171]:
+            - generic [ref=e172]:
+              - generic [ref=e173]: AX-417
+              - generic [ref=e174]: arrival gate a · 312 pax
+            - generic [ref=e175]: 09:10
+          - generic [ref=e176]: Recent Events
+          - generic [ref=e177]:
+            - generic [ref=e178]:
+              - generic [ref=e179]: 09:20
+              - generic [ref=e181]: arrival gate a abnormal crowding
+            - generic [ref=e182]:
+              - generic [ref=e183]: 09:20
+              - generic [ref=e185]: arrival gate b queue build-up
+            - generic [ref=e186]:
+              - generic [ref=e187]: 09:20
+              - generic [ref=e189]: bag drop a queue build-up
+            - generic [ref=e190]:
+              - generic [ref=e191]: 09:20
+              - generic [ref=e193]: baggage hall queue build-up
+            - generic [ref=e194]:
+              - generic [ref=e195]: 09:20
+              - generic [ref=e197]: baggage reclaim north queue build-up
+            - generic [ref=e198]:
+              - generic [ref=e199]: 09:20
+              - generic [ref=e201]: check in a abnormal crowding
+      - button [ref=e203] [cursor=pointer]
+      - generic:
+        - generic:
+          - generic: ACQUIRING SIGNAL
+          - generic: FLOOR SENSORS · GATES LIVE
+    - generic [ref=e213]:
+      - generic [ref=e214]:
+        - button "▶" [ref=e215] [cursor=pointer]
+        - button "1×" [ref=e216] [cursor=pointer]
+      - generic [ref=e217]:
+        - generic [ref=e218]: 09:20
+        - generic [ref=e219]: MORNING
+      - generic [ref=e220]:
+        - generic [ref=e221]: Forecast horizon · T+0 min
+        - slider [ref=e222] [cursor=pointer]: "0"
+        - generic [ref=e223]:
+          - generic [ref=e224]: 09:20
+          - generic [ref=e225]: 09:50
+          - generic [ref=e226]: 10:20
+          - generic [ref=e227]: 10:50
+          - generic [ref=e228]: 11:20
+      - generic [ref=e229]:
+        - generic [ref=e230]: Next movement
+        - generic [ref=e231]: AX-417 · 09:10 · 312p

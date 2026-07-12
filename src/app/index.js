@@ -1,5 +1,5 @@
 /*
- * Stratus Digital Twin — Airport Flow Ops app shell.
+ * Sentinel — Airport Flow Ops app shell.
  *
  * This is the composition root. It reads the live OperationalSnapshot through
  * the operational-database reader. The rows come from the Postgres export
@@ -54,6 +54,9 @@ const TINYFISH_PUBLIC_CONTEXT_API = "/api/tinyfish/public-context";
 const EDGE_ROWS_URL = new URL("../../database/export/edge-operational-rows.json", import.meta.url);
 const EXPORTED_ROWS_URL = new URL("../../database/export/operational-rows.json", import.meta.url);
 const SOURCE_LABELS = { edge: "EDGE CV", postgres: "PG EXPORT", fixtures: "FIXTURES" };
+const EDGE_ROWS_REQUESTED =
+  typeof globalThis.location !== "undefined" &&
+  new URLSearchParams(globalThis.location.search).get("source") === "edge";
 const tinyFishPublicContextAdapter = createTinyFishPublicContextAdapter();
 
 function createFixtureRowsBundle() {
@@ -82,11 +85,14 @@ function enrichRowsBundleWithPublicContext(bundle, updates) {
 }
 
 function labelForDataSource() {
+  if (dataSource === "edge+live") return "EDGE CV + LIVE TINYFISH";
+  if (dataSource === "postgres+live") return "PG + LIVE TINYFISH";
+  if (dataSource === "fixtures+live") return "FIX + LIVE TINYFISH";
   if (dataSource === "postgres+tinyfish+live") return "PG + LIVE TINYFISH";
   if (dataSource === "fixtures+tinyfish+live") return "FIX + LIVE TINYFISH";
   if (dataSource === "postgres+tinyfish") return "PG + TINYFISH";
   if (dataSource === "fixtures+tinyfish") return "FIX + TINYFISH";
-  return dataSource === "postgres" ? "PG EXPORT" : "FIXTURES";
+  return SOURCE_LABELS[dataSource] ?? "FIXTURES";
 }
 
 function markDataSourceLive() {
@@ -115,7 +121,7 @@ async function fetchRowsBundle(url) {
 
 async function loadRowsBundle() {
   const sources = [
-    { url: EDGE_ROWS_URL, source: "edge" },
+    ...(EDGE_ROWS_REQUESTED ? [{ url: EDGE_ROWS_URL, source: "edge" }] : []),
     { url: EXPORTED_ROWS_URL, source: "postgres" },
   ];
   for (const { url, source } of sources) {
@@ -130,25 +136,10 @@ async function loadRowsBundle() {
         : Math.min(state.snapshotIndex, snapshotIds.length - 1);
       return;
     } catch (error) {
-      console.warn(`Stratus: ${source} rows unavailable, trying next source.`, error);
+      console.warn(`sentinel: ${source} rows unavailable, trying next source.`, error);
     }
-  try {
-    // no-store: the export is live operational data; a cached copy could show
-    // stale numbers after the database is re-exported mid-shift.
-    const response = await fetch(EXPORTED_ROWS_URL, { cache: "no-store" });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const bundle = enrichRowsBundleWithPublicContext(await response.json());
-    if (!Array.isArray(bundle?.operationalSnapshots) || bundle.operationalSnapshots.length === 0) {
-      throw new Error("export contains no operational snapshots");
-    }
-    rowsBundle = bundle;
-    snapshotIds = bundle.operationalSnapshots.map((row) => row.snapshotId);
-    dataSource = "postgres+tinyfish";
-    state.snapshotIndex = Math.min(state.snapshotIndex, snapshotIds.length - 1);
-  } catch (error) {
-    console.warn("Stratus: Postgres export unavailable, staying on fixture rows.", error);
   }
-  console.warn("Stratus: no export available, staying on fixture rows.");
+  console.warn("sentinel: no export available, staying on fixture rows.");
 }
 
 // One reader over the whole bundle; getSnapshot(id) selects the active
@@ -473,6 +464,15 @@ async function fetchTinyFishLiveUpdates(fetcher = globalThis.fetch) {
     if (!Array.isArray(payload.updates)) {
       throw new Error("TinyFish live update response did not include updates");
     }
+    if (payload.unavailable) {
+      state.liveTinyFish = {
+        status: "error",
+        message: payload.message || "TinyFish live updates unavailable",
+        receivedAt: null,
+      };
+      render();
+      return;
+    }
 
     rowsBundle = enrichRowsBundleWithPublicContext(rowsBundle, payload.updates);
     markDataSourceLive();
@@ -480,7 +480,7 @@ async function fetchTinyFishLiveUpdates(fetcher = globalThis.fetch) {
     const receivedAt = new Date().toISOString();
     state.liveTinyFish = {
       status: "ready",
-      message: count > 0 ? `${count} live update${count > 1 ? "s" : ""} applied` : "No live updates returned",
+      message: payload.message || (count > 0 ? `${count} live update${count > 1 ? "s" : ""} applied` : "No live updates returned"),
       receivedAt,
     };
     state.log = [
@@ -535,10 +535,12 @@ function renderCommandBar(frame, clockMinutes, isSim) {
   return `
     <header style="display:flex; align-items:center; gap:16px; padding:0 18px; background:var(--panel2); border-bottom:1px solid var(--border);">
       <div style="display:flex; align-items:center; gap:10px;">
-        <div style="width:26px; height:26px; border:1.5px solid ${ACCENT}; border-radius:5px; display:flex; align-items:center; justify-content:center;">
-          <div style="width:11px; height:11px; background:${ACCENT}; border-radius:2px; box-shadow:0 0 9px rgba(41,163,255,.7); animation:livedot 2s infinite;"></div>
-        </div>
-        <span style="font-weight:700; font-size:15px;">Stratus</span>
+        <img
+          src="photo_2026-07-12_07-44-35.jpg"
+          alt="sentinel logo"
+          style="width:28px; height:28px; border-radius:6px; object-fit:cover; border:1.5px solid ${ACCENT}; box-shadow:0 0 9px rgba(41,163,255,.7);"
+        />
+        <span style="font-weight:700; font-size:15px;">sentinel</span>
         <span style="font-size:11px; color:var(--text3);">Digital Twin</span>
       </div>
       <div style="width:1px; height:26px; background:var(--border);"></div>
@@ -547,7 +549,7 @@ function renderCommandBar(frame, clockMinutes, isSim) {
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SNAPSHOT</div><div class="mono" style="font-size:12px;">${hhmm(clockMinutes)}</div></div>
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">OCCUPANCY</div><div class="mono" style="font-size:12px;">${kpiPax.toLocaleString("en")}</div></div>
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">ALERTS</div><div class="mono" style="font-size:12px; color:${alertColor};">${kpiAlerts}</div></div>
-        <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SOURCE</div><div class="mono" style="font-size:12px;" data-source="${dataSource}">${SOURCE_LABELS[dataSource] ?? "FIXTURES"}</div></div>
+        <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SOURCE</div><div class="mono" style="font-size:12px;" data-source="${dataSource}">${labelForDataSource()}</div></div>
       </div>
       <div style="flex:1;"></div>
       <div style="display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden;">${viewBtns}</div>
@@ -555,6 +557,7 @@ function renderCommandBar(frame, clockMinutes, isSim) {
       <button data-action="fetch-tinyfish" data-live-api="${TINYFISH_PUBLIC_CONTEXT_API}" title="${escapeHtml(state.liveTinyFish.message)}" style="display:flex; align-items:center; gap:7px; padding:7px 12px; border:1px solid rgba(39,211,209,.45); border-radius:6px; background:${state.liveTinyFish.status === "loading" ? "rgba(245,185,66,.15)" : "var(--hover)"}; color:${liveColor}; cursor:${state.liveTinyFish.status === "loading" ? "default" : "pointer"}; font-size:11px; font-weight:600;">
         <span style="width:6px; height:6px; border-radius:50%; background:${liveColor}; box-shadow:0 0 6px ${liveColor};"></span>${liveLabel}
       </button>
+      ${state.liveTinyFish.status === "idle" ? "" : `<div data-live-status style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; color:${liveColor};" title="${escapeHtml(state.liveTinyFish.message)}">${escapeHtml(state.liveTinyFish.message)}</div>`}
       <div style="display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid ${allFresh ? "rgba(50,199,131,.4)" : "rgba(245,185,66,.4)"}; border-radius:6px; font-size:11px; color:${freshColor};">
         <span style="width:6px; height:6px; border-radius:50%; background:${freshColor};"></span>${allFresh ? "All fresh" : `${frame.freshCount}/${mapZones.length} fresh`}
       </div>

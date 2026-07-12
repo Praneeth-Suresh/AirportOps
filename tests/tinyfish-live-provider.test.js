@@ -77,7 +77,7 @@ test("tinyfish live provider fails safely when API key is missing", async () => 
   );
 });
 
-test("tinyfish demo API handler returns local error when key is missing", async () => {
+test("tinyfish demo API handler degrades without a browser resource error when key is missing", async () => {
   const handler = createTinyFishDemoApiHandler({
     env: {},
     fetcher: async () => {
@@ -86,8 +86,10 @@ test("tinyfish demo API handler returns local error when key is missing", async 
   });
   const response = await handler(new URL("http://localhost:8000/api/tinyfish/public-context?snapshotId=fixture-peak"));
 
-  assert.equal(response.status, 503);
+  assert.equal(response.status, 200);
   assert.equal(response.body.error, "missing-tinyfish-api-key");
+  assert.equal(response.body.unavailable, true);
+  assert.deepEqual(response.body.updates, []);
   assert.equal(JSON.stringify(response.body).includes("test-api-key"), false);
 });
 
