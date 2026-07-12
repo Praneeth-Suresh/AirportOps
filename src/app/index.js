@@ -46,11 +46,14 @@ const SNAPSHOT_VARIANTS = ["normal", "peak", "stale"];
 const LIVE_REFRESH_MS = 5000; // demo cadence for pulling a fresh live snapshot
 const TINYFISH_PUBLIC_CONTEXT_API = "/api/tinyfish/public-context";
 
-// Live data source: rows exported from Postgres when available (written by
-// database/export-rows.mjs), otherwise fixture-shaped rows. Both are the same
-// contract shape and flow through the same operational-database reader, so
-// nothing downstream changes with the source.
+// Live data source, most-informed first: edge-CV-fed rows when an ingest run
+// has produced them (database/ingest-edge-observations.mjs), then rows
+// exported from Postgres (database/export-rows.mjs), then fixture-shaped
+// rows. All three are the same contract shape and flow through the same
+// operational-database reader, so nothing downstream changes with the source.
+const EDGE_ROWS_URL = new URL("../../database/export/edge-operational-rows.json", import.meta.url);
 const EXPORTED_ROWS_URL = new URL("../../database/export/operational-rows.json", import.meta.url);
+const SOURCE_LABELS = { edge: "EDGE CV", postgres: "PG EXPORT", fixtures: "FIXTURES" };
 const tinyFishPublicContextAdapter = createTinyFishPublicContextAdapter();
 
 function createFixtureRowsBundle() {
@@ -98,7 +101,37 @@ let rowsBundle = enrichRowsBundleWithPublicContext(createFixtureRowsBundle());
 let snapshotIds = rowsBundle.operationalSnapshots.map((row) => row.snapshotId);
 let dataSource = "fixtures+tinyfish";
 
+async function fetchRowsBundle(url) {
+  // no-store: exports are live operational data; a cached copy could show
+  // stale numbers after the database is re-exported mid-shift.
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const bundle = await response.json();
+  if (!Array.isArray(bundle?.operationalSnapshots) || bundle.operationalSnapshots.length === 0) {
+    throw new Error("export contains no operational snapshots");
+  }
+  return bundle;
+}
+
 async function loadRowsBundle() {
+  const sources = [
+    { url: EDGE_ROWS_URL, source: "edge" },
+    { url: EXPORTED_ROWS_URL, source: "postgres" },
+  ];
+  for (const { url, source } of sources) {
+    try {
+      const bundle = await fetchRowsBundle(url);
+      rowsBundle = bundle;
+      snapshotIds = bundle.operationalSnapshots.map((row) => row.snapshotId);
+      dataSource = source;
+      // Edge bundles append the CV-observed snapshot last; land the demo on it.
+      state.snapshotIndex = source === "edge"
+        ? snapshotIds.length - 1
+        : Math.min(state.snapshotIndex, snapshotIds.length - 1);
+      return;
+    } catch (error) {
+      console.warn(`Stratus: ${source} rows unavailable, trying next source.`, error);
+    }
   try {
     // no-store: the export is live operational data; a cached copy could show
     // stale numbers after the database is re-exported mid-shift.
@@ -115,6 +148,7 @@ async function loadRowsBundle() {
   } catch (error) {
     console.warn("Stratus: Postgres export unavailable, staying on fixture rows.", error);
   }
+  console.warn("Stratus: no export available, staying on fixture rows.");
 }
 
 // One reader over the whole bundle; getSnapshot(id) selects the active
@@ -513,7 +547,7 @@ function renderCommandBar(frame, clockMinutes, isSim) {
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SNAPSHOT</div><div class="mono" style="font-size:12px;">${hhmm(clockMinutes)}</div></div>
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">OCCUPANCY</div><div class="mono" style="font-size:12px;">${kpiPax.toLocaleString("en")}</div></div>
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">ALERTS</div><div class="mono" style="font-size:12px; color:${alertColor};">${kpiAlerts}</div></div>
-        <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SOURCE</div><div class="mono" style="font-size:12px;" data-source="${dataSource}">${labelForDataSource()}</div></div>
+        <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SOURCE</div><div class="mono" style="font-size:12px;" data-source="${dataSource}">${SOURCE_LABELS[dataSource] ?? "FIXTURES"}</div></div>
       </div>
       <div style="flex:1;"></div>
       <div style="display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden;">${viewBtns}</div>
@@ -660,8 +694,44 @@ const TOOL_META = [
   { key: "layers", label: "Layers", icon: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h16M4 12h16M4 16h16"/></svg>' },
   { key: "staffing", label: "Staffing", icon: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3"/><path d="M4 20c0-3 2.5-5 5-5s5 2 5 5"/><circle cx="17" cy="9" r="2.2"/><path d="M15 20c0-2.5 1.5-4 4-4"/></svg>' },
   { key: "flights", label: "Flights", icon: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15l-8-3.5V5.5a1.5 1.5 0 0 0-3 0V11L2 15v2l8-2v4l-2 1.2V22l3.5-1 3.5 1v-1.8L13 19v-4l8 2Z"/></svg>' },
+  { key: "cctv", label: "CCTV", icon: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2" y="6" width="13" height="9" rx="1.5"/><path d="M15 8.5 21 6 21 15 15 12.5"/><circle cx="6" cy="10.5" r="1.3"/></svg>' },
   { key: "incidents", label: "Incidents", icon: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v5M12 17.5v.5"/></svg>' },
 ];
+
+// CCTV camera groupings. Each camera covers a cluster of adjacent zones; a
+// camera tile is a lens over the same operational pipeline, so its people-in-
+// view count and per-zone busy numbers come straight from the frame. The
+// cam-checkin-east-01 entry is the OpenCV edge pilot's real camera (see
+// tools/edge-analytics); it is badged LIVE CV only when the active data source
+// is the edge bundle.
+const CAMERAS = [
+  { cameraId: "cam-checkin-east-01", label: "Check-in East", edge: true, zoneIds: ["check-in-a", "bag-drop-a"] },
+  { cameraId: "cam-checkin-west-02", label: "Check-in West", zoneIds: ["check-in-b", "departure-hall"] },
+  { cameraId: "cam-entrance-01", label: "Landside Entrance", zoneIds: ["terminal-entrance-east", "terminal-entrance-west"] },
+  { cameraId: "cam-security-01", label: "Security Screening", zoneIds: ["security-north", "transfer-corridor", "security-south"] },
+  { cameraId: "cam-gates-dep-01", label: "Departure Gates", zoneIds: ["departure-gate-a", "departure-gate-b", "departure-gate-c", "departure-gate-d"] },
+  { cameraId: "cam-immigration-01", label: "Immigration Hall", zoneIds: ["immigration-east", "immigration-west"] },
+  { cameraId: "cam-baggage-01", label: "Baggage Reclaim", zoneIds: ["baggage-hall", "baggage-reclaim-north", "baggage-reclaim-south"] },
+  { cameraId: "cam-customs-01", label: "Customs", zoneIds: ["customs-hall"] },
+  { cameraId: "cam-arrivals-01", label: "Arrivals Hall", zoneIds: ["arrival-gate-a", "arrival-gate-b", "arrivals-hall"] },
+];
+
+const STATUS_RANK = { normal: 0, watch: 1, critical: 2 };
+
+// Build per-camera view models from the current frame's zones. Only zones on
+// the active floor are present in mapZones, so a camera contributes only the
+// zones its lens currently sees; cameras with no visible zone drop out.
+function camerasForView(mapZones) {
+  const byId = new Map(mapZones.map((z) => [z.zoneId, z]));
+  return CAMERAS.map((cam) => {
+    const zones = cam.zoneIds.map((id) => byId.get(id)).filter(Boolean);
+    if (zones.length === 0) return null;
+    const peopleInView = zones.reduce((total, z) => total + z.occupancy, 0);
+    const worst = zones.reduce((acc, z) => (STATUS_RANK[z.status] > STATUS_RANK[acc.status] ? z : acc), zones[0]);
+    const allFresh = zones.every((z) => z.freshness.status === "fresh");
+    return { ...cam, zones, peopleInView, color: worst.color, status: worst.status, allFresh };
+  }).filter(Boolean);
+}
 
 function renderToolRail(frame) {
   const railButtons = TOOL_META.map((t) => {
@@ -693,7 +763,7 @@ function renderToolRail(frame) {
 }
 
 function renderDrawer(frame) {
-  const titles = { overview: "Overview", zones: "Zones", layers: "Map Layers", staffing: "Staffing", flights: "Inbound Flights", incidents: "Incidents" };
+  const titles = { overview: "Overview", zones: "Zones", layers: "Map Layers", staffing: "Staffing", flights: "Inbound Flights", cctv: "CCTV · Live View", incidents: "Incidents" };
   return `
     <div style="width:250px; background:var(--panel); border:1px solid var(--border); border-radius:9px; display:flex; flex-direction:column; animation:drawin .18s ease; overflow:hidden;">
       <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 13px; border-bottom:1px solid var(--border);">
@@ -769,6 +839,44 @@ function renderDrawerBody(frame) {
       .map(
         (f) => `<div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:var(--panel2); border:1px solid var(--border); border-radius:7px;"><div><div class="mono" style="font-size:12px; font-weight:600;">${f.flightId}</div><div style="font-size:10px; color:var(--text3);">${labelize(f.gateZoneId)} · ${f.status}</div></div><div style="text-align:right;"><div class="mono" style="font-size:12px; color:${ACCENT};">${hhmm(parseClockMinutes(f.scheduledAt))}</div><div style="font-size:10px; color:var(--text3);">${f.estimatedPassengers} pax</div></div></div>`,
       )
+      .join("")}</div>`;
+  }
+  if (state.tool === "cctv") {
+    const cams = camerasForView(mapZones);
+    const isEdge = dataSource === "edge";
+    if (cams.length === 0) {
+      return `<div style="padding:14px 10px; text-align:center; font-size:11px; color:var(--text3);">No cameras cover the ${state.view} floor.</div>`;
+    }
+    return `<div style="display:flex; flex-direction:column; gap:9px;">${cams
+      .map((cam) => {
+        const badge =
+          cam.edge && isEdge
+            ? `<span style="font-size:8px; font-weight:600; letter-spacing:.04em; color:#04121f; background:${OK}; padding:2px 5px; border-radius:3px;">● LIVE CV</span>`
+            : `<span style="font-size:9px; color:${cam.allFresh ? OK : WARN};">${cam.allFresh ? "fresh" : "stale"}</span>`;
+        const zoneRows = cam.zones
+          .map((z) => {
+            const util = z.utilization;
+            const busy = util
+              ? { txt: `${util.busyCounters}/${util.openCounters} busy`, color: util.openCounters > 0 && util.busyCounters >= util.openCounters ? BUSY : OK }
+              : { txt: `${z.staffHere.length} staff`, color: z.staffHere.length > 0 ? "var(--text2)" : "var(--text3)" };
+            return `<div data-zone-chip="${z.zoneId}" style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 8px; background:var(--panel2); border:1px solid ${z.zoneId === state.selected ? z.color : "var(--border)"}; border-radius:6px; cursor:pointer;">
+              <span style="display:flex; align-items:center; gap:6px; min-width:0;"><span style="width:6px; height:6px; border-radius:50%; background:${z.color}; flex:none;"></span><span style="font-size:11px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${z.label}</span></span>
+              <span style="display:flex; align-items:center; gap:9px; flex:none;"><span class="mono" style="font-size:11px; color:var(--text);" title="people in view">👤 ${z.occupancy}</span><span class="mono" style="font-size:10px; color:${busy.color};">${busy.txt}</span></span>
+            </div>`;
+          })
+          .join("");
+        return `<div style="border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; background:var(--panel2); border-bottom:1px solid var(--border);">
+            <span style="display:flex; align-items:center; gap:7px; min-width:0;">
+              <span style="display:flex; color:${cam.color};"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2" y="6" width="13" height="9" rx="1.5"/><path d="M15 8.5 21 6 21 15 15 12.5"/><circle cx="6" cy="10.5" r="1.3"/></svg></span>
+              <span style="min-width:0;"><span style="display:block; font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${cam.label}</span><span class="mono" style="font-size:8.5px; color:var(--text3);">${cam.cameraId}</span></span>
+            </span>
+            <span style="display:flex; flex-direction:column; align-items:flex-end; flex:none;"><span class="mono" style="font-size:15px; font-weight:600; color:${cam.color};">${cam.peopleInView}</span><span style="font-size:8px; color:var(--text3);">in view</span></span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px 4px;"><span style="font-size:8.5px; color:var(--text3); letter-spacing:.04em; text-transform:uppercase;">${cam.zones.length} zone${cam.zones.length > 1 ? "s" : ""}</span>${badge}</div>
+          <div style="display:flex; flex-direction:column; gap:5px; padding:0 8px 8px;">${zoneRows}</div>
+        </div>`;
+      })
       .join("")}</div>`;
   }
   if (state.tool === "incidents") {
