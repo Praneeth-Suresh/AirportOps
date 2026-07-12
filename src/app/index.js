@@ -27,18 +27,29 @@ import { defaultScenarioDecisions, simulationService } from "../simulation/index
 import { decisionSupportService } from "../decision-support/index.js";
 import { createFixtureSnapshotSeries } from "../fixtures/deterministicAdapters.js";
 import { computeMapLayout, mapBackgroundSvg, zonesForView, MAP_VIEWBOX } from "./mapLayout.js";
+import { OTTO_SIDE_SVG, OTTO_FACE_SVG } from "./ottoAssets.js";
 
 const ACCENT = "#29a3ff";
+const LIGHTBLUE = "#7cc4ff"; // "current time" timestamp accent
 const OK = "#32c783";
 const WARN = "#f5b942";
 const BUSY = "#f05b61";
-const TEAL = "#27d3d1";
+// Personnel colours are chosen so the three groups read apart at a glance:
+// passengers are cool blue dots, staff roles are a warm gold/coral family, and
+// "other personnel" (customs) is violet — none of them blue or zone-green.
+const PAX_COLOR = ACCENT; // passengers — cool blue
 const ROLE_COLOR = {
-  "immigration-officer": "var(--staff-officer)",
-  security: TEAL,
-  "ground-staff": WARN,
-  "customs-officer": "#c9a2ff",
+  "immigration-officer": "#ffd15c", // gold   (staff)
+  security: "#ff8a5c", // coral  (staff)
+  "ground-staff": "#f0a63c", // amber  (staff — warm, kept clear of the violet below)
+  "customs-officer": "#b892ff", // violet (other personnel)
 };
+
+// Muted map-layer variants of the OK/WARN status colours so green/yellow zones
+// recede against the dark floor and red stays the eye's first stop. The vivid
+// OK/WARN are kept for panels (cards, hover, legend).
+const OK_MAP = "#4f8a70"; // muted green
+const WARN_MAP = "#b08a43"; // muted amber
 
 const SNAPSHOT_VARIANTS = ["normal", "peak", "stale"];
 const snapshotSeries = createFixtureSnapshotSeries();
@@ -62,13 +73,13 @@ const state = {
   mode: "live", // live | sim
   selected: null,
   tool: null,
-  copilot: false,
+  otto: false, // Otto AI explanation expanded in the selected zone's card
   theme: "dark",
   zoom: 1,
   panX: 0,
   panY: 0,
   hover: null,
-  layers: { pax: true, staff: true, heat: true, flights: true },
+  layers: { pax: true, staff: true, heat: true },
   simDecisions: {}, // zoneId -> staged additional open counters
   simMovements: [], // { from, to, passengers }
   simShiftStaggered: false,
@@ -115,6 +126,19 @@ function pct(ratio) {
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+}
+
+// Triangle-exclamation glyph used to flag critical (red) zones and queues, so
+// the highest-severity state reads at a glance instead of just a coloured dot.
+function warnTriangle(color, size = 13) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none; filter:drop-shadow(0 0 4px ${color});"><path d="M12 3 2.4 20.2h19.2L12 3Z"/><path d="M12 9.5v4.6M12 17.6v.2"/></svg>`;
+}
+
+// Status marker: a triangle-exclamation for critical zones, otherwise the
+// familiar coloured status dot at the requested pixel size.
+function zoneMarker(status, color, dotPx = 6) {
+  if (status === "critical") return warnTriangle(color, dotPx + 6);
+  return `<span style="width:${dotPx}px; height:${dotPx}px; border-radius:50%; background:${color}; box-shadow:0 0 6px ${color}; display:inline-block; flex:none;"></span>`;
 }
 
 // --- scenario staging -------------------------------------------------------
@@ -241,6 +265,8 @@ function computeFrame() {
     const staffing = mon.staffingContext;
     const status = proj.status;
     const color = status === "critical" ? BUSY : status === "watch" ? WARN : OK;
+    // Muted variant for map-layer glow/dots so green/yellow zones recede.
+    const mapColor = status === "critical" ? BUSY : status === "watch" ? WARN_MAP : OK_MAP;
     const loadPct = Math.round(proj.queuePressure * 100);
     const forecastDelta = Math.round((next.queuePressure - proj.queuePressure) * 100);
     const staffHere = snapshot.staff.filter((s) => s.zoneId === zone.zoneId);
@@ -258,6 +284,7 @@ function computeFrame() {
       hit: pos,
       status,
       color,
+      mapColor,
       loadPct,
       forecastDelta,
       projOccupancy: proj.expectedOccupancy,
@@ -275,7 +302,8 @@ function computeFrame() {
       openCounters: util ? util.openCounters : null,
       staffHere,
       paxCount,
-      heatOpacity: status === "critical" ? 0.26 : status === "watch" ? 0.15 : 0.06,
+      // Critical stays loud; watch/normal glow is dialled down so red leads.
+      heatOpacity: status === "critical" ? 0.28 : status === "watch" ? 0.085 : 0.035,
     };
   });
 
@@ -313,8 +341,6 @@ function renderToString() {
   const clockMinutes = currentClockMinutes();
   const isSim = state.mode === "sim";
   const selectedZone = state.selected ? mapZones.find((z) => z.zoneId === state.selected) : null;
-  const topOption = options[0] || null;
-  const worst = [...mapZones].filter((z) => z.status !== "normal").sort((a, b) => b.loadPct - a.loadPct)[0];
 
   return `
     <div data-theme="${state.theme}" style="height:100vh; display:grid; grid-template-rows:58px 1fr 82px; overflow:hidden; background:var(--bg-app); color:var(--text);">
@@ -324,7 +350,6 @@ function renderToString() {
         ${renderToolRail(frame)}
         ${isSim ? renderSimBanner() : ""}
         ${renderInsightPanel(frame, selectedZone, isSim)}
-        ${renderCopilot(frame, worst, topOption, isSim)}
         ${isSim ? renderSimDock(frame) : ""}
         ${renderBoot()}
       </main>
@@ -377,7 +402,7 @@ function renderCommandBar(frame, clockMinutes, isSim) {
       <div style="width:1px; height:26px; background:var(--border);"></div>
       <div style="display:flex; align-items:center; gap:20px;">
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">TERMINAL</div><div style="font-size:12px; font-weight:500;">${snapshot.airport.airportId} · T1 ${viewLabel}</div></div>
-        <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">SNAPSHOT</div><div class="mono" style="font-size:12px;">${hhmm(clockMinutes)}</div></div>
+        <div><div style="font-size:9px; color:${LIGHTBLUE}; letter-spacing:.05em;">CURRENT TIME</div><div class="mono" style="font-size:12px; font-weight:600; color:${LIGHTBLUE};">${hhmm(parseClockMinutes(snapshot.asOf))}</div></div>
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">OCCUPANCY</div><div class="mono" style="font-size:12px;">${kpiPax.toLocaleString("en")}</div></div>
         <div><div style="font-size:9px; color:var(--text3); letter-spacing:.05em;">ALERTS</div><div class="mono" style="font-size:12px; color:${alertColor};">${kpiAlerts}</div></div>
       </div>
@@ -395,12 +420,10 @@ function renderMap(frame, isSim) {
   const { snapshot, layout, mapZones } = frame;
   const invZoom = Math.round((1 / state.zoom) * 1000) / 1000;
   const grabCursor = state.zoom > 1 ? (dragState.active ? "grabbing" : "grab") : "default";
-  const arrivalFlight = snapshot.flights.find((f) => f.type === "arrival");
-  const showPlane = state.layers.flights && state.booted && state.view === "arrival" && arrivalFlight;
 
   const heat = state.layers.heat
     ? mapZones
-        .map((z) => `<circle cx="${z.cx}" cy="${z.cy}" r="104" fill="${z.color}" fill-opacity="${z.heatOpacity}" filter="url(#soft)"></circle>`)
+        .map((z) => `<circle cx="${z.cx}" cy="${z.cy}" r="104" fill="${z.mapColor}" fill-opacity="${z.heatOpacity}" filter="url(#soft)"></circle>`)
         .join("")
     : "";
   const busyRings = mapZones
@@ -418,7 +441,7 @@ function renderMap(frame, isSim) {
             const ry = ((Math.sin((seed + i) * 78.233) * 43758.5453) % 1 + 1) % 1;
             const x = z.hit.hitX + 12 + rx * (z.hit.hitW - 24) + Math.sin(state.tick * 0.9 + i) * 3;
             const y = z.hit.hitY + 12 + ry * (z.hit.hitH - 24) + Math.cos(state.tick * 0.8 + i) * 3;
-            dots.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${ACCENT}" filter="url(#glow)"></circle>`);
+            dots.push(`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${PAX_COLOR}" filter="url(#glow)"></circle>`);
           }
           return dots;
         })
@@ -441,33 +464,33 @@ function renderMap(frame, isSim) {
     : "";
 
   const nodeDots = mapZones
-    .map((z) => `<circle cx="${z.cx}" cy="${z.cy}" r="3.5" fill="${z.color}" filter="url(#glow)"></circle>`)
+    .map((z) => `<circle cx="${z.cx}" cy="${z.cy}" r="3.5" fill="${z.mapColor}" filter="url(#glow)"></circle>`)
     .join("");
 
   const chips = mapZones
     .map((z) => {
-      const statusBorder = z.status === "critical" ? BUSY : z.status === "watch" ? "rgba(245,185,66,.55)" : "var(--border2)";
-      const selRing = z.zoneId === state.selected ? "box-shadow:0 0 0 2px " + z.color + ";" : "";
+      const statusBorder = z.status === "critical" ? BUSY : z.status === "watch" ? "rgba(176,138,67,.5)" : "var(--border2)";
+      const selRing = z.zoneId === state.selected ? "box-shadow:0 0 0 2px " + z.mapColor + ";" : "";
       const base = `position:absolute; left:${z.chipLeft}%; top:${z.chipTop}%; transform:translate(-50%,-50%) scale(${invZoom}); cursor:pointer; z-index:4; background:var(--chip-bg); backdrop-filter:blur(3px); border:1px solid ${statusBorder};`;
       return `
       <div data-zone-chip="${z.zoneId}" style="${base} display:flex; align-items:center; gap:7px; border-radius:5px; padding:4px 9px; white-space:nowrap; ${selRing}">
-        <span style="width:6px; height:6px; border-radius:50%; background:${z.color}; box-shadow:0 0 6px ${z.color};"></span>
+        ${zoneMarker(z.status, z.mapColor, 6)}
         <span style="font-size:11px; font-weight:600; color:var(--text);">${z.label}</span>
-        <span class="mono" style="font-size:11px; font-weight:600; color:${z.color};">${z.loadPct}%</span>
+        <span class="mono" style="font-size:11px; font-weight:600; color:${z.mapColor};">${z.loadPct}%</span>
       </div>`;
     })
     .join("");
 
-  // Layer 2 (hover preview) is suppressed while Layer 3 (a selected zone's
-  // detail panel) is open, so the two cards never stack.
-  const hover = state.hover && !state.selected ? mapZones.find((z) => z.zoneId === state.hover) : null;
+  // Layer 2 (hover preview) still works while Layer 3 (a selected zone's detail
+  // panel) is open — you can quick-view other zones — except the selected zone
+  // itself, whose stats already fill the detail panel.
+  const hover = state.hover && state.hover !== state.selected ? mapZones.find((z) => z.zoneId === state.hover) : null;
   const hoverTip = hover ? renderHoverTip(hover, invZoom) : "";
 
   return `
     <div data-pan style="position:absolute; inset:0; cursor:${grabCursor}; overflow:hidden;">
       <div style="position:absolute; inset:0; background:var(--map-grad);"></div>
       <div style="position:absolute; inset:0; transform:translate(${state.panX}px, ${state.panY}px) scale(${state.zoom}); transform-origin:center center;">
-        ${showPlane ? `<div style="position:absolute; top:9%; left:0; width:100%; pointer-events:none;"><svg width="42" height="42" viewBox="0 0 24 24" style="animation:planefly 11s linear infinite; filter:drop-shadow(0 0 6px rgba(41,163,255,.8));"><path transform="rotate(90 12 12)" d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" fill="${ACCENT}"></path></svg></div>` : ""}
         <svg viewBox="0 0 ${MAP_VIEWBOX.w} ${MAP_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none;">
           <defs>
             <filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="34"></feGaussianBlur></filter>
@@ -503,7 +526,7 @@ function renderHoverTip(hover, invZoom) {
     <div style="position:absolute; left:${hover.chipLeft}%; top:${hover.chipTop}%; transform:${tx} scale(${invZoom}); z-index:10; pointer-events:none; width:192px; background:var(--panel); border:1px solid ${hover.color}; border-radius:8px; box-shadow:0 10px 30px var(--scrim); padding:9px 11px;">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
         <span style="display:flex; align-items:center; gap:7px; min-width:0;">
-          <span style="width:7px; height:7px; border-radius:50%; background:${hover.color}; box-shadow:0 0 6px ${hover.color}; flex:none;"></span>
+          ${zoneMarker(hover.status, hover.color, 7)}
           <span style="font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${hover.label}</span>
         </span>
         <span class="mono" style="font-size:15px; font-weight:600; color:${hover.color}; flex:none;">${hover.loadPct}%</span>
@@ -590,10 +613,9 @@ function renderDrawerBody(frame) {
   }
   if (state.tool === "layers") {
     const layerMeta = [
-      { key: "pax", label: "Passengers", swatch: ACCENT },
-      { key: "staff", label: "Manpower", swatch: "#8aa0b2" },
+      { key: "pax", label: "Passengers", swatch: PAX_COLOR },
+      { key: "staff", label: "Manpower", swatch: ROLE_COLOR["immigration-officer"] },
       { key: "heat", label: "Congestion heat", swatch: BUSY },
-      { key: "flights", label: "Flights", swatch: ACCENT },
     ];
     return `<div style="display:flex; flex-direction:column; gap:7px;">${layerMeta
       .map((l) => {
@@ -658,7 +680,7 @@ function renderSimBanner() {
 }
 
 function renderInsightPanel(frame, selectedZone, isSim) {
-  const body = selectedZone ? renderZoneDetail(frame, selectedZone, isSim) : renderTerminalStatus(frame);
+  const body = selectedZone ? renderZoneDetail(frame, selectedZone, isSim) : renderTerminalStatus(frame, isSim);
   return `<div style="position:absolute; right:14px; top:14px; bottom:14px; width:312px; z-index:11; display:flex; flex-direction:column; pointer-events:none;">${body}</div>`;
 }
 
@@ -666,7 +688,6 @@ function renderZoneDetail(frame, zone, isSim) {
   const staffing = zone.staffing;
   const util = zone.utilization;
   const option = frame.options.find((o) => o.affectedZones.includes(zone.zoneId));
-  const recFg = zone.status === "critical" ? BUSY : zone.status === "watch" ? WARN : "var(--text)";
   const forecastColor = zone.forecastDelta > 6 ? BUSY : zone.forecastDelta > 0 ? WARN : OK;
   const canAdjust = !!util;
   const crowd = [
@@ -680,7 +701,7 @@ function renderZoneDetail(frame, zone, isSim) {
   return `
     <div style="pointer-events:auto; max-height:100%; background:var(--panel); border:1px solid var(--border2); border-radius:9px; display:flex; flex-direction:column; animation:panelin .18s ease; overflow:hidden;">
       <div style="display:flex; align-items:flex-start; justify-content:space-between; padding:13px 14px; border-bottom:1px solid var(--border);">
-        <div><div style="display:flex; align-items:center; gap:8px;"><span style="width:8px; height:8px; border-radius:50%; background:${zone.color}; box-shadow:0 0 7px ${zone.color};"></span><span style="font-size:15px; font-weight:600;">${zone.label}</span></div><div style="font-size:10px; color:var(--text3); margin-top:3px;">${zone.type} · ${staffing ? staffing.roleRequired : "no counter bank"}</div></div>
+        <div><div style="display:flex; align-items:center; gap:8px;">${zoneMarker(zone.status, zone.color, 8)}<span style="font-size:15px; font-weight:600;">${zone.label}</span></div><div style="font-size:10px; color:var(--text3); margin-top:3px;">${zone.type} · ${staffing ? staffing.roleRequired : "no counter bank"}</div></div>
         <button data-action="close-sel" style="border:none; background:none; color:var(--text3); cursor:pointer; font-size:15px;">✕</button>
       </div>
       <div style="overflow-y:auto; padding:13px 14px 16px;">
@@ -691,11 +712,7 @@ function renderZoneDetail(frame, zone, isSim) {
         </div>
         <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:var(--panel2); border:1px solid var(--border); border-radius:6px; margin-bottom:8px;"><span style="font-size:11px; color:var(--text2);">Forecast · 20 min</span><span class="mono" style="font-size:13px; font-weight:600; color:${forecastColor};">${zone.forecastDelta >= 0 ? "+" : ""}${zone.forecastDelta}% load</span></div>
         <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:var(--panel2); border:1px solid var(--border); border-radius:6px; margin-bottom:8px;"><span style="font-size:11px; color:var(--text2);">Staff allocated</span><span class="mono" style="font-size:13px; font-weight:600;">${staffing ? staffing.activeCoverageUnits + " / " + staffing.requiredCoverageUnits + " req" : zone.staffHere.length + " on floor"}</span></div>
-        <div style="border:1px solid ${zone.status === "critical" ? "rgba(240,91,97,.4)" : zone.status === "watch" ? "rgba(245,185,66,.4)" : "var(--border)"}; border-radius:7px; padding:11px 12px; background:var(--panel2); margin:6px 0 14px;">
-          <div style="font-size:10px; color:var(--text3); margin-bottom:5px;">Recommended action</div>
-          <div style="font-size:13px; font-weight:600; color:${recFg}; line-height:1.4;">${option ? escapeHtml(describeDecision(option.decision)) : "Hold — zone within thresholds"}</div>
-          ${option ? `<button data-apply-option="${option.optionId}" style="width:100%; margin-top:10px; padding:8px; border:none; border-radius:6px; background:${ACCENT}; color:#04121f; cursor:pointer; font-size:11px; font-weight:600;">${isSim ? "Apply to draft" : "Simulate this"}</button>` : ""}
-        </div>
+        ${ottoBlock(zone, option, isSim)}
         <div style="font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">Crowd metrics</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:6px; overflow:hidden;">${crowd
           .map((m) => `<div style="background:var(--panel2); padding:8px 10px;"><div style="font-size:9px; color:var(--text3);">${m.k}</div><div class="mono" style="font-size:13px; font-weight:600; margin-top:2px; color:${m.color};">${m.v}</div></div>`)
@@ -710,11 +727,14 @@ function renderZoneDetail(frame, zone, isSim) {
   `;
 }
 
-function renderTerminalStatus(frame) {
-  const { snapshot, kpiPax, kpiStaff, kpiWait, kpiAlerts, alerts, monitoring } = frame;
+function renderTerminalStatus(frame, isSim) {
+  const { snapshot, kpiPax, kpiStaff, kpiWait, kpiAlerts, alerts, monitoring, mapZones, options } = frame;
   const statusColor = kpiAlerts > 0 ? BUSY : OK;
   const nextFlight = [...snapshot.flights].sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt)).find((f) => true);
   const feed = buildFeed(frame);
+  // Terminal-wide Otto: speak about the most pressured zone.
+  const worst = [...mapZones].filter((z) => z.status !== "normal").sort((a, b) => b.loadPct - a.loadPct)[0] || null;
+  const worstOption = worst ? options.find((o) => o.affectedZones.includes(worst.zoneId)) || options[0] || null : null;
   return `
     <div style="pointer-events:auto; max-height:100%; background:var(--panel); border:1px solid var(--border); border-radius:9px; display:flex; flex-direction:column; overflow:hidden;">
       <div style="padding:13px 14px; border-bottom:1px solid var(--border);">
@@ -726,10 +746,11 @@ function renderTerminalStatus(frame) {
         </div>
       </div>
       <div style="overflow-y:auto; padding:13px 14px 14px;">
-        <div style="display:flex; align-items:center; gap:9px; padding:10px 11px; background:var(--panel2); border:1px dashed var(--border2); border-radius:7px; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:9px; padding:10px 11px; background:var(--panel2); border:1px dashed var(--border2); border-radius:7px; margin-bottom:14px;">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.8"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
           <span style="font-size:11px; color:var(--text2); line-height:1.4;">Hover any zone on the map for live queue stats, or click to inspect.</span>
         </div>
+        ${ottoBlock(worst, worstOption, isSim)}
         ${nextFlight ? `<div style="font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">Next Movement</div>
         <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:var(--panel2); border:1px solid var(--border); border-radius:7px; margin-bottom:16px;"><div><div class="mono" style="font-size:13px; font-weight:600;">${nextFlight.flightId}</div><div style="font-size:10px; color:var(--text3);">${labelize(nextFlight.gateZoneId)} · ${nextFlight.estimatedPassengers} pax</div></div><div class="mono" style="font-size:15px; color:${ACCENT};">${hhmm(parseClockMinutes(nextFlight.scheduledAt))}</div></div>` : ""}
         <div style="font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">Recent Events</div>
@@ -762,91 +783,53 @@ function buildFeed(frame) {
   return feed.slice(0, 6);
 }
 
-const DOG_SVG = '<svg width="42" height="48" viewBox="0 0 130 150"><ellipse cx="65" cy="122" rx="34" ry="24" fill="var(--hover)" stroke="var(--text2)" stroke-width="2.4"/><path d="M92 118 q26 -6 28 -30 q-14 10 -30 14 z" fill="var(--panel2)" stroke="var(--text2)" stroke-width="2.4" style="animation:wag .6s ease-in-out infinite; transform-box:fill-box; transform-origin:0% 100%;"/><rect x="46" y="132" width="9" height="16" rx="4" fill="var(--hover)" stroke="var(--text2)" stroke-width="2.2"/><rect x="74" y="132" width="9" height="16" rx="4" fill="var(--hover)" stroke="var(--text2)" stroke-width="2.2"/><path d="M34 46 q-16 6 -14 40 q10 -4 20 -18 z" fill="var(--panel2)" stroke="var(--text2)" stroke-width="2.4"/><path d="M96 46 q16 6 14 40 q-10 -4 -20 -18 z" fill="var(--panel2)" stroke="var(--text2)" stroke-width="2.4"/><circle cx="65" cy="58" r="35" fill="var(--hover)" stroke="var(--text2)" stroke-width="2.4"/><g style="animation:blink 4.2s infinite; transform-box:fill-box; transform-origin:center;"><circle cx="53" cy="55" r="4.6" fill="var(--text)"/><circle cx="77" cy="55" r="4.6" fill="var(--text)"/></g><ellipse cx="65" cy="74" rx="17" ry="13" fill="var(--panel2)" stroke="var(--text2)" stroke-width="2"/><ellipse cx="65" cy="68" rx="5.5" ry="4.2" fill="#29A3FF"/><path d="M65 72 v6 M65 78 q-7 3 -11 -1 M65 78 q7 3 11 -1" fill="none" stroke="var(--text2)" stroke-width="1.8" stroke-linecap="round"/><rect x="43" y="90" width="44" height="7" rx="3.5" fill="#29A3FF"/></svg>';
-const DOG_MINI_SVG = '<svg width="22" height="22" viewBox="0 0 130 150"><path d="M34 46 q-16 6 -14 40 q10 -4 20 -18 z" fill="var(--panel)" stroke="var(--text2)" stroke-width="3"/><path d="M96 46 q16 6 14 40 q-10 -4 -20 -18 z" fill="var(--panel)" stroke="var(--text2)" stroke-width="3"/><circle cx="65" cy="62" r="36" fill="var(--hover)" stroke="var(--text2)" stroke-width="3"/><circle cx="53" cy="58" r="5" fill="var(--text)"/><circle cx="77" cy="58" r="5" fill="var(--text)"/><ellipse cx="65" cy="80" rx="17" ry="13" fill="var(--panel)" stroke="var(--text2)" stroke-width="2.4"/><ellipse cx="65" cy="74" rx="5.5" ry="4.2" fill="#29A3FF"/></svg>';
-
-function renderCopilot(frame, worst, topOption, isSim) {
-  const dogAlert = frame.kpiAlerts > 0;
-  const dogStatus = dogAlert ? "ALERT" : "CALM";
-  const dogTag = dogAlert ? BUSY : OK;
-  const speech = worst
-    ? `${worst.label} is at ${worst.loadPct}% — queue ${worst.queueLength}, ~${worst.wait}m wait. ${topOption ? "I recommend: " + describeDecision(topOption.decision).toLowerCase() + ". " : ""}${isSim ? "Apply it to your draft below." : "Switch to Simulate to plan it."}`
-    : `All ${state.view} zones are within thresholds. Queues clear, coverage balanced, sensor freshness good.`;
-
-  const agentDef = [
-    { key: "flow", short: "QUEUE", nx: 42, ny: 30, ty: 17 },
-    { key: "counter", short: "CNTR", nx: 218, ny: 30, ty: 17 },
-    { key: "staff", short: "STAFF", nx: 42, ny: 102, ty: 118 },
-    { key: "shift", short: "FCAST", nx: 218, ny: 102, ty: 118 },
-  ];
-  const busyMap = {
-    flow: !!worst,
-    counter: frame.options.some((o) => o.decision.type === "counter-capacity"),
-    staff: frame.options.some((o) => o.decision.type === "staff-reassignment" || o.decision.type === "passenger-movement"),
-    shift: frame.options.some((o) => o.decision.type === "shift-timing") || state.simShiftStaggered,
-  };
-  const agents = agentDef
-    .map((a) => {
-      const busy = busyMap[a.key];
-      const dot = busy ? BUSY : TEAL;
-      const line = busy ? "rgba(240,91,97,.5)" : "var(--border2)";
-      return `<line x1="130" y1="66" x2="${a.nx}" y2="${a.ny}" stroke="${line}" stroke-width="1.4" stroke-dasharray="4 4" style="animation:dashflow ${busy ? "0.7s" : "1.6s"} linear infinite;"></line>`;
-    })
-    .join("");
-  const agentNodes = agentDef
-    .map((a) => {
-      const busy = busyMap[a.key];
-      const dot = busy ? BUSY : TEAL;
-      const fill = busy ? "rgba(240,91,97,.14)" : "var(--hover)";
-      return `<g><circle cx="${a.nx}" cy="${a.ny}" r="9" fill="${fill}" stroke="${dot}" stroke-width="1.6"></circle><text x="${a.nx}" y="${a.ty}" text-anchor="middle" fill="var(--text2)" font-size="7.5" font-family="IBM Plex Mono">${a.short}</text></g>`;
-    })
-    .join("");
-  const swarmActive = !!worst;
-
-  const topRecBlock = topOption
-    ? `<div style="margin-top:11px; border:1px solid ${topOption.decision.type === "counter-capacity" ? "rgba(41,163,255,.4)" : "var(--border2)"}; border-left:3px solid ${dogAlert ? BUSY : WARN}; border-radius:6px; padding:10px 11px; background:var(--panel2);">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:5px;"><span style="font-size:12px; font-weight:600;">${escapeHtml(describeDecision(topOption.decision))}</span><span style="font-size:9px; color:${dogAlert ? BUSY : WARN};">${topOption.decision.type}</span></div>
-        <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:7px;">
-          <span class="mono" style="font-size:9px; padding:2px 6px; background:var(--hover); border-radius:3px; color:${OK};">−${topOption.expectedImpact.estimatedWaitMinutesReduced}m wait</span>
-          <span class="mono" style="font-size:9px; padding:2px 6px; background:var(--hover); border-radius:3px; color:${OK};">−${Math.round(topOption.expectedImpact.queuePressureDrop * 100)}% press</span>
-          <span class="mono" style="font-size:9px; padding:2px 6px; background:var(--hover); border-radius:3px; color:${ACCENT};">+${topOption.expectedImpact.passengersRelieved} relieved</span>
-        </div>
-        <button data-apply-option="${topOption.optionId}" style="width:100%; padding:7px; border:none; border-radius:5px; background:${ACCENT}; color:#04121f; cursor:pointer; font-size:10px; font-weight:600;">${isSim ? "Apply to draft" : "Simulate this"}</button>
-      </div>`
-    : "";
-
-  const panel = state.copilot
-    ? `<div style="width:302px; background:var(--panel); border:1px solid ${dogAlert ? "rgba(240,91,97,.5)" : "var(--border)"}; border-radius:11px; overflow:hidden; animation:panelin .18s ease; box-shadow:0 12px 40px var(--scrim);">
-        <div style="display:flex; align-items:center; gap:11px; padding:12px 13px; background:${dogAlert ? "rgba(240,91,97,.06)" : "var(--panel2)"};">
-          <div style="flex:none; animation:floaty 3.4s ease-in-out infinite;">${DOG_SVG}</div>
-          <div style="flex:1;"><div style="display:flex; align-items:center; gap:7px;"><span style="font-size:13px; font-weight:600;">Beagle</span><span style="font-size:9px; color:#04121f; background:${dogTag}; padding:2px 6px; border-radius:3px; font-weight:600;">${dogStatus}</span></div><div style="font-size:10px; color:var(--text3); margin-top:2px;">Ops Copilot · agent swarm</div></div>
-          <button data-action="toggle-copilot" style="border:none; background:none; color:var(--text3); cursor:pointer; font-size:14px;">✕</button>
-        </div>
-        <div style="padding:12px 13px;">
-          <div style="font-size:12px; line-height:1.5; color:var(--text);">${escapeHtml(speech)}</div>
-          <div style="display:flex; align-items:center; justify-content:space-between; margin:13px 0 8px;"><span style="font-size:10px; color:var(--text3); letter-spacing:.05em; text-transform:uppercase;">Agent Swarm</span><span style="font-size:9px; color:${swarmActive ? BUSY : TEAL};">${swarmActive ? "negotiating" : "monitoring"}</span></div>
-          <div style="background:var(--panel2); border:1px solid var(--border); border-radius:7px; padding:5px;">
-            <svg viewBox="0 0 260 132" style="width:100%; display:block;">
-              ${agents}
-              <circle cx="130" cy="66" r="15" fill="var(--hover)" stroke="var(--border2)"></circle>
-              <text x="130" y="70" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="IBM Plex Mono" font-weight="600">HUB</text>
-              ${agentNodes}
-            </svg>
-          </div>
-          ${topRecBlock}
-        </div>
-      </div>`
-    : "";
-
+// Otto — the ops copilot, embedded in every Level-3 card. The side-profile
+// otter avatar plus an "Ask Otto" toggle that reveals a Problem → How to solve
+// it → Why explanation, the "Why" drawn straight from the decision-support
+// rationale so it reads as how the AI actually derived the recommendation.
+function ottoBlock(zone, option, isSim) {
+  const status = zone ? zone.status : "normal";
+  const alert = status === "critical";
+  const tag = alert ? "ALERT" : status === "watch" ? "WATCH" : "CALM";
+  const tagColor = alert ? BUSY : status === "watch" ? WARN : OK;
   return `
-    <div style="position:absolute; right:14px; bottom:14px; z-index:13; display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
-      ${panel}
-      <button data-action="toggle-copilot" style="display:flex; align-items:center; gap:9px; padding:7px 15px 7px 8px; border:1px solid ${dogAlert ? "rgba(240,91,97,.5)" : "var(--border)"}; border-radius:24px; background:var(--panel); color:var(--text); cursor:pointer; font-size:12px; font-weight:600; box-shadow:0 6px 20px var(--scrim);">
-        <span style="display:flex;">${DOG_MINI_SVG}</span>
-        Beagle · ${dogAlert ? "1 action" : "monitoring"}
-      </button>
-    </div>
-  `;
+    <div style="border:1px solid ${alert ? "rgba(240,91,97,.4)" : "var(--border)"}; border-radius:8px; background:var(--panel2); overflow:hidden; margin:6px 0 14px;">
+      <div style="display:flex; align-items:center; gap:10px; padding:9px 11px;">
+        <div style="flex:none; animation:floaty 3.4s ease-in-out infinite;">${OTTO_SIDE_SVG}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="display:flex; align-items:center; gap:6px;"><span style="font-size:12px; font-weight:600;">Otto AI</span><span style="font-size:8px; letter-spacing:.05em; color:#04121f; background:${tagColor}; padding:2px 5px; border-radius:3px; font-weight:700;">${tag}</span></div>
+          <div style="font-size:9px; color:var(--text3); margin-top:2px;">otter ops copilot</div>
+        </div>
+        <button data-action="toggle-otto" style="flex:none; padding:6px 12px; border:none; border-radius:6px; background:${LIGHTBLUE}; color:#04121f; cursor:pointer; font-size:11px; font-weight:700;">${state.otto ? "Hide" : "Ask Otto"}</button>
+      </div>
+      ${state.otto ? ottoExplanation(zone, option, isSim) : ""}
+    </div>`;
+}
+
+function ottoExplanation(zone, option, isSim) {
+  const problem = zone
+    ? (zone.status === "normal"
+        ? `${zone.label} is steady at ${zone.loadPct}% load — queue ${zone.queueLength}, ~${zone.wait}m wait — within thresholds.`
+        : `In ${zone.label}, ${zone.status === "critical" ? "abnormal crowding" : "a queue build-up"} is forming: ${zone.loadPct}% load, ${zone.queueLength} in queue, ~${zone.wait}m wait${zone.forecastDelta > 0 ? `, trending +${zone.forecastDelta}% over the next 20 min` : ""}.`)
+    : "All zones are within thresholds right now.";
+  const fix = option ? `${describeDecision(option.decision)}.` : "Hold — no action needed; keep monitoring.";
+  const impact = option
+    ? `<div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:7px;">
+        <span class="mono" style="font-size:9px; padding:2px 6px; background:var(--hover); border-radius:3px; color:${OK};">−${option.expectedImpact.estimatedWaitMinutesReduced}m wait</span>
+        <span class="mono" style="font-size:9px; padding:2px 6px; background:var(--hover); border-radius:3px; color:${OK};">−${Math.round(option.expectedImpact.queuePressureDrop * 100)}% pressure</span>
+        <span class="mono" style="font-size:9px; padding:2px 6px; background:var(--hover); border-radius:3px; color:${ACCENT};">+${option.expectedImpact.passengersRelieved} relieved</span>
+      </div>`
+    : "";
+  const why = option && option.rationale && option.rationale.length
+    ? option.rationale.slice(0, 4).map((r) => `<li style="margin-bottom:3px;">${escapeHtml(r.label)}</li>`).join("")
+    : `<li>${zone && zone.status === "normal" ? "Queue, wait and utilisation are all under alert thresholds." : "Otto is watching this zone; no strong recommendation yet."}</li>`;
+  return `
+    <div style="border-top:1px solid var(--border); padding:11px 12px; font-size:11px; line-height:1.5;">
+      <div style="margin-bottom:9px;"><span style="color:${BUSY}; font-weight:700; text-transform:uppercase; font-size:9px; letter-spacing:.06em;">Problem</span><div style="color:var(--text); margin-top:2px;">${escapeHtml(problem)}</div></div>
+      <div style="margin-bottom:9px;"><span style="color:${OK}; font-weight:700; text-transform:uppercase; font-size:9px; letter-spacing:.06em;">How to solve it</span><div style="color:var(--text); margin-top:2px;">${escapeHtml(fix)}</div>${impact}</div>
+      <div><span style="color:${LIGHTBLUE}; font-weight:700; text-transform:uppercase; font-size:9px; letter-spacing:.06em;">Why · how Otto derived it</span><ul style="margin:4px 0 0; padding-left:16px; color:var(--text2);">${why}</ul></div>
+      ${option ? `<button data-apply-option="${option.optionId}" style="width:100%; margin-top:11px; padding:8px; border:none; border-radius:6px; background:${ACCENT}; color:#ffffff; cursor:pointer; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em;">${isSim ? "Apply to draft" : "Simulate"}</button>` : ""}
+    </div>`;
 }
 
 function renderSimDock(frame) {
@@ -871,28 +854,51 @@ function renderBoot() {
 }
 
 function renderTimeline(frame, clockMinutes, isSim) {
-  const { snapshot } = frame;
-  const dayPart = clockMinutes < 720 ? "MORNING" : clockMinutes < 1020 ? "AFTERNOON" : "EVENING";
-  const nextFlight = [...snapshot.flights].sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))[0];
-  const baseMin = parseClockMinutes(snapshot.asOf);
+  const isNow = state.minute === 0;
+  const clockColor = isNow ? LIGHTBLUE : "var(--text)";
+  const stateLabel = isNow
+    ? `<span style="color:${LIGHTBLUE};">CURRENT TIME</span>`
+    : `<span style="color:${WARN};">+${state.minute}m · FORECAST</span>`;
+  const scrubLabel = isNow
+    ? `<span style="color:${LIGHTBLUE};">Now</span> — drag the timeline right to simulate ahead`
+    : `Forecast +${state.minute} min · a simulation of how the terminal is likely to react, projected from past patterns${isSim ? " · scenario applied" : ""}`;
+  // Legend of what the map colours and markers mean.
+  const legend = [
+    { t: "tri", c: BUSY, label: "Critical — act now" },
+    { t: "dot", c: WARN_MAP, label: "Watch — building" },
+    { t: "dot", c: OK_MAP, label: "Normal" },
+    { t: "dot", c: PAX_COLOR, label: "Passengers" },
+    { t: "sq", c: ROLE_COLOR["immigration-officer"], label: "Staff" },
+    { t: "sq", c: ROLE_COLOR["customs-officer"], label: "Other personnel" },
+  ];
+  const legendHtml = legend
+    .map((l) => {
+      const swatch = l.t === "tri"
+        ? warnTriangle(l.c, 12)
+        : l.t === "sq"
+          ? `<span style="width:9px; height:9px; border-radius:2px; background:${l.c}; display:inline-block; flex:none;"></span>`
+          : `<span style="width:9px; height:9px; border-radius:50%; background:${l.c}; display:inline-block; flex:none;"></span>`;
+      return `<span style="display:flex; align-items:center; gap:5px; font-size:9px; color:var(--text2); white-space:nowrap;">${swatch}${l.label}</span>`;
+    })
+    .join("");
   return `
     <footer style="display:flex; align-items:center; gap:16px; padding:0 18px; background:var(--panel2); border-top:1px solid var(--border);">
       <div style="display:flex; align-items:center; gap:8px;">
         <button data-action="toggle-play" style="width:36px; height:36px; border:1px solid var(--border2); border-radius:7px; background:${state.playing ? ACCENT : "var(--hover)"}; color:${state.playing ? "#04121f" : "var(--text)"}; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center;">${state.playing ? "❚❚" : "▶"}</button>
         <button data-action="cycle-speed" class="mono" style="height:36px; padding:0 12px; border:1px solid var(--border2); border-radius:7px; background:var(--hover); color:var(--text2); cursor:pointer; font-size:11px;">${state.speed}×</button>
       </div>
-      <div style="text-align:center; min-width:74px;">
-        <div class="mono" style="font-size:20px; font-weight:600; line-height:1;">${hhmm(clockMinutes)}</div>
-        <div style="font-size:9px; color:var(--text3); margin-top:2px; letter-spacing:.08em;">${dayPart}</div>
+      <div style="text-align:center; min-width:82px;">
+        <div class="mono" style="font-size:20px; font-weight:600; line-height:1; color:${clockColor};">${hhmm(clockMinutes)}</div>
+        <div style="font-size:8px; margin-top:3px; letter-spacing:.06em; font-weight:700;">${stateLabel}</div>
       </div>
       <div style="flex:1; position:relative; padding-top:15px;">
-        <div style="position:absolute; top:0; left:0; font-size:9px; color:var(--text2);">Forecast horizon · T+${state.minute} min ${isSim ? "· projected" : ""}</div>
+        <div style="position:absolute; top:0; left:0; font-size:9px; color:var(--text2);">${scrubLabel}</div>
         <input type="range" min="0" max="120" step="15" value="${state.minute}" data-scrub style="position:relative;">
-        <div class="mono" style="display:flex; justify-content:space-between; font-size:9px; color:var(--text3); margin-top:6px;"><span>${hhmm(baseMin)}</span><span>${hhmm(baseMin + 30)}</span><span>${hhmm(baseMin + 60)}</span><span>${hhmm(baseMin + 90)}</span><span>${hhmm(baseMin + 120)}</span></div>
+        <div class="mono" style="display:flex; justify-content:space-between; font-size:9px; color:var(--text3); margin-top:6px;"><span style="color:${LIGHTBLUE};">NOW</span><span>+30</span><span>+60</span><span>+90</span><span>+120m</span></div>
       </div>
-      <div style="text-align:right; min-width:170px;">
-        <div style="font-size:9px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase;">Next movement</div>
-        <div class="mono" style="font-size:12px; font-weight:600; margin-top:3px;">${nextFlight ? `${nextFlight.flightId} · ${hhmm(parseClockMinutes(nextFlight.scheduledAt))} · ${nextFlight.estimatedPassengers}p` : "—"}</div>
+      <div style="min-width:250px;">
+        <div style="font-size:9px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:5px;">Legend</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 12px;">${legendHtml}</div>
       </div>
     </footer>
   `;
@@ -920,12 +926,13 @@ function describeDecision(decision) {
 
 function wireEvents() {
   // Layer 1 → Layer 2: hover fires only on the visible map chip/icon (scoped to
-  // the map so the drawer's zone list doesn't spawn map tooltips), and never
-  // while a zone is selected (Layer 3 open).
+  // the map so the drawer's zone list doesn't spawn map tooltips). It keeps
+  // working while a zone is selected so you can quick-view other zones; only the
+  // selected zone's own preview is skipped (its stats are already in Layer 3).
   app.querySelectorAll("[data-pan] [data-zone-chip]").forEach((el) => {
     const id = el.getAttribute("data-zone-chip");
     el.addEventListener("mouseenter", () => {
-      if (state.selected || state.hover === id) return;
+      if (state.hover === id || id === state.selected) return;
       state.hover = id;
       render();
     });
@@ -1011,9 +1018,12 @@ function wireEvents() {
 
   const actions = {
     "toggle-theme": () => (state.theme = state.theme === "dark" ? "light" : "dark"),
-    "toggle-copilot": () => (state.copilot = !state.copilot),
+    "toggle-otto": () => (state.otto = !state.otto),
     "close-drawer": () => (state.tool = null),
-    "close-sel": () => (state.selected = null),
+    "close-sel": () => {
+      state.selected = null;
+      state.otto = false;
+    },
     "zoom-in": () => (state.zoom = clamp(state.zoom * 1.3, 1, 3.2)),
     "zoom-out": () => zoomOut(),
     "zoom-reset": () => resetView(),
@@ -1058,7 +1068,7 @@ function wireEvents() {
 function selectZone(zoneId) {
   state.selected = zoneId;
   state.tool = null;
-  state.hover = null; // Layer 2 disappears the moment Layer 3 opens
+  state.hover = null; // clear the just-hovered tip; other zones still preview on hover
   render();
 }
 
@@ -1100,7 +1110,7 @@ function init() {
 
   // Only the play head drives re-renders. Paused (the default) is fully idle —
   // no per-second innerHTML rebuild — while CSS-driven motion (pulse rings,
-  // flow dashes, the plane, the copilot) keeps running on its own.
+  // flow dashes, the floating Otto avatar) keeps running on its own.
   globalThis.setInterval(() => {
     if (!state.playing) {
       return;

@@ -144,22 +144,9 @@ input[type="range"]::-moz-range-thumb {
   0%, 92%, 100% { transform: scaleY(1); }
   96% { transform: scaleY(0.08); }
 }
-@keyframes wag {
-  0%, 100% { transform: rotate(10deg); }
-  50% { transform: rotate(-16deg); }
-}
 @keyframes softpulse {
   0%, 100% { opacity: 0.25; }
   50% { opacity: 0.85; }
-}
-@keyframes dashflow {
-  to { stroke-dashoffset: -32; }
-}
-@keyframes planefly {
-  0% { transform: translateX(-6vw); opacity: 0; }
-  8% { opacity: 0.9; }
-  92% { opacity: 0.9; }
-  100% { transform: translateX(104vw); opacity: 0; }
 }
 @keyframes scan {
   0% { transform: translateY(-100%); }
@@ -184,9 +171,6 @@ input[type="range"]::-moz-range-thumb {
 @keyframes draftpulse {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
-}
-@keyframes flowdash {
-  to { stroke-dashoffset: -24; }
 }
 
 @media (prefers-reduced-motion: reduce) {

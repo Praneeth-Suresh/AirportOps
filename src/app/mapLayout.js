@@ -284,10 +284,11 @@ function arrivalFloor() {
   // Directional flow converging on the central descent.
   parts.push(arrow(320, 210, 470, 210), arrow(1128, 210, 978, 210));
 
-  // Landing-side outer walk (angled corridor) with up-flow toward the halls.
-  parts.push(wall("M120 96 V300 H60 V690 H150", 0.4));
-  parts.push(wall("M40 300 V690", 0.3));
-  parts.push(arrow(88, 470, 88, 356), arrow(150, 250, 214, 250));
+  // Landing-side arrivals corridor — a slanted ramp that chamfers off the top
+  // concourse and feeds the immigration halls from the left (matches the map).
+  parts.push(wall("M150 96 L52 320 V452 H150", 0.42)); // outer wall: diagonal + walk + foot
+  parts.push(wall("M226 96 L150 300", 0.3)); // inner wall: diagonal down to the hall corner
+  parts.push(arrow(96, 430, 96, 344), arrow(70, 250, 158, 250));
 
   // Central descent core: escalator + stairs + escalator down to the ground
   // floor, with information desks below.
@@ -314,12 +315,14 @@ function arrivalFloor() {
   parts.push(exchange(214, 600), firstAid(300, 600), restroom(348, 588), transport(452, 574, "car"));
   parts.push(exchange(1234, 600), firstAid(1148, 600), restroom(1076, 588), transport(968, 574, "car"));
 
-  // Centre core: customs office, hall inspection points, lift, restroom, info.
+  // Centre core: customs office with a baggage-inspection point, hall customs
+  // checks flanking it, plus lift, restroom and info.
   parts.push(box(662, 452, 124, 92, 6, 0.45)); // customs office
+  parts.push(baggage(706, 470)); // central baggage inspection
   parts.push(customs(586, 466), customs(834, 466)); // hall → customs inspection
   parts.push(elevator(658, 306), restroom(750, 306));
-  parts.push(info(712, 566));
-  parts.push(arrow(724, 306, 724, 452), arrow(724, 452, 724, 640));
+  parts.push(info(712, 560));
+  parts.push(arrow(724, 306, 724, 452), arrow(724, 566, 724, 640));
 
   // --- Baggage carousel (GF) ----------------------------------------------
   parts.push(`<rect x="300" y="784" width="848" height="184" rx="92" fill="none" ${STROKE} stroke-opacity="0.55" stroke-width="2.4"/>`);
