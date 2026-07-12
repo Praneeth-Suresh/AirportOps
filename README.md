@@ -1,6 +1,6 @@
-# AirportOps
+# sentinel
 
-AirportOps is a dependency-free static ES module application for airport operations decision support. The frontend reads operational rows exported from the Postgres operational database (`database/export/operational-rows.json`) when that export is present, and falls back to deterministic fixtures otherwise — so the frontend and domain systems can always be exercised without live airport integrations. The header of the Stratus surface shows which source is active (`PG EXPORT` or `FIXTURES`).
+sentinel is a dependency-free static ES module application for airport operations decision support. The frontend reads operational rows exported from the Postgres operational database (`database/export/operational-rows.json`) when that export is present, and falls back to deterministic fixtures otherwise — so the frontend and domain systems can always be exercised without live airport integrations. The header of the sentinel surface shows which source is active (`PG EXPORT` or `FIXTURES`).
 
 ## Prerequisites
 
@@ -22,7 +22,7 @@ Then open:
 http://localhost:8000/
 ```
 
-The frontend entrypoint is `index.html`, which loads `src/app/index.js` and `src/app/styles.css`. The app shell renders the **Stratus digital-twin surface** — a flow map, timeline scrubber over the 120-minute forecast horizon, zone-inspection panel, live-vs-simulate modes, and the Beagle decision copilot. Every value it shows is composed from the operational-database reader plus the monitoring, prediction, simulation, and decision-support modules; the flow map is laid out from the seeded zone/path graph (`src/app/mapLayout.js`), so it reflects whatever the migrations and seeds contain.
+The frontend entrypoint is `index.html`, which loads `src/app/index.js` and `src/app/styles.css`. The app shell renders the **sentinel digital-twin surface** — a flow map, timeline scrubber over the 120-minute forecast horizon, zone-inspection panel, live-vs-simulate modes, and the Beagle decision copilot. Every value it shows is composed from the operational-database reader plus the monitoring, prediction, simulation, and decision-support modules; the flow map is laid out from the seeded zone/path graph (`src/app/mapLayout.js`), so it reflects whatever the migrations and seeds contain.
 
 If port `8000` is already in use, choose another port:
 
@@ -46,7 +46,7 @@ Then open:
 http://localhost:8000/
 ```
 
-Press **Fetch live updates** in the Stratus header. The browser calls the local `/api/tinyfish/public-context` route, and that route calls `GET https://api.search.tinyfish.ai` with the `X-API-Key` header. The returned search results are normalized into `tinyfish-public-web` observations with freshness and confidence before the monitoring panel renders them.
+Press **Fetch live updates** in the sentinel header. The browser calls the local `/api/tinyfish/public-context` route, and that route calls `GET https://api.search.tinyfish.ai` with the `X-API-Key` header. The returned search results are normalized into `tinyfish-public-web` observations with freshness and confidence before the monitoring panel renders them.
 
 Optional environment overrides:
 
@@ -101,7 +101,7 @@ To create/verify the seed data in one step, run:
 npm run seed
 ```
 
-This applies the migration and seed SQL when `DATABASE_URL` (and `psql`) are available, exports the Postgres rows and asserts each exported snapshot is exactly equal to its fixture counterpart, and always exercises the JavaScript seed path through the operational-database reader — asserting the snapshot series (`normal → peak → stale`) drives the expected monitoring, forecast, and recommendation behaviour the Stratus animation relies on.
+This applies the migration and seed SQL when `DATABASE_URL` (and `psql`) are available, exports the Postgres rows and asserts each exported snapshot is exactly equal to its fixture counterpart, and always exercises the JavaScript seed path through the operational-database reader — asserting the snapshot series (`normal → peak → stale`) drives the expected monitoring, forecast, and recommendation behaviour the sentinel animation relies on.
 
 ### Export Postgres rows for the frontend
 

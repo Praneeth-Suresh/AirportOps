@@ -1,0 +1,172 @@
+- main [ref=f1e2]:
+  - generic [ref=f1e2007]:
+    - generic [ref=f1e2008]:
+      - generic [ref=f1e2009]:
+        - generic [ref=f1e2012]: Stratus
+        - generic [ref=f1e2013]: Digital Twin
+      - generic [ref=f1e2015]:
+        - generic [ref=f1e2016]:
+          - generic [ref=f1e2017]: TERMINAL
+          - generic [ref=f1e2018]: BKK · T1 Arrivals
+        - generic [ref=f1e2019]:
+          - generic [ref=f1e2020]: SNAPSHOT
+          - generic [ref=f1e2021]: 10:20
+        - generic [ref=f1e2022]:
+          - generic [ref=f1e2023]: OCCUPANCY
+          - generic [ref=f1e2024]: 8,430
+        - generic [ref=f1e2025]:
+          - generic [ref=f1e2026]: ALERTS
+          - generic [ref=f1e2027]: "15"
+        - generic [ref=f1e2028]:
+          - generic [ref=f1e2029]: SOURCE
+          - generic [ref=f1e2030]: PG EXPORT
+      - generic [ref=f1e2031]:
+        - button "Departures" [ref=f1e2032] [cursor=pointer]
+        - button "Arrivals" [ref=f1e2033] [cursor=pointer]
+      - generic [ref=f1e2034]:
+        - button "Live" [ref=f1e2035] [cursor=pointer]
+        - button "Simulate" [ref=f1e2037] [cursor=pointer]
+      - button "Fetch live updates" [ref=f1e2039] [cursor=pointer]
+      - generic [ref=f1e2041]: 6/9 fresh
+    - main [ref=f1e2043]:
+      - generic [ref=f1e2046]:
+        - img:
+          - generic:
+            - generic: $
+            - generic: $
+        - generic [ref=f1e2047] [cursor=pointer]:
+          - generic [ref=f1e2049]: Arrival Gate A
+          - generic [ref=f1e2050]: 40%
+        - generic [ref=f1e2051] [cursor=pointer]:
+          - generic [ref=f1e2053]: Arrival Gate B
+          - generic [ref=f1e2054]: 35%
+        - generic [ref=f1e2055] [cursor=pointer]:
+          - generic [ref=f1e2057]: Arrivals Hall
+          - generic [ref=f1e2058]: 90%
+        - generic [ref=f1e2059] [cursor=pointer]:
+          - generic [ref=f1e2061]: Baggage Hall
+          - generic [ref=f1e2062]: 64%
+        - generic [ref=f1e2063] [cursor=pointer]:
+          - generic [ref=f1e2065]: Baggage Reclaim North
+          - generic [ref=f1e2066]: 77%
+        - generic [ref=f1e2067] [cursor=pointer]:
+          - generic [ref=f1e2069]: Baggage Reclaim South
+          - generic [ref=f1e2070]: 70%
+        - generic [ref=f1e2071] [cursor=pointer]:
+          - generic [ref=f1e2073]: Customs Hall
+          - generic [ref=f1e2074]: 79%
+        - generic [ref=f1e2075] [cursor=pointer]:
+          - generic [ref=f1e2077]: Immigration East
+          - generic [ref=f1e2078]: 100%
+        - generic [ref=f1e2079] [cursor=pointer]:
+          - generic [ref=f1e2081]: Immigration West
+          - generic [ref=f1e2082]: 108%
+      - generic [ref=f1e2084]:
+        - button "Overview" [ref=f1e2085] [cursor=pointer]
+        - button "Zones" [ref=f1e2092] [cursor=pointer]
+        - button "Layers" [ref=f1e2098] [cursor=pointer]
+        - button "Staffing" [ref=f1e2102] [cursor=pointer]
+        - button "Flights" [ref=f1e2109] [cursor=pointer]
+        - button "CCTV" [ref=f1e2113] [cursor=pointer]
+        - button "Incidents" [ref=f1e2119] [cursor=pointer]
+        - button "+" [ref=f1e2125] [cursor=pointer]
+        - generic [ref=f1e2126]: 100%
+        - button "−" [ref=f1e2127] [cursor=pointer]
+        - button "Reset view" [ref=f1e2128] [cursor=pointer]
+        - button "Toggle theme" [ref=f1e2132] [cursor=pointer]
+      - generic [ref=f1e2136]:
+        - generic [ref=f1e2137]:
+          - generic [ref=f1e2138]:
+            - generic [ref=f1e2139]: Terminal Status
+            - generic [ref=f1e2140]: Degraded
+          - generic [ref=f1e2142]:
+            - generic [ref=f1e2143]:
+              - generic [ref=f1e2144]: 8,430
+              - generic [ref=f1e2145]: in terminal
+            - generic [ref=f1e2146]:
+              - generic [ref=f1e2147]: 24m
+              - generic [ref=f1e2148]: max wait
+            - generic [ref=f1e2149]:
+              - generic [ref=f1e2150]: "13"
+              - generic [ref=f1e2151]: on shift
+        - generic [ref=f1e2152]:
+          - generic [ref=f1e2153]: Hover any zone on the map for live queue stats, or click to inspect.
+          - generic [ref=f1e2158]: Next Movement
+          - generic [ref=f1e2159]:
+            - generic [ref=f1e2160]:
+              - generic [ref=f1e2161]: AX-417
+              - generic [ref=f1e2162]: arrival gate a · 312 pax
+            - generic [ref=f1e2163]: 09:10
+          - generic [ref=f1e2164]: Recent Events
+          - generic [ref=f1e2165]:
+            - generic [ref=f1e2166]:
+              - generic [ref=f1e2167]: 10:20
+              - generic [ref=f1e2169]: Decisions committed to live snapshot
+            - generic [ref=f1e2170]:
+              - generic [ref=f1e2171]: 10:20
+              - generic [ref=f1e2173]: arrival gate a abnormal crowding
+            - generic [ref=f1e2174]:
+              - generic [ref=f1e2175]: 10:20
+              - generic [ref=f1e2177]: arrival gate b queue build-up
+            - generic [ref=f1e2178]:
+              - generic [ref=f1e2179]: 10:20
+              - generic [ref=f1e2181]: bag drop a queue build-up
+            - generic [ref=f1e2182]:
+              - generic [ref=f1e2183]: 10:20
+              - generic [ref=f1e2185]: baggage hall queue build-up
+            - generic [ref=f1e2186]:
+              - generic [ref=f1e2187]: 10:20
+              - generic [ref=f1e2189]: baggage reclaim north queue build-up
+      - generic [ref=f1e2190]:
+        - generic [ref=f1e2191]:
+          - generic [ref=f1e2192]:
+            - generic [ref=f1e2209]:
+              - generic [ref=f1e2210]:
+                - generic [ref=f1e2211]: Beagle
+                - generic [ref=f1e2212]: ALERT
+              - generic [ref=f1e2213]: Ops Copilot · agent swarm
+            - button "✕" [ref=f1e2214] [cursor=pointer]
+          - generic [ref=f1e2215]:
+            - generic [ref=f1e2216]: "Immigration West is at 108% — queue 110, ~7m wait. I recommend: reassign 1 security unit(s) from departure hall in 8m. Switch to Simulate to plan it."
+            - generic [ref=f1e2217]:
+              - generic [ref=f1e2218]: Agent Swarm
+              - generic [ref=f1e2219]: negotiating
+            - img [ref=f1e2221]:
+              - generic [ref=f1e2227]: HUB
+              - generic [ref=f1e2228]: QUEUE
+              - generic [ref=f1e2231]: CNTR
+              - generic [ref=f1e2234]: STAFF
+              - generic [ref=f1e2237]: FCAST
+            - generic [ref=f1e2240]:
+              - generic [ref=f1e2241]:
+                - generic [ref=f1e2242]: Reassign 1 security unit(s) from departure hall in 8m
+                - generic [ref=f1e2243]: staff-reassignment
+              - generic [ref=f1e2244]:
+                - generic [ref=f1e2245]: −3m wait
+                - generic [ref=f1e2246]: −12% press
+                - generic [ref=f1e2247]: +73 relieved
+              - button "Simulate this" [ref=f1e2248] [cursor=pointer]
+        - button [ref=f1e2249] [cursor=pointer]
+      - generic:
+        - generic:
+          - generic: ACQUIRING SIGNAL
+          - generic: FLOOR SENSORS · GATES LIVE
+    - generic [ref=f1e2259]:
+      - generic [ref=f1e2260]:
+        - button "▶" [ref=f1e2261] [cursor=pointer]
+        - button "1×" [ref=f1e2262] [cursor=pointer]
+      - generic [ref=f1e2263]:
+        - generic [ref=f1e2264]: 10:20
+        - generic [ref=f1e2265]: MORNING
+      - generic [ref=f1e2266]:
+        - generic [ref=f1e2267]: Forecast horizon · T+60 min
+        - slider [ref=f1e2268] [cursor=pointer]: "60"
+        - generic [ref=f1e2269]:
+          - generic [ref=f1e2270]: 09:20
+          - generic [ref=f1e2271]: 09:50
+          - generic [ref=f1e2272]: 10:20
+          - generic [ref=f1e2273]: 10:50
+          - generic [ref=f1e2274]: 11:20
+      - generic [ref=f1e2275]:
+        - generic [ref=f1e2276]: Next movement
+        - generic [ref=f1e2277]: AX-417 · 09:10 · 312p
