@@ -75,6 +75,16 @@ function validateScenarioDecisions(snapshot, decisions) {
     if (decision.zoneId && !zoneIds.has(decision.zoneId)) {
       throw new Error(`ScenarioDecision references unknown zone: ${decision.zoneId}`);
     }
+    if (decision.type === "counter-capacity") {
+      const counter = snapshot.counters.find((candidate) => candidate.zoneId === decision.zoneId);
+      const remainingCapacity = counter ? counter.maxOpen - counter.open : 0;
+      if (!counter) {
+        throw new Error(`ScenarioDecision references zone without counter capacity: ${decision.zoneId}`);
+      }
+      if (decision.openDelta > remainingCapacity) {
+        throw new Error(`ScenarioDecision exceeds counter capacity for ${decision.zoneId}`);
+      }
+    }
     if (decision.fromZoneId && !zoneIds.has(decision.fromZoneId)) {
       throw new Error(`ScenarioDecision references unknown origin zone: ${decision.fromZoneId}`);
     }

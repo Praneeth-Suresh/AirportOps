@@ -59,7 +59,9 @@ bc_resolve_components() {
   local manifest="$1"
   shift
   local -a requested=("$@")
-  local -A seen=()
+  # Space-delimited visited list instead of an associative array so resolution
+  # also works on macOS bash 3.2. Component names never contain spaces.
+  local seen=" "
   local -a ordered=()
   local component
 
@@ -68,7 +70,7 @@ bc_resolve_components() {
     local dep
 
     [[ -n "${item}" ]] || return 0
-    [[ -z "${seen[${item}]:-}" ]] || return 0
+    [[ "${seen}" == *" ${item} "* ]] && return 0
 
     [[ -n "$(bc_manifest_line "${manifest}" component "${item}")" ]] || bc_fail "unknown component: ${item}"
 
@@ -76,7 +78,7 @@ bc_resolve_components() {
       [[ -n "${dep}" ]] && bc_resolve_visit "${dep}"
     done < <(bc_component_field "${manifest}" "${item}" requires)
 
-    seen["${item}"]=1
+    seen="${seen}${item} "
     ordered+=("${item}")
   }
 
@@ -133,7 +135,10 @@ bc_validate_manifest() {
   done < <(bc_component_names "${manifest}")
 
   while IFS= read -r profile; do
-    mapfile -t selected < <(bc_profile_components "${manifest}" "${profile}")
+    selected=()
+    while IFS= read -r selected_component; do
+      [[ -n "${selected_component}" ]] && selected+=("${selected_component}")
+    done < <(bc_profile_components "${manifest}" "${profile}")
     ((${#selected[@]} > 0)) || bc_fail "profile has no components: ${profile}"
     for component in "${selected[@]}"; do
       [[ -n "$(bc_manifest_line "${manifest}" component "${component}")" ]] || bc_fail "profile ${profile} references unknown component ${component}"

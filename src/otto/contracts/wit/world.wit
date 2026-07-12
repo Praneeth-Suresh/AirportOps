@@ -1,0 +1,53 @@
+package z:otto-ops@0.1.0;
+
+/// Otto Operations TEE Contract
+///
+/// This contract runs inside a T3N Trusted Execution Environment.
+/// It provides confidential computation for airport operations decisions:
+/// - Evaluate decision options with sensitive operational data protected
+/// - Verify proposals against constraint rules (TEE-attested)
+/// - Sign recommendations with the agent's attestation
+/// - Audit sensitive computations without exposing raw operational data
+///
+/// Host capabilities imported:
+/// - kv-store: persist audit entries and proposal state
+/// - logging: diagnostic output
+/// - tenant-context: identify the calling tenant
+/// - http: call back to operational data sources if needed
+
+world otto-ops {
+  import host:tenant/tenant-context@1.0.0;
+  import host:interfaces/logging@2.1.0;
+  import host:interfaces/kv-store@2.1.0;
+
+  export contracts;
+}
+
+interface contracts {
+  /// Uniform 3-field envelope for all T3N contract calls.
+  record generic-input {
+    input:        option<list<u8>>,
+    user-profile: option<list<u8>>,
+    context:      option<list<u8>>,
+  }
+
+  /// Evaluate decision options from an operational snapshot within the TEE.
+  /// Input: JSON { snapshot, forecast, projections, alerts }
+  /// Output: JSON { options: DecisionOption[], attestation }
+  evaluate-options: func(req: generic-input) -> result<list<u8>, string>;
+
+  /// Verify a proposal against operational constraints.
+  /// Input: JSON { proposal, snapshot }
+  /// Output: JSON { valid, violations[], attestation }
+  verify-proposal: func(req: generic-input) -> result<list<u8>, string>;
+
+  /// Sign a recommendation set with TEE attestation.
+  /// Input: JSON { optionIds, agentDid, timestamp }
+  /// Output: JSON { signed: true, attestation }
+  sign-recommendation: func(req: generic-input) -> result<list<u8>, string>;
+
+  /// Record an audit entry in TEE-protected storage.
+  /// Input: JSON { entry: AuditEntry }
+  /// Output: JSON { persisted: true, entryId }
+  record-audit: func(req: generic-input) -> result<list<u8>, string>;
+}

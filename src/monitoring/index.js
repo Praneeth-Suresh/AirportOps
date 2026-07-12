@@ -1,9 +1,13 @@
 import { assertMonitoringAnalytics, deepFreeze } from "../contracts/index.js";
 
+const PUBLIC_WEB_CONTEXT_SOURCE = "tinyfish-public-web";
+
 export class MonitoringAnalyticsService {
   analyze(snapshot) {
     const queueStates = snapshot.zones.map((zone) => buildQueueState(snapshot, zone));
     const counterUtilizations = snapshot.counters.map((counter) => buildCounterUtilization(snapshot, counter));
+    const staffingContexts = snapshot.counters.map((counter) => buildStaffingContext(snapshot, counter, counterUtilizations));
+    const publicContext = buildPublicContext(snapshot);
     const crowdingEvents = queueStates
       .filter((queue) => queue.severity !== "normal")
       .map((queue) => buildCrowdingEvent(snapshot, queue));
@@ -15,6 +19,7 @@ export class MonitoringAnalyticsService {
       ...queueStates
         .filter((queue) => queue.freshness.status === "stale")
         .map((queue) => buildDataQualityAlert(snapshot, queue)),
+      ...publicContext.map((update) => buildPublicContextAlert(snapshot, update)),
     ];
 
     const analytics = {
@@ -22,6 +27,8 @@ export class MonitoringAnalyticsService {
       refreshCadenceSeconds: 30,
       queueStates,
       counterUtilizations,
+      staffingContexts,
+      publicContext,
       crowdingEvents,
       operationalAlerts: dedupeAlerts(operationalAlerts),
       bottlenecks: queueStates.map((queue) => classifyBottleneck(queue, counterUtilizations)),
@@ -46,6 +53,7 @@ export class MonitoringViewModel {
         const forecastZone = currentPoint.zones.find((candidate) => candidate.zoneId === zone.zoneId);
         const queueState = analytics.queueStates.find((candidate) => candidate.zoneId === zone.zoneId);
         const counterUtilization = analytics.counterUtilizations.find((candidate) => candidate.zoneId === zone.zoneId);
+        const staffingContext = analytics.staffingContexts.find((candidate) => candidate.zoneId === zone.zoneId);
         const bottleneck = analytics.bottlenecks.find((candidate) => candidate.zoneId === zone.zoneId);
         const alert = analytics.operationalAlerts.find((candidate) => candidate.zoneId === zone.zoneId);
         return {
@@ -55,6 +63,7 @@ export class MonitoringViewModel {
           staffCount: snapshot.staff.filter((staff) => staff.zoneId === zone.zoneId).length,
           queueState,
           counterUtilization,
+          staffingContext,
           bottleneck,
           alert,
         };
@@ -115,6 +124,60 @@ function buildCounterUtilization(snapshot, counter) {
     observedAt: edgeMetric?.observedAt ?? snapshot.asOf,
     freshness: edgeMetric?.freshness ?? { observedAt: snapshot.asOf, status: "watch" },
     confidence: edgeMetric?.confidence ?? { score: 0.72, basis: "derived from counter state" },
+  };
+}
+
+function buildStaffingContext(snapshot, counter, counterUtilizations) {
+  const utilization = counterUtilizations.find((candidate) => candidate.counterId === counter.counterId);
+  const activeCoverageUnits = sumCoverage(
+    snapshot.staff.filter(
+      (staff) => staff.zoneId === counter.zoneId
+        && staff.role === counter.roleRequired
+        && staff.availability === "active",
+    ),
+  );
+  const requiredCoverageUnits = Math.max(counter.open, utilization?.busyCounters ?? counter.open);
+  const reliefCandidates = snapshot.staff
+    .filter((staff) => staff.zoneId !== counter.zoneId)
+    .filter((staff) => staff.role === counter.roleRequired)
+    .filter((staff) => staff.availability === "available" || staff.availability === "active")
+    .filter((staff) => staff.restMinutesDue >= 30)
+    .map((staff) => {
+      const transferRule = findTransferRule(snapshot, staff, counter.zoneId);
+      return {
+        staffId: staff.staffId,
+        fromZoneId: staff.zoneId,
+        coverageUnits: staff.coverageUnits,
+        availability: staff.availability,
+        transferMinutes: transferRule?.transferMinutes ?? 15,
+        confidence: staff.confidence,
+      };
+    })
+    .sort((a, b) => a.transferMinutes - b.transferMinutes);
+  const reliefCoverageUnits = sumCoverage(reliefCandidates);
+  const weakestConfidence = Math.min(
+    counter.confidence.score,
+    ...snapshot.staff
+      .filter((staff) => staff.role === counter.roleRequired)
+      .map((staff) => staff.confidence.score),
+  );
+
+  return {
+    zoneId: counter.zoneId,
+    counterId: counter.counterId,
+    roleRequired: counter.roleRequired,
+    activeCoverageUnits,
+    requiredCoverageUnits,
+    staffingGap: Math.max(0, requiredCoverageUnits - activeCoverageUnits),
+    reliefCoverageUnits,
+    reliefCandidates,
+    openCounterCapacity: Math.max(0, counter.maxOpen - counter.open),
+    openLeadMinutes: counter.openLeadMinutes,
+    freshness: { observedAt: counter.observedAt, status: "fresh" },
+    confidence: {
+      score: Number(weakestConfidence.toFixed(2)),
+      basis: "counter and roster confidence",
+    },
   };
 }
 
@@ -184,6 +247,46 @@ function buildDataQualityAlert(snapshot, queue) {
   };
 }
 
+function buildPublicContext(snapshot) {
+  return snapshot.observations
+    .filter((observation) => observation.source === PUBLIC_WEB_CONTEXT_SOURCE)
+    .flatMap((observation) => (observation.publicUpdates ?? []).map((update, index) => ({
+      updateId: update.updateId ?? `public-web-${index + 1}`,
+      source: observation.source,
+      provider: update.provider ?? "public web",
+      title: update.title,
+      summary: update.summary,
+      url: update.url,
+      zoneId: update.zoneId,
+      flightId: update.flightId,
+      severity: update.severity ?? "watch",
+      evidence: update.evidence ?? [],
+      observedAt: observation.observedAt,
+      freshness: update.freshness ?? { observedAt: observation.observedAt, status: "fresh" },
+      confidence: update.confidence ?? observation.confidence,
+    })));
+}
+
+function buildPublicContextAlert(snapshot, update) {
+  return {
+    alertId: `alert-public-web-${update.updateId}`,
+    zoneId: update.zoneId,
+    type: "public-web-context",
+    severity: update.severity,
+    lifecycleState: update.freshness.status === "stale" ? "stale" : "new",
+    message: `${labelForZone(snapshot, update.zoneId)} public update: ${update.summary}`,
+    evidence: [
+      update.title,
+      ...update.evidence,
+      update.url ? `Source ${update.url}` : "Source public web",
+    ],
+    detectedAt: update.observedAt,
+    confidence: update.confidence,
+    freshness: update.freshness,
+    source: update.source,
+  };
+}
+
 function classifyBottleneck(queue, counterUtilizations) {
   const utilization = counterUtilizations.find((candidate) => candidate.zoneId === queue.zoneId);
   const reason = queue.freshness.status === "stale"
@@ -221,6 +324,19 @@ function findEdgeMetric(snapshot, zoneId) {
     confidence: observation.confidence,
     freshness,
   };
+}
+
+function findTransferRule(snapshot, staff, toZoneId) {
+  return snapshot.airport.transferRules?.find((rule) => (
+    rule.allowed
+    && rule.role === staff.role
+    && rule.fromZoneId === staff.zoneId
+    && rule.toZoneId === toZoneId
+  ));
+}
+
+function sumCoverage(staffLike) {
+  return staffLike.reduce((total, staff) => total + (staff.coverageUnits ?? 0), 0);
 }
 
 function labelForZone(snapshot, zoneId) {

@@ -37,6 +37,10 @@ export function assertOperationalSnapshot(snapshot) {
   assertArray(snapshot.observations, "OperationalSnapshot.observations");
 
   const zoneIds = new Set(snapshot.zones.map((zone) => zone.zoneId));
+  assertArray(snapshot.airport.paths, "AirportLayout.paths");
+  if (snapshot.airport.transferRules) {
+    assertArray(snapshot.airport.transferRules, "AirportLayout.transferRules");
+  }
 
   for (const zone of snapshot.zones) {
     assertString(zone.zoneId, "Zone.zoneId");
@@ -51,11 +55,54 @@ export function assertOperationalSnapshot(snapshot) {
     }
     assertNumber(flow.estimatedCount, "PassengerFlow.estimatedCount");
   }
+
+  for (const counter of snapshot.counters) {
+    assertString(counter.counterId, "CounterState.counterId");
+    assertString(counter.zoneId, "CounterState.zoneId");
+    if (!zoneIds.has(counter.zoneId)) {
+      throw new Error(`CounterState ${counter.counterId} references unknown zone: ${counter.zoneId}`);
+    }
+    assertNumber(counter.open, `${counter.counterId}.open`);
+    assertNumber(counter.available, `${counter.counterId}.available`);
+    assertNumber(counter.maxOpen, `${counter.counterId}.maxOpen`);
+    assertNumber(counter.openLeadMinutes, `${counter.counterId}.openLeadMinutes`);
+    assertString(counter.roleRequired, `${counter.counterId}.roleRequired`);
+    assertString(counter.observedAt, `${counter.counterId}.observedAt`);
+    assertConfidence(counter.confidence, `${counter.counterId}.confidence`);
+    if (counter.maxOpen < counter.open) {
+      throw new Error(`CounterState ${counter.counterId} maxOpen must cover open counters`);
+    }
+  }
+
+  for (const staff of snapshot.staff) {
+    assertString(staff.staffId, "StaffState.staffId");
+    assertString(staff.role, `${staff.staffId}.role`);
+    assertString(staff.zoneId, `${staff.staffId}.zoneId`);
+    if (!zoneIds.has(staff.zoneId)) {
+      throw new Error(`StaffState ${staff.staffId} references unknown zone: ${staff.zoneId}`);
+    }
+    assertString(staff.availability, `${staff.staffId}.availability`);
+    assertNumber(staff.coverageUnits, `${staff.staffId}.coverageUnits`);
+    assertNumber(staff.restMinutesDue, `${staff.staffId}.restMinutesDue`);
+    assertString(staff.observedAt, `${staff.staffId}.observedAt`);
+    assertConfidence(staff.confidence, `${staff.staffId}.confidence`);
+  }
+
+  for (const rule of snapshot.airport.transferRules ?? []) {
+    assertString(rule.role, "TransferRule.role");
+    assertString(rule.fromZoneId, "TransferRule.fromZoneId");
+    assertString(rule.toZoneId, "TransferRule.toZoneId");
+    assertNumber(rule.transferMinutes, "TransferRule.transferMinutes");
+    if (!zoneIds.has(rule.fromZoneId) || !zoneIds.has(rule.toZoneId)) {
+      throw new Error(`TransferRule references an unknown zone: ${rule.fromZoneId} -> ${rule.toZoneId}`);
+    }
+  }
 }
 
 export function assertFlowForecast(forecast) {
   assertObject(forecast, "FlowForecast");
   assertString(forecast.generatedAt, "FlowForecast.generatedAt");
+  assertNumber(forecast.refreshCadenceSeconds, "FlowForecast.refreshCadenceSeconds");
   assertObject(forecast.horizon, "FlowForecast.horizon");
   assertArray(forecast.points, "FlowForecast.points");
   assertConfidence(forecast.confidence, "FlowForecast.confidence");
@@ -74,12 +121,43 @@ export function assertDecisionOptions(options) {
   assertArray(options, "DecisionOption[]");
   for (const option of options) {
     assertString(option.optionId, "DecisionOption.optionId");
+    assertNumber(option.rank, "DecisionOption.rank");
     assertObject(option.decision, "DecisionOption.decision");
+    assertString(option.decision.type, "DecisionOption.decision.type");
     assertArray(option.affectedZones, "DecisionOption.affectedZones");
     assertObject(option.timeWindow, "DecisionOption.timeWindow");
     assertObject(option.expectedImpact, "DecisionOption.expectedImpact");
+    assertNumber(option.expectedImpact.queuePressureDrop, "DecisionOption.expectedImpact.queuePressureDrop");
+    assertNumber(option.expectedImpact.passengersRelieved, "DecisionOption.expectedImpact.passengersRelieved");
+    assertNumber(option.expectedImpact.estimatedWaitMinutesReduced, "DecisionOption.expectedImpact.estimatedWaitMinutesReduced");
+    assertString(option.expectedImpact.label, "DecisionOption.expectedImpact.label");
     assertArray(option.rationale, "DecisionOption.rationale");
     assertConfidence(option.confidence, "DecisionOption.confidence");
+    assertString(option.confidence.basis, "DecisionOption.confidence.basis");
+    if (option.relatedAlertId !== undefined && option.relatedAlertId !== null) {
+      assertString(option.relatedAlertId, "DecisionOption.relatedAlertId");
+    }
+  }
+}
+
+export function assertDecisionSupportRequest(request) {
+  assertObject(request, "DecisionSupportRequest");
+  assertObject(request.snapshot, "DecisionSupportRequest.snapshot");
+  assertObject(request.forecast, "DecisionSupportRequest.forecast");
+  if (request.projections !== undefined) {
+    assertArray(request.projections, "DecisionSupportRequest.projections");
+  }
+  if (request.operationalAlerts !== undefined) {
+    assertArray(request.operationalAlerts, "DecisionSupportRequest.operationalAlerts");
+  }
+  if (request.queueStates !== undefined) {
+    assertArray(request.queueStates, "DecisionSupportRequest.queueStates");
+  }
+  if (request.counterUtilizations !== undefined) {
+    assertArray(request.counterUtilizations, "DecisionSupportRequest.counterUtilizations");
+  }
+  if (request.staffingContexts !== undefined) {
+    assertArray(request.staffingContexts, "DecisionSupportRequest.staffingContexts");
   }
 }
 
@@ -88,6 +166,7 @@ export function assertMonitoringAnalytics(analytics) {
   assertString(analytics.generatedAt, "MonitoringAnalytics.generatedAt");
   assertArray(analytics.queueStates, "MonitoringAnalytics.queueStates");
   assertArray(analytics.counterUtilizations, "MonitoringAnalytics.counterUtilizations");
+  assertArray(analytics.staffingContexts, "MonitoringAnalytics.staffingContexts");
   assertArray(analytics.crowdingEvents, "MonitoringAnalytics.crowdingEvents");
   assertArray(analytics.operationalAlerts, "MonitoringAnalytics.operationalAlerts");
 
@@ -107,6 +186,16 @@ export function assertMonitoringAnalytics(analytics) {
     assertNumber(utilization.utilizationRatio, "CounterUtilization.utilizationRatio");
     assertString(utilization.status, "CounterUtilization.status");
     assertConfidence(utilization.confidence, "CounterUtilization.confidence");
+  }
+
+  for (const context of analytics.staffingContexts) {
+    assertString(context.zoneId, "StaffingContext.zoneId");
+    assertString(context.roleRequired, "StaffingContext.roleRequired");
+    assertNumber(context.activeCoverageUnits, "StaffingContext.activeCoverageUnits");
+    assertNumber(context.requiredCoverageUnits, "StaffingContext.requiredCoverageUnits");
+    assertNumber(context.staffingGap, "StaffingContext.staffingGap");
+    assertArray(context.reliefCandidates, "StaffingContext.reliefCandidates");
+    assertConfidence(context.confidence, "StaffingContext.confidence");
   }
 
   for (const event of analytics.crowdingEvents) {

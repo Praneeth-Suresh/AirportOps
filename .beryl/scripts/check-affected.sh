@@ -133,7 +133,11 @@ if ! git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exit 0
 fi
 
-mapfile -t changed_files < <(collect_changed_files | LC_ALL=C sort -u)
+# while-read instead of mapfile so the check also runs on macOS bash 3.2.
+changed_files=()
+while IFS= read -r changed_file; do
+  [[ -n "${changed_file}" ]] && changed_files+=("${changed_file}")
+done < <(collect_changed_files | LC_ALL=C sort -u)
 
 if ((${#changed_files[@]} == 0)); then
   printf "check-affected: no changed files in %s mode (OK)\n" "${mode}"

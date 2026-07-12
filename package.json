@@ -5,6 +5,10 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "check": "npm test"
+    "check": "npm test",
+    "demo:tinyfish": "node demo/tinyfish-server.mjs",
+    "seed": "node database/seed.mjs",
+    "export:rows": "node database/export-rows.mjs",
+    "generate:seeds": "node database/generate-variant-seeds.mjs"
   }
 }

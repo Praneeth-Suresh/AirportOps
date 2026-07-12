@@ -36,6 +36,7 @@ Fill these files before feature implementation:
 - `testing-policy.md`
 - `agent-rules.md`
 - `task-routing.md`
+- `database.md` when changing Postgres schema, seeds, persistence readers, or database-backed operational data paths.
 
 Then run:
 
