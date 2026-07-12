@@ -1,0 +1,183 @@
+- main [ref=e2]:
+  - generic [ref=e461]:
+    - generic [ref=e462]:
+      - generic [ref=e463]:
+        - img "sentinel logo" [ref=e464]
+        - generic [ref=e465]: sentinel
+        - generic [ref=e466]: Digital Twin
+      - generic [ref=e468]:
+        - generic [ref=e469]:
+          - generic [ref=e470]: TERMINAL
+          - generic [ref=e471]: BKK · T1 Departures
+        - generic [ref=e472]:
+          - generic [ref=e473]: SNAPSHOT
+          - generic [ref=e474]: 09:20
+        - generic [ref=e475]:
+          - generic [ref=e476]: OCCUPANCY
+          - generic [ref=e477]: 8,430
+        - generic [ref=e478]:
+          - generic [ref=e479]: ALERTS
+          - generic [ref=e480]: "15"
+        - generic [ref=e481]:
+          - generic [ref=e482]: SOURCE
+          - generic [ref=e483]: PG EXPORT
+      - generic [ref=e484]:
+        - button "Departures" [ref=e485] [cursor=pointer]
+        - button "Arrivals" [ref=e486] [cursor=pointer]
+      - generic [ref=e487]:
+        - button "Live" [ref=e488] [cursor=pointer]
+        - button "Simulate" [ref=e490] [cursor=pointer]
+      - button "Fetch live updates" [ref=e492] [cursor=pointer]
+      - generic [ref=e494]: 10/13 fresh
+    - main [ref=e496]:
+      - generic [ref=e499]:
+        - img:
+          - generic:
+            - generic: A
+            - generic: C
+            - generic: B
+            - generic: D
+        - generic [ref=e500] [cursor=pointer]:
+          - generic [ref=e502]: Bag Drop A
+          - generic [ref=e503]: 74%
+        - generic [ref=e504] [cursor=pointer]:
+          - generic [ref=e506]: Check-in A
+          - generic [ref=e507]: 95%
+        - generic [ref=e508] [cursor=pointer]:
+          - generic [ref=e510]: Check-in B
+          - generic [ref=e511]: 76%
+        - generic [ref=e512] [cursor=pointer]:
+          - generic [ref=e514]: Departure Gate A
+          - generic [ref=e515]: 46%
+        - generic [ref=e516] [cursor=pointer]:
+          - generic [ref=e518]: Departure Gate B
+          - generic [ref=e519]: 35%
+        - generic [ref=e520] [cursor=pointer]:
+          - generic [ref=e522]: Departure Gate C
+          - generic [ref=e523]: 38%
+        - generic [ref=e524] [cursor=pointer]:
+          - generic [ref=e526]: Departure Gate D
+          - generic [ref=e527]: 41%
+        - generic [ref=e528] [cursor=pointer]:
+          - generic [ref=e530]: Departure Hall
+          - generic [ref=e531]: 60%
+        - generic [ref=e532] [cursor=pointer]:
+          - generic [ref=e534]: Security North
+          - generic [ref=e535]: 94%
+        - generic [ref=e536] [cursor=pointer]:
+          - generic [ref=e538]: Security South
+          - generic [ref=e539]: 80%
+        - generic [ref=e540] [cursor=pointer]:
+          - generic [ref=e542]: Terminal Entrance East
+          - generic [ref=e543]: 37%
+        - generic [ref=e544] [cursor=pointer]:
+          - generic [ref=e546]: Terminal Entrance West
+          - generic [ref=e547]: 33%
+        - generic [ref=e548] [cursor=pointer]:
+          - generic [ref=e550]: Transfer Corridor
+          - generic [ref=e551]: 38%
+      - generic [ref=e553]:
+        - button "Overview" [ref=e554] [cursor=pointer]
+        - button "Zones" [ref=e561] [cursor=pointer]
+        - button "Layers" [ref=e567] [cursor=pointer]
+        - button "Staffing" [ref=e571] [cursor=pointer]
+        - button "Flights" [ref=e578] [cursor=pointer]
+        - button "CCTV" [ref=e582] [cursor=pointer]
+        - button "Incidents" [ref=e588] [cursor=pointer]
+        - button "+" [ref=e595] [cursor=pointer]
+        - generic [ref=e596]: 100%
+        - button "−" [ref=e597] [cursor=pointer]
+        - button "Reset view" [ref=e598] [cursor=pointer]
+        - button "Toggle theme" [ref=e602] [cursor=pointer]
+      - generic [ref=e606]:
+        - generic [ref=e607]:
+          - generic [ref=e608]:
+            - generic [ref=e609]: Check-in A
+            - generic [ref=e612]: check-in · ground-staff
+          - button "✕" [ref=e613] [cursor=pointer]
+        - generic [ref=e614]:
+          - generic [ref=e615]:
+            - generic [ref=e616]:
+              - generic [ref=e617]: 95%
+              - generic [ref=e618]: current load
+            - generic [ref=e619]:
+              - generic [ref=e620]: 5m
+              - generic [ref=e621]: est wait
+          - generic [ref=e622]:
+            - generic [ref=e623]: Forecast · 20 min
+            - generic [ref=e624]: +4% load
+          - generic [ref=e625]:
+            - generic [ref=e626]: Staff allocated
+            - generic [ref=e627]: 5 / 6 req
+          - generic [ref=e628]:
+            - generic [ref=e629]: Recommended action
+            - generic [ref=e630]: Reassign 1 ground-staff unit(s) from bag drop a in 4m
+            - button "Simulate this" [ref=e631] [cursor=pointer]
+          - generic [ref=e632]:
+            - generic [ref=e633]:
+              - img "Otto AI" [ref=e634]
+              - generic [ref=e635]:
+                - generic [ref=e636]:
+                  - generic [ref=e637]: Otto AI
+                  - generic [ref=e638]: EXPLAINABLE
+                - generic [ref=e639]: Why this recommendation was produced
+            - generic [ref=e640]: I recommended reassign 1 ground-staff unit(s) from bag drop a in 4m because the live queue, forecast pressure, and feasible staffing/counter constraints point to measurable relief.
+            - list [ref=e641]:
+              - listitem [ref=e642]: Triggered by abnormal-crowding alert alert-crowding-check-in-a (critical)
+              - listitem [ref=e643]: Check-in A is forecast at 127% queue pressure within the horizon
+              - listitem [ref=e644]: 1 ground-staff coverage unit(s) short; 3 can move from bag-drop-a in 4 min
+            - generic [ref=e645]:
+              - generic [ref=e646]: Confidence 63%
+              - generic [ref=e647]: limited by scenario projection confidence
+          - generic [ref=e648]: Crowd metrics
+          - generic [ref=e649]:
+            - generic [ref=e650]:
+              - generic [ref=e651]: OCCUPANCY
+              - generic [ref=e652]: 720 / 760
+            - generic [ref=e653]:
+              - generic [ref=e654]: QUEUE
+              - generic [ref=e655]: 138 pax
+            - generic [ref=e656]:
+              - generic [ref=e657]: DENSITY
+              - generic [ref=e658]: 3.2/m²
+            - generic [ref=e659]:
+              - generic [ref=e660]: SERVICE
+              - generic [ref=e661]: 6/6 busy
+            - generic [ref=e662]:
+              - generic [ref=e663]: OPEN
+              - generic [ref=e664]: 6 open
+            - generic [ref=e665]:
+              - generic [ref=e666]: UTIL
+              - generic [ref=e667]: "1.00"
+          - generic:
+            - button "− Close counter"
+            - button "+ Open counter"
+          - generic [ref=e668]: Freshness fresh · confidence 88% · rest due 4m relief
+      - generic:
+        - generic:
+          - generic: ACQUIRING SIGNAL
+          - generic: FLOOR SENSORS · GATES LIVE
+    - generic [ref=e669]:
+      - generic [ref=e670]:
+        - button "▶" [ref=e671] [cursor=pointer]
+        - button "1×" [ref=e672] [cursor=pointer]
+      - generic [ref=e673]:
+        - generic [ref=e674]: 09:20
+        - generic [ref=e675]: MORNING
+      - generic [ref=e676]:
+        - generic [ref=e677]: Forecast horizon · T+0 min
+        - generic [ref=e678]: 09:20
+        - slider [ref=e681] [cursor=pointer]: "0"
+        - generic [ref=e682]:
+          - generic [ref=e683]: 09:20
+          - generic [ref=e684]: 09:50
+          - generic [ref=e685]: 10:20
+          - generic [ref=e686]: 10:50
+          - generic [ref=e687]: 11:20
+      - generic [ref=e688]:
+        - generic [ref=e689]: Map legend
+        - generic [ref=e690]:
+          - generic [ref=e691]: Passengers
+          - generic [ref=e693]: Staff
+          - generic [ref=e695]: Watch
+          - generic [ref=e697]: Critical

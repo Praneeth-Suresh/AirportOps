@@ -1,0 +1,169 @@
+- main [ref=e2]:
+  - generic [ref=e912]:
+    - generic [ref=e913]:
+      - generic [ref=e914]:
+        - img "sentinel logo" [ref=e915]
+        - generic [ref=e916]: sentinel
+        - generic [ref=e917]: Digital Twin
+      - generic [ref=e919]:
+        - generic [ref=e920]:
+          - generic [ref=e921]: TERMINAL
+          - generic [ref=e922]: BKK · T1 Arrivals
+        - generic [ref=e923]:
+          - generic [ref=e924]: SNAPSHOT
+          - generic [ref=e925]: 09:20
+        - generic [ref=e926]:
+          - generic [ref=e927]: OCCUPANCY
+          - generic [ref=e928]: 8,430
+        - generic [ref=e929]:
+          - generic [ref=e930]: ALERTS
+          - generic [ref=e931]: "15"
+        - generic [ref=e932]:
+          - generic [ref=e933]: SOURCE
+          - generic [ref=e934]: PG EXPORT
+      - generic [ref=e935]:
+        - button "Departures" [ref=e936] [cursor=pointer]
+        - button "Arrivals" [ref=e937] [cursor=pointer]
+      - generic [ref=e938]:
+        - button "Live" [ref=e939] [cursor=pointer]
+        - button "Simulate" [ref=e941] [cursor=pointer]
+      - button "Fetch live updates" [ref=e943] [cursor=pointer]
+      - generic [ref=e945]: 6/9 fresh
+    - main [ref=e947]:
+      - generic [ref=e950]:
+        - img:
+          - generic:
+            - generic: $
+            - generic: $
+        - generic [ref=e951] [cursor=pointer]:
+          - generic [ref=e953]: Arrival Gate A
+          - generic [ref=e954]: 68%
+        - generic [ref=e955] [cursor=pointer]:
+          - generic [ref=e957]: Arrival Gate B
+          - generic [ref=e958]: 61%
+        - generic [ref=e959] [cursor=pointer]:
+          - generic [ref=e961]: Arrivals Hall
+          - generic [ref=e962]: 57%
+        - generic [ref=e963] [cursor=pointer]:
+          - generic [ref=e965]: Baggage Hall
+          - generic [ref=e966]: 41%
+        - generic [ref=e967] [cursor=pointer]:
+          - generic [ref=e969]: Baggage Reclaim North
+          - generic [ref=e970]: 60%
+        - generic [ref=e971] [cursor=pointer]:
+          - generic [ref=e973]: Baggage Reclaim South
+          - generic [ref=e974]: 54%
+        - generic [ref=e975] [cursor=pointer]:
+          - generic [ref=e977]: Customs Hall
+          - generic [ref=e978]: 55%
+        - generic [ref=e979] [cursor=pointer]:
+          - generic [ref=e981]: Immigration East
+          - generic [ref=e982]: 96%
+        - generic [ref=e983] [cursor=pointer]:
+          - generic [ref=e985]: Immigration West
+          - generic [ref=e986]: 89%
+      - generic [ref=e988]:
+        - button "Overview" [ref=e989] [cursor=pointer]
+        - button "Zones" [ref=e996] [cursor=pointer]
+        - button "Layers" [ref=e1002] [cursor=pointer]
+        - button "Staffing" [ref=e1006] [cursor=pointer]
+        - button "Flights" [ref=e1013] [cursor=pointer]
+        - button "CCTV" [ref=e1017] [cursor=pointer]
+        - button "Incidents" [ref=e1023] [cursor=pointer]
+        - button "+" [ref=e1030] [cursor=pointer]
+        - generic [ref=e1031]: 100%
+        - button "−" [ref=e1032] [cursor=pointer]
+        - button "Reset view" [ref=e1033] [cursor=pointer]
+        - button "Toggle theme" [ref=e1037] [cursor=pointer]
+      - generic [ref=e1041]:
+        - generic [ref=e1042]:
+          - generic [ref=e1043]:
+            - generic [ref=e1044]: Immigration East
+            - generic [ref=e1047]: immigration · immigration-officer
+          - button "✕" [ref=e1048] [cursor=pointer]
+        - generic [ref=e1049]:
+          - generic [ref=e1050]:
+            - generic [ref=e1051]:
+              - generic [ref=e1052]: 96%
+              - generic [ref=e1053]: current load
+            - generic [ref=e1054]:
+              - generic [ref=e1055]: 24m
+              - generic [ref=e1056]: est wait
+          - generic [ref=e1057]:
+            - generic [ref=e1058]: Forecast · 20 min
+            - generic [ref=e1059]: +1% load
+          - generic [ref=e1060]:
+            - generic [ref=e1061]: Staff allocated
+            - generic [ref=e1062]: 8 / 9 req
+          - generic [ref=e1063]:
+            - generic [ref=e1064]: Recommended action
+            - generic [ref=e1065]: Reassign 1 immigration-officer unit(s) from arrival gate a in 6m
+            - button "Simulate this" [ref=e1066] [cursor=pointer]
+          - generic [ref=e1067]:
+            - generic [ref=e1068]:
+              - img "Otto AI" [ref=e1069]
+              - generic [ref=e1070]:
+                - generic [ref=e1071]:
+                  - generic [ref=e1072]: Otto AI
+                  - generic [ref=e1073]: EXPLAINABLE
+                - generic [ref=e1074]: Why this recommendation was produced
+            - generic [ref=e1075]: I recommended reassign 1 immigration-officer unit(s) from arrival gate a in 6m because the live queue, forecast pressure, and feasible staffing/counter constraints point to measurable relief.
+            - list [ref=e1076]:
+              - listitem [ref=e1077]: Triggered by abnormal-crowding alert alert-crowding-immigration-east (critical)
+              - listitem [ref=e1078]: Immigration East is forecast at 105% queue pressure within the horizon
+              - listitem [ref=e1079]: 1 immigration-officer coverage unit(s) short; 3 can move from arrival-gate-a in 6 min
+            - generic [ref=e1080]:
+              - generic [ref=e1081]: Confidence 63%
+              - generic [ref=e1082]: limited by scenario projection confidence
+          - generic [ref=e1083]: Crowd metrics
+          - generic [ref=e1084]:
+            - generic [ref=e1085]:
+              - generic [ref=e1086]: OCCUPANCY
+              - generic [ref=e1087]: 690 / 720
+            - generic [ref=e1088]:
+              - generic [ref=e1089]: QUEUE
+              - generic [ref=e1090]: 514 pax
+            - generic [ref=e1091]:
+              - generic [ref=e1092]: DENSITY
+              - generic [ref=e1093]: 2.9/m²
+            - generic [ref=e1094]:
+              - generic [ref=e1095]: SERVICE
+              - generic [ref=e1096]: 0/9 busy
+            - generic [ref=e1097]:
+              - generic [ref=e1098]: OPEN
+              - generic [ref=e1099]: 9 open
+            - generic [ref=e1100]:
+              - generic [ref=e1101]: UTIL
+              - generic [ref=e1102]: "0.00"
+          - generic:
+            - button "− Close counter"
+            - button "+ Open counter"
+          - generic [ref=e1103]: Freshness fresh · confidence 86% · rest due 6m relief
+      - generic:
+        - generic:
+          - generic: ACQUIRING SIGNAL
+          - generic: FLOOR SENSORS · GATES LIVE
+    - generic [ref=e1104]:
+      - generic [ref=e1105]:
+        - button "▶" [ref=e1106] [cursor=pointer]
+        - button "1×" [ref=e1107] [cursor=pointer]
+      - generic [ref=e1108]:
+        - generic [ref=e1109]: 09:20
+        - generic [ref=e1110]: MORNING
+      - generic [ref=e1111]:
+        - generic [ref=e1112]: Forecast horizon · T+0 min
+        - generic [ref=e1113]: 09:20
+        - slider [ref=e1116] [cursor=pointer]: "0"
+        - generic [ref=e1117]:
+          - generic [ref=e1118]: 09:20
+          - generic [ref=e1119]: 09:50
+          - generic [ref=e1120]: 10:20
+          - generic [ref=e1121]: 10:50
+          - generic [ref=e1122]: 11:20
+      - generic [ref=e1123]:
+        - generic [ref=e1124]: Map legend
+        - generic [ref=e1125]:
+          - generic [ref=e1126]: Passengers
+          - generic [ref=e1128]: Staff
+          - generic [ref=e1130]: Watch
+          - generic [ref=e1132]: Critical

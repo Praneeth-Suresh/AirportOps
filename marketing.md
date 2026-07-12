@@ -1,19 +1,3 @@
-# Marketing Elevator Pitch Candidates
-
-## Candidate 1: Real-time operational confidence
-
-AirportOps gives airport managers a live operations surface for seeing where passenger pressure is building, which counters and staff are under strain, and which flights will be affected next. It combines current queue, wait-time, counter-utilization, and crowding signals with near-term forecasts so duty teams can make faster, better-informed staffing and counter decisions while staying fully in control.
-
-## Candidate 2: From congestion signals to action-ready options
-
-AirportOps turns fragmented airport operations data into clear, explainable decisions. Operators can monitor passenger movement, test counter and staffing scenarios before applying them, and review ranked recommendations that show the affected zone, expected impact, confidence, and supporting evidence.
-
-## Candidate 3: A safer way to manage terminal pressure
-
-AirportOps helps airports anticipate and relieve terminal congestion before it becomes a passenger experience problem. By combining live operational snapshots, passenger-flow forecasts, what-if simulations, and advisory decision support, it helps teams coordinate counters, staff, and passenger movement without handing control to automation.
-
-# Hackathon Writeup
-
 ## Inspiration
 
 Airport operations teams still rely on fragmented systems, manual observation, and delayed updates when terminal pressure builds. We wanted to create a live decision-support surface where operators can see passenger flow, queue pressure, counter utilization, staff coverage, and flight impact before congestion becomes a passenger-experience problem.
@@ -26,11 +10,13 @@ Operators can inspect zones, compare live and simulated states, see upcoming fli
 
 ## How we built it
 
-We built AirportOps as a dependency-light static ES module application backed by deterministic domain modules, seeded operational data, and a browser-first operations surface. The app can run from exported Postgres rows when they are available, or from fixture-shaped rows when they are not, which let us keep the full demo path working without depending on live airport systems.
+We built AirportOps as a dependency-light static ES module application backed by seeded operational data, deterministic domain modules, and a browser-first operations surface. The app can run from exported Postgres rows when they are available, or from fixture-shaped rows when they are not, which keeps the full demo path working without depending on live airport systems.
 
 At the bottom of the stack is the operational database layer. It owns the Postgres schema, migrations, seed data, and export tooling that produce contract-shaped operational rows. Those rows describe the airport layout, zones, counters, staff, flights, passenger flows, observations, freshness, and confidence. The browser never queries SQL directly; it reads a normalized rows bundle and turns it into an immutable `OperationalSnapshot`.
 
-Above that, we split the product into bounded contexts. The operational-state layer validates and assembles snapshots. Monitoring derives queue length, estimated wait time, counter utilization, crowding events, bottlenecks, public context, and alerts. Prediction produces the near-term passenger-flow and queue-pressure forecast. Simulation projects what would happen if an operator changed counters, moved staff, or adjusted flow. Decision support ranks options from the snapshot, forecast, projections, and alerts, then attaches rationale, impact, confidence, and affected zones.
+Above that, the product is split into bounded contexts. Operational state validates and assembles snapshots. Monitoring derives queue length, estimated wait time, counter utilization, crowding events, bottlenecks, public context, and alerts. Prediction produces near-term passenger-flow and queue-pressure forecasts. Simulation projects what would happen if an operator changed counters, moved staff, or adjusted flow. Decision support ranks options from the snapshot, forecast, projections, and alerts, then attaches rationale, impact, confidence, and affected zones.
+
+Agentic AI is used through Otto AI and the Beagle operations copilot. Instead of asking a model to guess from an unstructured prompt, the system gives the agent a bounded operating context: current snapshot, monitoring alerts, forecast points, simulation projections, staffing constraints, public-web observations, and allowed decision types. The agent swarm is modeled as specialist reasoning around queue pressure, counter capacity, staff movement, and forecast risk. These agents turn structured signals into explainable recommendations, questions, and proposal drafts, while deterministic rules remain available as the fallback when an AI service is unavailable.
 
 The front end is the Stratus digital-twin surface: a static HTML/CSS/JavaScript app shell that composes those modules into one operator view. It renders the airport map, live and simulated modes, a forecast timeline, zone details, data-source status, public context, recent events, and Otto AI recommendations. The UI owns presentation state only; the operational calculations stay in the domain modules.
 

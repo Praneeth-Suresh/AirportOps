@@ -28,6 +28,7 @@ import { MonitoringViewModel } from "../monitoring/index.js";
 import { defaultScenarioDecisions, simulationService } from "../simulation/index.js";
 import { decisionSupportService } from "../decision-support/index.js";
 import { createFixtureSnapshotSeries } from "../fixtures/deterministicAdapters.js";
+import { cameraForId, camerasForView } from "./cctvDemo.js";
 import { computeMapLayout, mapBackgroundSvg, zonesForView, MAP_VIEWBOX } from "./mapLayout.js";
 
 const ACCENT = "#29a3ff";
@@ -155,6 +156,7 @@ const state = {
   view: "departure",
   mode: "live", // live | sim
   selected: null,
+  selectedCamera: null,
   tool: null,
   copilot: false,
   theme: "dark",
@@ -163,11 +165,13 @@ const state = {
   panY: 0,
   hover: null,
   layers: { pax: true, staff: true, heat: true, flights: true },
-  simDecisions: {}, // zoneId -> staged additional open counters
+  simDecisions: {}, // zoneId -> staged open-counter delta, signed
   simMovements: [], // { from, to, passengers }
+  simStaffReassignments: [], // { from, to, role, coverageUnits }
   simShiftStaggered: false,
   appliedDecisions: {},
   appliedMovements: [],
+  appliedStaffReassignments: [],
   appliedShiftStaggered: false,
   playing: false,
   speed: 1,
@@ -220,8 +224,8 @@ function escapeHtml(value) {
 
 function activeDecisionState() {
   return state.mode === "sim"
-    ? { counters: state.simDecisions, movements: state.simMovements, shift: state.simShiftStaggered }
-    : { counters: state.appliedDecisions, movements: state.appliedMovements, shift: state.appliedShiftStaggered };
+    ? { counters: state.simDecisions, movements: state.simMovements, staff: state.simStaffReassignments, shift: state.simShiftStaggered }
+    : { counters: state.appliedDecisions, movements: state.appliedMovements, staff: state.appliedStaffReassignments, shift: state.appliedShiftStaggered };
 }
 
 function decisionsFor(snapshot, set) {
@@ -229,8 +233,8 @@ function decisionsFor(snapshot, set) {
   for (const [zoneId, delta] of Object.entries(set.counters)) {
     const counter = snapshot.counters.find((c) => c.zoneId === zoneId);
     if (!counter) continue;
-    const capped = clamp(delta, 0, counter.maxOpen - counter.open);
-    if (capped > 0) decisions.push({ type: "counter-capacity", zoneId, openDelta: capped });
+    const capped = clamp(delta, -counter.open, counter.maxOpen - counter.open);
+    if (capped !== 0) decisions.push({ type: "counter-capacity", zoneId, openDelta: capped });
   }
   const zoneIds = new Set(snapshot.zones.map((z) => z.zoneId));
   for (const move of set.movements) {
@@ -238,19 +242,32 @@ function decisionsFor(snapshot, set) {
       decisions.push({ type: "passenger-movement", fromZoneId: move.from, toZoneId: move.to, passengers: move.passengers });
     }
   }
+  for (const move of set.staff) {
+    if (zoneIds.has(move.from) && zoneIds.has(move.to) && move.coverageUnits > 0) {
+      decisions.push({
+        type: "staff-reassignment",
+        role: move.role,
+        fromZoneId: move.from,
+        toZoneId: move.to,
+        coverageUnits: move.coverageUnits,
+        transferMinutes: move.transferMinutes ?? 10,
+      });
+    }
+  }
   if (set.shift) decisions.push({ type: "shift-timing", role: "security", startDeltaMinutes: -20 });
   return decisions;
 }
 
 function draftCount() {
-  const counters = Object.values(state.simDecisions).filter((d) => d > 0).length;
-  return counters + state.simMovements.length + (state.simShiftStaggered ? 1 : 0);
+  const counters = Object.values(state.simDecisions).filter((d) => d !== 0).length;
+  return counters + state.simMovements.length + state.simStaffReassignments.length + (state.simShiftStaggered ? 1 : 0);
 }
 
 function enterSim() {
   state.mode = "sim";
   state.simDecisions = { ...state.appliedDecisions };
   state.simMovements = state.appliedMovements.map((m) => ({ ...m }));
+  state.simStaffReassignments = state.appliedStaffReassignments.map((m) => ({ ...m }));
   state.simShiftStaggered = state.appliedShiftStaggered;
 }
 
@@ -261,6 +278,7 @@ function goLive() {
 function confirmDecisions() {
   state.appliedDecisions = { ...state.simDecisions };
   state.appliedMovements = state.simMovements.map((m) => ({ ...m }));
+  state.appliedStaffReassignments = state.simStaffReassignments.map((m) => ({ ...m }));
   state.appliedShiftStaggered = state.simShiftStaggered;
   state.mode = "live";
   state.log = [{ time: hhmm(currentClockMinutes()), txt: "Decisions committed to live snapshot", dot: OK }, ...state.log].slice(0, 3);
@@ -272,8 +290,28 @@ function stageCounter(zoneId, delta) {
   const counter = snapshot.counters.find((c) => c.zoneId === zoneId);
   if (!counter) return;
   const maxDelta = counter.maxOpen - counter.open;
+  const minDelta = -counter.open;
   const current = state.simDecisions[zoneId] ?? 0;
-  state.simDecisions[zoneId] = clamp(current + delta, 0, maxDelta);
+  state.simDecisions[zoneId] = clamp(current + delta, minDelta, maxDelta);
+}
+
+function stageStaffReassignment(move) {
+  if (state.mode !== "sim") enterSim();
+  const snapshot = lastFrame.snapshot;
+  const fromZone = snapshot.zones.find((zone) => zone.zoneId === move.fromZoneId);
+  const toZone = snapshot.zones.find((zone) => zone.zoneId === move.toZoneId);
+  if (!fromZone || !toZone) return;
+  const role = move.role ?? toZone.type;
+  state.simStaffReassignments = [
+    ...state.simStaffReassignments,
+    {
+      from: move.fromZoneId,
+      to: move.toZoneId,
+      role,
+      coverageUnits: clamp(move.coverageUnits ?? 1, 1, 12),
+      transferMinutes: move.transferMinutes ?? 10,
+    },
+  ];
 }
 
 function applyOption(option) {
@@ -282,8 +320,7 @@ function applyOption(option) {
   if (decision.type === "counter-capacity") {
     stageCounter(decision.zoneId, decision.openDelta ?? 1);
   } else if (decision.type === "staff-reassignment") {
-    // Moving same-role staff exists to open relief capacity in the target zone.
-    stageCounter(decision.toZoneId, 1);
+    stageStaffReassignment(decision);
   } else if (decision.type === "passenger-movement") {
     state.simMovements = [
       ...state.simMovements,
@@ -343,6 +380,9 @@ function computeFrame() {
     const queue = mon.queueState;
     const util = mon.counterUtilization;
     const staffing = mon.staffingContext;
+    const counter = snapshot.counters.find((candidate) => candidate.zoneId === zone.zoneId);
+    const counterDelta = counter ? clamp(activeSet.counters[zone.zoneId] ?? 0, -counter.open, counter.maxOpen - counter.open) : 0;
+    const scenarioOpenCounters = counter ? clamp(counter.open + counterDelta, 0, counter.maxOpen) : null;
     const status = proj.status;
     const color = status === "critical" ? BUSY : status === "watch" ? WARN : OK;
     const loadPct = Math.round(proj.queuePressure * 100);
@@ -369,6 +409,7 @@ function computeFrame() {
       queueLength: queue.queueLength,
       wait: queue.estimatedWaitMinutes,
       density: queue.densityPerSquareMeter,
+      serviceRatePerMinute: queue.serviceRatePerMinute,
       severity: queue.severity,
       confidence: mon.confidence,
       freshness: mon.freshness,
@@ -376,7 +417,10 @@ function computeFrame() {
       bottleneck: mon.bottleneck,
       utilization: util,
       staffing,
-      openCounters: util ? util.openCounters : null,
+      baseOpenCounters: counter ? counter.open : null,
+      openCounters: scenarioOpenCounters,
+      counterDelta,
+      counterMaxOpen: counter ? counter.maxOpen : null,
       staffHere,
       paxCount,
       heatOpacity: status === "critical" ? 0.26 : status === "watch" ? 0.15 : 0.06,
@@ -395,6 +439,7 @@ function computeFrame() {
     monitoring,
     projection,
     projectionPoint,
+    activeSet,
     options,
     publicContext: monitoring.analytics.publicContext,
     layout,
@@ -429,7 +474,8 @@ function renderToString() {
         ${renderToolRail(frame)}
         ${isSim ? renderSimBanner() : ""}
         ${renderInsightPanel(frame, selectedZone, isSim)}
-        ${renderCopilot(frame, worst, topOption, isSim)}
+        ${state.selectedCamera ? renderCctvViewer(frame) : ""}
+        
         ${isSim ? renderSimDock(frame) : ""}
         ${renderBoot()}
       </main>
@@ -541,7 +587,6 @@ function renderCommandBar(frame, clockMinutes, isSim) {
           style="width:28px; height:28px; border-radius:6px; object-fit:cover; border:1.5px solid ${ACCENT}; box-shadow:0 0 9px rgba(41,163,255,.7);"
         />
         <span style="font-weight:700; font-size:15px;">sentinel</span>
-        <span style="font-size:11px; color:var(--text3);">Digital Twin</span>
       </div>
       <div style="width:1px; height:26px; background:var(--border);"></div>
       <div style="display:flex; align-items:center; gap:20px;">
@@ -566,11 +611,9 @@ function renderCommandBar(frame, clockMinutes, isSim) {
 }
 
 function renderMap(frame, isSim) {
-  const { snapshot, layout, mapZones } = frame;
+  const { layout, mapZones, activeSet } = frame;
   const invZoom = Math.round((1 / state.zoom) * 1000) / 1000;
   const grabCursor = state.zoom > 1 ? (dragState.active ? "grabbing" : "grab") : "default";
-  const arrivalFlight = snapshot.flights.find((f) => f.type === "arrival");
-  const showPlane = state.layers.flights && state.booted && state.view === "arrival" && arrivalFlight;
 
   const heat = state.layers.heat
     ? mapZones
@@ -614,6 +657,51 @@ function renderMap(frame, isSim) {
         .join("")
     : "";
 
+  const counterBanks = mapZones
+    .filter((z) => z.counterMaxOpen)
+    .map((z) => {
+      const size = 11;
+      const gap = 3;
+      const cols = Math.min(5, z.counterMaxOpen);
+      const rows = Math.ceil(z.counterMaxOpen / cols);
+      const startX = z.cx - ((cols * size + (cols - 1) * gap) / 2);
+      const startY = z.cy - 55 - ((rows - 1) * (size + gap)) / 2;
+      const rects = [];
+      for (let i = 0; i < z.counterMaxOpen; i += 1) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const open = i < z.openCounters;
+        rects.push(`<rect data-counter-bank="${z.zoneId}" data-counter-state="${open ? "open" : "closed"}" x="${(startX + col * (size + gap)).toFixed(1)}" y="${(startY + row * (size + gap)).toFixed(1)}" width="${size}" height="${size}" rx="2" fill="${open ? OK : "var(--border2)"}" fill-opacity="${open ? 0.95 : 0.42}" stroke="var(--bg-app)" stroke-width="1" style="transition:fill .22s ease, fill-opacity .22s ease;"></rect>`);
+      }
+      const deltaLabel = isSim && z.counterDelta !== 0
+        ? `<text x="${z.cx}" y="${(startY - 6).toFixed(1)}" text-anchor="middle" fill="${z.counterDelta > 0 ? OK : WARN}" font-size="11" font-family="IBM Plex Mono" font-weight="700">${z.counterDelta > 0 ? "+" : ""}${z.counterDelta}</text>`
+        : "";
+      return `<g opacity="${state.layers.staff ? 1 : 0.95}">${deltaLabel}${rects.join("")}</g>`;
+    })
+    .join("");
+
+  const positions = layout.positions;
+  const staffTransfers = state.layers.staff
+    ? activeSet.staff
+        .flatMap((move, moveIndex) => {
+          const from = positions[move.from];
+          const to = positions[move.to];
+          if (!from || !to) return [];
+          const units = clamp(Math.round(move.coverageUnits), 1, 8);
+          const path = `M ${from.cx} ${from.cy} L ${to.cx} ${to.cy}`;
+          const color = ROLE_COLOR[move.role] || TEAL;
+          const line = `<path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-opacity="0.42" stroke-dasharray="5 7" style="animation:dashflow 1.1s linear infinite;"></path>`;
+          const dots = [];
+          for (let i = 0; i < units; i += 1) {
+            dots.push(`<circle r="6" fill="${color}" stroke="var(--bg-app)" stroke-width="1.4" filter="url(#glow)">
+              <animateMotion dur="${1.8 + i * 0.12}s" begin="${(moveIndex * 0.22 + i * 0.18).toFixed(2)}s" repeatCount="indefinite" path="${path}"></animateMotion>
+            </circle>`);
+          }
+          return [`<g>${line}${dots.join("")}</g>`];
+        })
+        .join("")
+    : "";
+
   const nodeDots = mapZones
     .map((z) => `<circle cx="${z.cx}" cy="${z.cy}" r="3.5" fill="${z.color}" filter="url(#glow)"></circle>`)
     .join("");
@@ -641,7 +729,6 @@ function renderMap(frame, isSim) {
     <div data-pan style="position:absolute; inset:0; cursor:${grabCursor}; overflow:hidden;">
       <div style="position:absolute; inset:0; background:var(--map-grad);"></div>
       <div style="position:absolute; inset:0; transform:translate(${state.panX}px, ${state.panY}px) scale(${state.zoom}); transform-origin:center center;">
-        ${showPlane ? `<div style="position:absolute; top:9%; left:0; width:100%; pointer-events:none;"><svg width="42" height="42" viewBox="0 0 24 24" style="animation:planefly 11s linear infinite; filter:drop-shadow(0 0 6px rgba(41,163,255,.8));"><path transform="rotate(90 12 12)" d="M21 16v-2l-8-5V3.5A1.5 1.5 0 0 0 11.5 2 1.5 1.5 0 0 0 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z" fill="${ACCENT}"></path></svg></div>` : ""}
         <svg viewBox="0 0 ${MAP_VIEWBOX.w} ${MAP_VIEWBOX.h}" preserveAspectRatio="xMidYMid meet" style="position:absolute; inset:0; width:100%; height:100%; pointer-events:none;">
           <defs>
             <filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="34"></feGaussianBlur></filter>
@@ -651,7 +738,9 @@ function renderMap(frame, isSim) {
           <g opacity="${state.layers.heat ? 1 : 0}">${heat}</g>
           ${busyRings}
           <g opacity="${state.layers.pax ? 1 : 0}">${passengers}</g>
+          ${counterBanks}
           <g opacity="${state.layers.staff ? 1 : 0}">${staff}</g>
+          ${staffTransfers}
           ${nodeDots}
         </svg>
         ${chips}
@@ -700,41 +789,6 @@ const TOOL_META = [
   { key: "cctv", label: "CCTV", icon: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2" y="6" width="13" height="9" rx="1.5"/><path d="M15 8.5 21 6 21 15 15 12.5"/><circle cx="6" cy="10.5" r="1.3"/></svg>' },
   { key: "incidents", label: "Incidents", icon: '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v5M12 17.5v.5"/></svg>' },
 ];
-
-// CCTV camera groupings. Each camera covers a cluster of adjacent zones; a
-// camera tile is a lens over the same operational pipeline, so its people-in-
-// view count and per-zone busy numbers come straight from the frame. The
-// cam-checkin-east-01 entry is the OpenCV edge pilot's real camera (see
-// tools/edge-analytics); it is badged LIVE CV only when the active data source
-// is the edge bundle.
-const CAMERAS = [
-  { cameraId: "cam-checkin-east-01", label: "Check-in East", edge: true, zoneIds: ["check-in-a", "bag-drop-a"] },
-  { cameraId: "cam-checkin-west-02", label: "Check-in West", zoneIds: ["check-in-b", "departure-hall"] },
-  { cameraId: "cam-entrance-01", label: "Landside Entrance", zoneIds: ["terminal-entrance-east", "terminal-entrance-west"] },
-  { cameraId: "cam-security-01", label: "Security Screening", zoneIds: ["security-north", "transfer-corridor", "security-south"] },
-  { cameraId: "cam-gates-dep-01", label: "Departure Gates", zoneIds: ["departure-gate-a", "departure-gate-b", "departure-gate-c", "departure-gate-d"] },
-  { cameraId: "cam-immigration-01", label: "Immigration Hall", zoneIds: ["immigration-east", "immigration-west"] },
-  { cameraId: "cam-baggage-01", label: "Baggage Reclaim", zoneIds: ["baggage-hall", "baggage-reclaim-north", "baggage-reclaim-south"] },
-  { cameraId: "cam-customs-01", label: "Customs", zoneIds: ["customs-hall"] },
-  { cameraId: "cam-arrivals-01", label: "Arrivals Hall", zoneIds: ["arrival-gate-a", "arrival-gate-b", "arrivals-hall"] },
-];
-
-const STATUS_RANK = { normal: 0, watch: 1, critical: 2 };
-
-// Build per-camera view models from the current frame's zones. Only zones on
-// the active floor are present in mapZones, so a camera contributes only the
-// zones its lens currently sees; cameras with no visible zone drop out.
-function camerasForView(mapZones) {
-  const byId = new Map(mapZones.map((z) => [z.zoneId, z]));
-  return CAMERAS.map((cam) => {
-    const zones = cam.zoneIds.map((id) => byId.get(id)).filter(Boolean);
-    if (zones.length === 0) return null;
-    const peopleInView = zones.reduce((total, z) => total + z.occupancy, 0);
-    const worst = zones.reduce((acc, z) => (STATUS_RANK[z.status] > STATUS_RANK[acc.status] ? z : acc), zones[0]);
-    const allFresh = zones.every((z) => z.freshness.status === "fresh");
-    return { ...cam, zones, peopleInView, color: worst.color, status: worst.status, allFresh };
-  }).filter(Boolean);
-}
 
 function renderToolRail(frame) {
   const railButtons = TOOL_META.map((t) => {
@@ -845,15 +899,14 @@ function renderDrawerBody(frame) {
       .join("")}</div>`;
   }
   if (state.tool === "cctv") {
-    const cams = camerasForView(mapZones);
-    const isEdge = dataSource === "edge";
+    const cams = camerasForView(mapZones, { dataSource });
     if (cams.length === 0) {
       return `<div style="padding:14px 10px; text-align:center; font-size:11px; color:var(--text3);">No cameras cover the ${state.view} floor.</div>`;
     }
     return `<div style="display:flex; flex-direction:column; gap:9px;">${cams
       .map((cam) => {
         const badge =
-          cam.edge && isEdge
+          cam.isEdgeLive
             ? `<span style="font-size:8px; font-weight:600; letter-spacing:.04em; color:#04121f; background:${OK}; padding:2px 5px; border-radius:3px;">● LIVE CV</span>`
             : `<span style="font-size:9px; color:${cam.allFresh ? OK : WARN};">${cam.allFresh ? "fresh" : "stale"}</span>`;
         const zoneRows = cam.zones
@@ -864,19 +917,19 @@ function renderDrawerBody(frame) {
               : { txt: `${z.staffHere.length} staff`, color: z.staffHere.length > 0 ? "var(--text2)" : "var(--text3)" };
             return `<div data-zone-chip="${z.zoneId}" style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px 8px; background:var(--panel2); border:1px solid ${z.zoneId === state.selected ? z.color : "var(--border)"}; border-radius:6px; cursor:pointer;">
               <span style="display:flex; align-items:center; gap:6px; min-width:0;"><span style="width:6px; height:6px; border-radius:50%; background:${z.color}; flex:none;"></span><span style="font-size:11px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${z.label}</span></span>
-              <span style="display:flex; align-items:center; gap:9px; flex:none;"><span class="mono" style="font-size:11px; color:var(--text);" title="people in view">👤 ${z.occupancy}</span><span class="mono" style="font-size:10px; color:${busy.color};">${busy.txt}</span></span>
+              <span style="display:flex; align-items:center; gap:9px; flex:none;"><span class="mono" style="font-size:11px; color:var(--text);" title="people in view">PAX ${z.occupancy}</span><span class="mono" style="font-size:10px; color:${busy.color};">${busy.txt}</span></span>
             </div>`;
           })
           .join("");
-        return `<div style="border:1px solid var(--border); border-radius:8px; overflow:hidden;">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; background:var(--panel2); border-bottom:1px solid var(--border);">
+        return `<div style="border:1px solid ${state.selectedCamera === cam.cameraId ? cam.color : "var(--border)"}; border-radius:8px; overflow:hidden;">
+          <button data-camera="${cam.cameraId}" style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; background:var(--panel2); border:0; border-bottom:1px solid var(--border); color:var(--text); cursor:pointer; text-align:left;">
             <span style="display:flex; align-items:center; gap:7px; min-width:0;">
               <span style="display:flex; color:${cam.color};"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2" y="6" width="13" height="9" rx="1.5"/><path d="M15 8.5 21 6 21 15 15 12.5"/><circle cx="6" cy="10.5" r="1.3"/></svg></span>
               <span style="min-width:0;"><span style="display:block; font-size:11px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${cam.label}</span><span class="mono" style="font-size:8.5px; color:var(--text3);">${cam.cameraId}</span></span>
             </span>
             <span style="display:flex; flex-direction:column; align-items:flex-end; flex:none;"><span class="mono" style="font-size:15px; font-weight:600; color:${cam.color};">${cam.peopleInView}</span><span style="font-size:8px; color:var(--text3);">in view</span></span>
-          </div>
-          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px 4px;"><span style="font-size:8.5px; color:var(--text3); letter-spacing:.04em; text-transform:uppercase;">${cam.zones.length} zone${cam.zones.length > 1 ? "s" : ""}</span>${badge}</div>
+          </button>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px 4px;"><span style="font-size:8.5px; color:var(--text3); letter-spacing:.04em; text-transform:uppercase;">${cam.zones.length} zone${cam.zones.length > 1 ? "s" : ""} · ${cam.detectionBoxes.length} boxes</span>${badge}</div>
           <div style="display:flex; flex-direction:column; gap:5px; padding:0 8px 8px;">${zoneRows}</div>
         </div>`;
       })
@@ -896,6 +949,122 @@ function renderDrawerBody(frame) {
   return "";
 }
 
+function renderCctvViewer(frame) {
+  const camera = cameraForId(frame.mapZones, state.selectedCamera, { dataSource });
+  if (!camera) return "";
+
+  const zoneIds = new Set(camera.zones.map((zone) => zone.zoneId));
+  const cameraAlerts = frame.alerts.filter((alert) => zoneIds.has(alert.zoneId));
+  const recommendation = frame.options.find((option) => option.affectedZones.some((zoneId) => zoneIds.has(zoneId)));
+  const insight = camera.insight;
+  const feedStatus = camera.status === "critical" ? "Crowd critical" : camera.status === "watch" ? "Crowd watch" : "Within threshold";
+  const statusColor = camera.status === "critical" ? BUSY : camera.status === "watch" ? WARN : OK;
+  const sourceLabel = camera.isEdgeLive ? "LIVE CV" : "DEMO CV";
+  const details = [
+    ["Camera", camera.cameraId],
+    ["Coverage", camera.zones.map((zone) => zone.label).join(" + ")],
+    ["Floor", camera.floor],
+    ["Lens", camera.lens],
+    ["Source", camera.source],
+    ["Freshness", insight.freshness],
+    ["Confidence", pct(insight.confidence.score)],
+  ];
+  const metrics = [
+    ["Occupancy", `${insight.occupancy} / ${insight.capacity}`, "occupancy"],
+    ["Queue length", `${insight.queueLength} pax`, "queue_length"],
+    ["Est wait", `${insight.estimatedWaitMinutes}m`, "estimated_wait_minutes"],
+    ["Density", `${insight.densityPerSquareMeter}/m2`, "density_per_square_meter"],
+    ["Service load", `${insight.activeServiceLoadPerMinute}/min`, "active_service_load_per_minute"],
+    ["Busy counters", insight.openCounters > 0 ? `${insight.busyCounters}/${insight.openCounters}` : "n/a", "busy_counters"],
+  ];
+  const boxes = camera.detectionBoxes
+    .map((box, index) => `<div class="cctv-box" style="left:${box.left}%; top:${box.top}%; width:${box.width}%; height:${box.height}%; animation-delay:${(index % 6) * 0.18}s;">
+      <span>${box.label.toUpperCase()} ${Math.round(box.confidence * 100)}%</span>
+    </div>`)
+    .join("");
+  const people = camera.detectionBoxes
+    .map((box, index) => `<span class="cctv-person" style="left:${box.left + box.width / 2}%; top:${box.top + box.height * 0.75}%; animation-delay:${(index % 5) * 0.22}s;"></span>`)
+    .join("");
+  const laneGuides = camera.zones
+    .map((zone, index) => `<div class="cctv-zone-band" style="left:${8 + index * (84 / camera.zones.length)}%; width:${Math.max(18, 76 / camera.zones.length)}%; border-color:${zone.color};">
+      <span>${escapeHtml(zone.label)}</span>
+    </div>`)
+    .join("");
+  const alertBlock = cameraAlerts.length > 0
+    ? cameraAlerts.slice(0, 3).map((alert) => `<div style="padding:8px 9px; border:1px solid ${alert.severity === "critical" ? "rgba(240,91,97,.45)" : "rgba(245,185,66,.45)"}; border-left:3px solid ${alert.severity === "critical" ? BUSY : WARN}; border-radius:6px; background:var(--panel2);">
+        <div style="font-size:10px; font-weight:600; color:${alert.severity === "critical" ? BUSY : WARN}; text-transform:uppercase;">${alert.severity} · ${escapeHtml(alert.type)}</div>
+        <div style="font-size:11px; line-height:1.35; color:var(--text2); margin-top:3px;">${escapeHtml(alert.message)}</div>
+      </div>`).join("")
+    : `<div style="padding:9px 10px; border:1px solid rgba(50,199,131,.36); border-radius:6px; background:var(--panel2); font-size:11px; color:var(--text2);">No active camera-zone alerts.</div>`;
+  const recommendationBlock = recommendation
+    ? `<div style="padding:10px 11px; border:1px solid rgba(41,163,255,.4); border-radius:7px; background:linear-gradient(135deg, rgba(41,163,255,.12), var(--panel2));">
+        <div style="font-size:10px; color:${ACCENT}; text-transform:uppercase; font-weight:700;">Operational recommendation</div>
+        <div style="font-size:12px; line-height:1.4; color:var(--text); margin-top:5px;">${escapeHtml(describeDecision(recommendation.decision))}</div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+          <span class="mono" style="font-size:9px; color:${OK}; background:var(--hover); border-radius:4px; padding:3px 6px;">-${recommendation.expectedImpact.estimatedWaitMinutesReduced}m wait</span>
+          <span class="mono" style="font-size:9px; color:${ACCENT}; background:var(--hover); border-radius:4px; padding:3px 6px;">${pct(recommendation.confidence.score)} confidence</span>
+        </div>
+      </div>`
+    : `<div style="padding:10px 11px; border:1px solid var(--border); border-radius:7px; background:var(--panel2); font-size:11px; color:var(--text2);">No intervention recommended for this camera view.</div>`;
+
+  return `
+    <div class="cctv-modal" role="dialog" aria-modal="true" aria-label="${escapeHtml(camera.label)} CCTV viewer">
+      <div class="cctv-viewer" style="--feed-accent:${camera.color};">
+        <div class="cctv-viewer-head">
+          <div style="min-width:0;">
+            <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+              <span style="width:8px; height:8px; border-radius:50%; background:${statusColor}; box-shadow:0 0 8px ${statusColor}; flex:none;"></span>
+              <span style="font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(camera.label)}</span>
+              <span class="mono" style="font-size:9px; color:#04121f; background:${camera.isEdgeLive ? OK : WARN}; padding:3px 6px; border-radius:4px; font-weight:700;">${sourceLabel}</span>
+            </div>
+            <div style="font-size:10px; color:var(--text3); margin-top:3px;">${escapeHtml(feedStatus)} · ${camera.peopleInView} people in frame · ${camera.detectionBoxes.length} detections</div>
+          </div>
+          <button data-action="close-camera" aria-label="Close CCTV viewer" style="border:1px solid var(--border); background:var(--hover); color:var(--text2); cursor:pointer; width:32px; height:32px; border-radius:7px; font-size:15px;">x</button>
+        </div>
+        <div class="cctv-viewer-body">
+          <section class="cctv-feed" aria-label="Demo CCTV footage with crowd detection boxes">
+            <div class="cctv-feed-stage">
+              <div class="cctv-feed-grid"></div>
+              <div class="cctv-feed-depth"></div>
+              ${laneGuides}
+              ${people}
+              ${boxes}
+              <div class="cctv-scan"></div>
+              <div class="cctv-feed-osd">
+                <span class="mono">${camera.cameraId}</span>
+                <span class="mono">${hhmm(currentClockMinutes())}</span>
+                <span class="mono">${camera.floor.toUpperCase()}</span>
+              </div>
+            </div>
+          </section>
+          <aside class="cctv-side">
+            <div>
+              <div class="cctv-section-label">Camera details</div>
+              <div class="cctv-detail-grid">${details
+                .map(([label, value]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`)
+                .join("")}</div>
+            </div>
+            <div>
+              <div class="cctv-section-label">Analysis insights</div>
+              <div class="cctv-metric-grid">${metrics
+                .map(([label, value, field]) => `<div title="data.md field: ${field}"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`)
+                .join("")}</div>
+            </div>
+            <div>
+              <div class="cctv-section-label">Alerts</div>
+              <div style="display:flex; flex-direction:column; gap:7px;">${alertBlock}</div>
+            </div>
+            <div>
+              <div class="cctv-section-label">Decision support</div>
+              ${recommendationBlock}
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderSimBanner() {
   return `
     <div style="position:absolute; top:16px; left:50%; transform:translateX(-50%); z-index:11; display:flex; align-items:center; gap:8px; background:rgba(245,185,66,.14); border:1px solid rgba(245,185,66,.5); border-radius:7px; padding:6px 13px;">
@@ -907,22 +1076,163 @@ function renderSimBanner() {
 
 function renderInsightPanel(frame, selectedZone, isSim) {
   const body = selectedZone ? renderZoneDetail(frame, selectedZone, isSim) : renderTerminalStatus(frame);
-  return `<div style="position:absolute; right:14px; top:14px; bottom:14px; width:312px; z-index:11; display:flex; flex-direction:column; pointer-events:none;">${body}</div>`;
+  return `<div class="insight-panel">${body}</div>`;
+}
+
+function renderOttoExplainability(frame, zone, option) {
+  const rationale = option?.rationale?.slice(0, 3) ?? [];
+  const confidence = option?.confidence ?? zone.confidence;
+  const basis = option?.confidence?.basis ?? `${zone.freshness.status} observations with ${pct(zone.confidence.score)} confidence`;
+  const status = option
+    ? `I recommended ${describeDecision(option.decision).toLowerCase()} because the live queue, forecast pressure, and feasible staffing/counter constraints point to measurable relief.`
+    : `I am not recommending an intervention here because current load, queue pressure, and staffing coverage remain inside operating thresholds.`;
+  const evidence = rationale.length > 0
+    ? rationale.map((item) => {
+        const label = escapeHtml(item.label ?? "Evidence");
+        const value = item.value ?? item.detail ?? item.description ?? "";
+        return `<li style="margin:0 0 6px; color:var(--text2);"><span style="color:var(--text);">${label}</span>${value ? ` · ${escapeHtml(value)}` : ""}</li>`;
+      }).join("")
+    : `<li style="margin:0 0 6px; color:var(--text2);"><span style="color:var(--text);">Live threshold check</span> · load ${zone.loadPct}%, queue ${zone.queueLength}, wait ${zone.wait}m</li>`;
+
+  return `
+    <div style="border:1px solid rgba(41,163,255,.38); border-radius:9px; padding:11px 12px; background:linear-gradient(135deg, rgba(41,163,255,.12), var(--panel2) 52%); margin:0 0 14px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <img src="./otto.png" alt="Otto AI" style="width:38px; height:38px; border-radius:10px; object-fit:cover; border:1px solid rgba(41,163,255,.45); background:var(--hover); flex:none;">
+        <div style="min-width:0;">
+          <div style="display:flex; align-items:center; gap:7px;"><span style="font-size:12px; font-weight:700;">Otto AI</span><span class="mono" style="font-size:9px; color:${ACCENT}; padding:2px 6px; border:1px solid rgba(41,163,255,.35); border-radius:999px;">EXPLAINABLE</span></div>
+          <div style="font-size:10px; color:var(--text3); margin-top:2px;">Why this recommendation was produced</div>
+        </div>
+      </div>
+      <div style="font-size:11px; line-height:1.45; color:var(--text); margin-bottom:8px;">${escapeHtml(status)}</div>
+      <ul style="list-style:none; margin:0; padding:0; font-size:10px; line-height:1.35;">${evidence}</ul>
+      <div style="display:flex; justify-content:space-between; gap:8px; margin-top:9px; padding-top:8px; border-top:1px solid var(--border); font-size:9px; color:var(--text3);">
+        <span>Confidence <span class="mono" style="color:${ACCENT};">${pct(confidence.score)}</span></span>
+        <span style="text-align:right;">${escapeHtml(basis)}</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderRecommendedChanges(frame, zone, option, isSim) {
+  if (!option) {
+    return `
+      <div style="border:1px solid var(--border); border-radius:7px; padding:11px 12px; background:var(--panel2); margin:6px 0 14px;">
+        <div style="font-size:10px; color:var(--text3); margin-bottom:5px;">Recommended changes</div>
+        <div style="font-size:13px; font-weight:600; color:var(--text); line-height:1.4;">Hold - zone within thresholds</div>
+      </div>
+    `;
+  }
+
+  const impact = option.expectedImpact;
+  const rationale = option.rationale?.slice(0, 2) ?? [];
+  const recFg = zone.status === "critical" ? BUSY : zone.status === "watch" ? WARN : ACCENT;
+  const badgeStyle = "font-size:9px; background:var(--hover); border-radius:4px; padding:3px 6px;";
+  return `
+    <div style="border:1px solid ${zone.status === "critical" ? "rgba(240,91,97,.45)" : "rgba(245,185,66,.45)"}; border-radius:7px; padding:11px 12px; background:var(--panel2); margin:6px 0 14px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px;">
+        <div style="font-size:10px; color:var(--text3);">Recommended changes</div>
+        <span class="mono" style="font-size:9px; color:${ACCENT};">${pct(option.confidence.score)} confidence</span>
+      </div>
+      <div style="font-size:13px; font-weight:600; color:${recFg}; line-height:1.4;">${escapeHtml(describeDecision(option.decision))}</div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+        <span class="mono" style="${badgeStyle} color:${OK};">-${impact.estimatedWaitMinutesReduced}m wait</span>
+        <span class="mono" style="${badgeStyle} color:${OK};">-${Math.round(impact.queuePressureDrop * 100)}% pressure</span>
+        <span class="mono" style="${badgeStyle} color:${ACCENT};">${impact.passengersRelieved} pax relieved</span>
+      </div>
+      ${rationale.length > 0 ? `<div style="display:flex; flex-direction:column; gap:5px; margin-top:9px;">${rationale
+        .map((item) => `<div style="font-size:10px; line-height:1.35; color:var(--text2);">${escapeHtml(item.label)}</div>`)
+        .join("")}</div>` : ""}
+      <button data-apply-option="${option.optionId}" style="width:100%; margin-top:10px; padding:8px; border:none; border-radius:6px; background:${ACCENT}; color:#fff; cursor:pointer; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em;">${isSim ? "Apply to draft" : "Apply in simulator"}</button>
+    </div>
+  `;
+}
+
+function renderCounterControls(zone, isSim) {
+  if (!zone.counterMaxOpen) return "";
+  const disabled = !isSim;
+  const delta = zone.counterDelta === 0 ? "no draft change" : `${zone.counterDelta > 0 ? "+" : ""}${zone.counterDelta} counter${Math.abs(zone.counterDelta) === 1 ? "" : "s"}`;
+  return `
+    <div style="border:1px solid var(--border); border-radius:7px; padding:10px 11px; background:var(--panel2); margin-top:12px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+        <div style="font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase;">Counter plan</div>
+        <div class="mono" style="font-size:11px; color:${zone.counterDelta === 0 ? "var(--text2)" : zone.counterDelta > 0 ? OK : WARN};">${zone.openCounters}/${zone.counterMaxOpen} open · ${delta}</div>
+      </div>
+      <div style="display:flex; gap:7px; margin-top:9px; opacity:${disabled ? 0.42 : 1}; pointer-events:${disabled ? "none" : "auto"};">
+        <button data-counter-dec="${zone.zoneId}" style="flex:1; padding:9px; border:1px solid var(--border2); border-radius:6px; background:var(--hover); color:var(--text); cursor:pointer; font-size:11px;">Close counter</button>
+        <button data-counter-inc="${zone.zoneId}" style="flex:1; padding:9px; border:1px solid var(--border2); border-radius:6px; background:var(--hover); color:var(--text); cursor:pointer; font-size:11px;">Open counter</button>
+      </div>
+    </div>
+  `;
+}
+
+function staffOriginChoices(frame, zone) {
+  const targetRole = zone.staffing?.roleRequired;
+  const candidates = new Map();
+  for (const candidate of zone.staffing?.reliefCandidates ?? []) {
+    candidates.set(candidate.fromZoneId, labelize(candidate.fromZoneId));
+  }
+  for (const staff of frame.snapshot.staff) {
+    if (staff.zoneId !== zone.zoneId && (!targetRole || staff.role === targetRole)) {
+      candidates.set(staff.zoneId, labelize(staff.zoneId));
+    }
+  }
+  return [...candidates.entries()].map(([zoneId, label]) => ({ zoneId, label }));
+}
+
+function staffDestinationChoices(frame) {
+  return frame.mapZones
+    .filter((zone) => zone.staffing)
+    .map((zone) => ({ zoneId: zone.zoneId, label: zone.label }));
+}
+
+function renderStaffReassignmentControls(frame, zone, isSim) {
+  const disabled = !isSim;
+  const origins = staffOriginChoices(frame, zone);
+  const destinations = staffDestinationChoices(frame);
+  const rows = state.simStaffReassignments
+    .map((move, index) => ({ move, index }))
+    .filter(({ move }) => move.to === zone.zoneId || move.from === zone.zoneId);
+  const role = zone.staffing?.roleRequired ?? "staff";
+  const rowHtml = rows.length > 0
+    ? rows.map(({ move, index }) => `
+        <div style="display:grid; grid-template-columns:1fr 1fr 64px 28px; gap:6px; align-items:center;">
+          <select data-staff-move-field="${index}" data-field="from" style="min-width:0; padding:7px 6px; border:1px solid var(--border); border-radius:6px; background:var(--hover); color:var(--text); font-size:10px;">
+            ${origins.map((origin) => `<option value="${origin.zoneId}" ${origin.zoneId === move.from ? "selected" : ""}>${escapeHtml(origin.label)}</option>`).join("")}
+          </select>
+          <select data-staff-move-field="${index}" data-field="to" style="min-width:0; padding:7px 6px; border:1px solid var(--border); border-radius:6px; background:var(--hover); color:var(--text); font-size:10px;">
+            ${destinations.map((destination) => `<option value="${destination.zoneId}" ${destination.zoneId === move.to ? "selected" : ""}>${escapeHtml(destination.label)}</option>`).join("")}
+          </select>
+          <input data-staff-move-field="${index}" data-field="coverageUnits" type="number" min="1" max="12" step="1" value="${move.coverageUnits}" style="width:64px; padding:7px 6px; border:1px solid var(--border); border-radius:6px; background:var(--hover); color:var(--text); font-size:10px;">
+          <button data-remove-staff-move="${index}" title="Remove movement" style="height:30px; border:1px solid var(--border); border-radius:6px; background:var(--hover); color:var(--text3); cursor:pointer;">x</button>
+        </div>`)
+      .join("")
+    : `<div style="font-size:10px; line-height:1.35; color:var(--text3); padding:8px 0;">No manpower redirection staged for this location.</div>`;
+  const candidate = origins[0];
+  return `
+    <div style="border:1px solid var(--border); border-radius:7px; padding:10px 11px; background:var(--panel2); margin-top:10px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px;">
+        <div style="font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase;">Manpower redirection</div>
+        <span class="mono" style="font-size:9px; color:${rows.length ? TEAL : "var(--text3)"};">${rows.length} move${rows.length === 1 ? "" : "s"}</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:7px; opacity:${disabled ? 0.42 : 1}; pointer-events:${disabled ? "none" : "auto"};">
+        ${rowHtml}
+        <button data-add-staff-move="${zone.zoneId}" data-default-from="${candidate?.zoneId ?? ""}" data-default-role="${role}" style="padding:8px; border:1px solid rgba(39,211,209,.42); border-radius:6px; background:var(--hover); color:${TEAL}; cursor:pointer; font-size:11px; font-weight:600;">Add staff movement</button>
+      </div>
+    </div>
+  `;
 }
 
 function renderZoneDetail(frame, zone, isSim) {
   const staffing = zone.staffing;
   const util = zone.utilization;
   const option = frame.options.find((o) => o.affectedZones.includes(zone.zoneId));
-  const recFg = zone.status === "critical" ? BUSY : zone.status === "watch" ? WARN : "var(--text)";
   const forecastColor = zone.forecastDelta > 6 ? BUSY : zone.forecastDelta > 0 ? WARN : OK;
-  const canAdjust = !!util;
   const crowd = [
     { k: "OCCUPANCY", v: `${zone.occupancy} / ${zone.capacity}`, color: "var(--text)" },
     { k: "QUEUE", v: `${zone.queueLength} pax`, color: zone.color },
     { k: "DENSITY", v: `${zone.density}/m²`, color: zone.density > 2.2 ? BUSY : "var(--text)" },
-    { k: "SERVICE", v: `${util ? util.busyCounters : "—"}${util ? "/" + util.openCounters : ""} busy`, color: "var(--text)" },
-    { k: "OPEN", v: `${util ? util.openCounters : 0} open`, color: "var(--text)" },
+    { k: "SERVICE", v: `${util ? util.busyCounters : "—"}${util ? "/" + zone.openCounters : ""} busy`, color: "var(--text)" },
+    { k: "OPEN", v: `${zone.openCounters ?? 0} open`, color: zone.counterDelta === 0 ? "var(--text)" : zone.counterDelta > 0 ? OK : WARN },
     { k: "UTIL", v: util ? util.utilizationRatio.toFixed(2) : "n/a", color: zone.color },
   ];
   return `
@@ -939,19 +1249,14 @@ function renderZoneDetail(frame, zone, isSim) {
         </div>
         <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:var(--panel2); border:1px solid var(--border); border-radius:6px; margin-bottom:8px;"><span style="font-size:11px; color:var(--text2);">Forecast · 20 min</span><span class="mono" style="font-size:13px; font-weight:600; color:${forecastColor};">${zone.forecastDelta >= 0 ? "+" : ""}${zone.forecastDelta}% load</span></div>
         <div style="display:flex; align-items:center; justify-content:space-between; padding:9px 11px; background:var(--panel2); border:1px solid var(--border); border-radius:6px; margin-bottom:8px;"><span style="font-size:11px; color:var(--text2);">Staff allocated</span><span class="mono" style="font-size:13px; font-weight:600;">${staffing ? staffing.activeCoverageUnits + " / " + staffing.requiredCoverageUnits + " req" : zone.staffHere.length + " on floor"}</span></div>
-        <div style="border:1px solid ${zone.status === "critical" ? "rgba(240,91,97,.4)" : zone.status === "watch" ? "rgba(245,185,66,.4)" : "var(--border)"}; border-radius:7px; padding:11px 12px; background:var(--panel2); margin:6px 0 14px;">
-          <div style="font-size:10px; color:var(--text3); margin-bottom:5px;">Recommended action</div>
-          <div style="font-size:13px; font-weight:600; color:${recFg}; line-height:1.4;">${option ? escapeHtml(describeDecision(option.decision)) : "Hold — zone within thresholds"}</div>
-          ${option ? `<button data-apply-option="${option.optionId}" style="width:100%; margin-top:10px; padding:8px; border:none; border-radius:6px; background:${ACCENT}; color:#04121f; cursor:pointer; font-size:11px; font-weight:600;">${isSim ? "Apply to draft" : "Simulate this"}</button>` : ""}
-        </div>
+        ${renderRecommendedChanges(frame, zone, option, isSim)}
+        ${renderOttoExplainability(frame, zone, option)}
         <div style="font-size:10px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px;">Crowd metrics</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); border:1px solid var(--border); border-radius:6px; overflow:hidden;">${crowd
           .map((m) => `<div style="background:var(--panel2); padding:8px 10px;"><div style="font-size:9px; color:var(--text3);">${m.k}</div><div class="mono" style="font-size:13px; font-weight:600; margin-top:2px; color:${m.color};">${m.v}</div></div>`)
           .join("")}</div>
-        <div style="display:flex; gap:7px; margin-top:12px; opacity:${isSim && canAdjust ? 1 : 0.4}; pointer-events:${isSim && canAdjust ? "auto" : "none"};">
-          <button data-counter-dec="${zone.zoneId}" style="flex:1; padding:9px; border:1px solid var(--border2); border-radius:6px; background:var(--hover); color:var(--text); cursor:pointer; font-size:11px;">− Close counter</button>
-          <button data-counter-inc="${zone.zoneId}" style="flex:1; padding:9px; border:1px solid var(--border2); border-radius:6px; background:var(--hover); color:var(--text); cursor:pointer; font-size:11px;">+ Open counter</button>
-        </div>
+        ${renderCounterControls(zone, isSim)}
+        ${renderStaffReassignmentControls(frame, zone, isSim)}
         <div style="font-size:10px; color:var(--text3); margin-top:10px;">Freshness ${zone.freshness.status} · confidence <span class="mono">${pct(zone.confidence.score)}</span>${staffing ? ` · rest due <span class="mono">${staffing.reliefCandidates[0]?.transferMinutes ?? 0}m relief</span>` : ""}</div>
       </div>
     </div>
@@ -1136,10 +1441,16 @@ function renderBoot() {
 function renderTimeline(frame, clockMinutes, isSim) {
   const { snapshot } = frame;
   const dayPart = clockMinutes < 720 ? "MORNING" : clockMinutes < 1020 ? "AFTERNOON" : "EVENING";
-  const nextFlight = [...snapshot.flights].sort((a, b) => a.scheduledAt.localeCompare(b.scheduledAt))[0];
   const baseMin = parseClockMinutes(snapshot.asOf);
+  const progressPct = Math.round((state.minute / 120) * 100);
+  const legend = [
+    { dot: ACCENT, label: "Passengers" },
+    { dot: "var(--staff-officer)", label: "Staff" },
+    { dot: WARN, label: "Watch" },
+    { dot: BUSY, label: "Critical" },
+  ];
   return `
-    <footer style="display:flex; align-items:center; gap:16px; padding:0 18px; background:var(--panel2); border-top:1px solid var(--border);">
+    <footer style="display:flex; align-items:center; gap:16px; padding:0 18px; background:var(--footer-blue); border-top:1px solid var(--footer-border); box-shadow:0 -12px 36px rgba(41,163,255,.08);">
       <div style="display:flex; align-items:center; gap:8px;">
         <button data-action="toggle-play" style="width:36px; height:36px; border:1px solid var(--border2); border-radius:7px; background:${state.playing ? ACCENT : "var(--hover)"}; color:${state.playing ? "#04121f" : "var(--text)"}; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center;">${state.playing ? "❚❚" : "▶"}</button>
         <button data-action="cycle-speed" class="mono" style="height:36px; padding:0 12px; border:1px solid var(--border2); border-radius:7px; background:var(--hover); color:var(--text2); cursor:pointer; font-size:11px;">${state.speed}×</button>
@@ -1150,12 +1461,18 @@ function renderTimeline(frame, clockMinutes, isSim) {
       </div>
       <div style="flex:1; position:relative; padding-top:15px;">
         <div style="position:absolute; top:0; left:0; font-size:9px; color:var(--text2);">Forecast horizon · T+${state.minute} min ${isSim ? "· projected" : ""}</div>
-        <input type="range" min="0" max="120" step="15" value="${state.minute}" data-scrub style="position:relative;">
+        <div style="position:absolute; top:-2px; left:${progressPct}%; transform:translateX(-50%); display:flex; align-items:center; gap:5px; padding:2px 7px; border-radius:999px; background:rgba(41,163,255,.18); border:1px solid rgba(41,163,255,.45); color:var(--text); font-size:9px; white-space:nowrap;">
+          <span style="width:5px; height:5px; border-radius:50%; background:${ACCENT}; box-shadow:0 0 8px ${ACCENT};"></span>
+          <span class="mono">${hhmm(clockMinutes)}</span>
+        </div>
+        <input type="range" min="0" max="120" step="15" value="${state.minute}" data-scrub style="position:relative; background:linear-gradient(90deg, var(--timeline-fill) 0%, var(--timeline-fill) ${progressPct}%, var(--timeline-track) ${progressPct}%, var(--timeline-track) 100%);">
         <div class="mono" style="display:flex; justify-content:space-between; font-size:9px; color:var(--text3); margin-top:6px;"><span>${hhmm(baseMin)}</span><span>${hhmm(baseMin + 30)}</span><span>${hhmm(baseMin + 60)}</span><span>${hhmm(baseMin + 90)}</span><span>${hhmm(baseMin + 120)}</span></div>
       </div>
-      <div style="text-align:right; min-width:170px;">
-        <div style="font-size:9px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase;">Next movement</div>
-        <div class="mono" style="font-size:12px; font-weight:600; margin-top:3px;">${nextFlight ? `${nextFlight.flightId} · ${hhmm(parseClockMinutes(nextFlight.scheduledAt))} · ${nextFlight.estimatedPassengers}p` : "—"}</div>
+      <div style="min-width:208px;">
+        <div style="font-size:9px; color:var(--text3); letter-spacing:.06em; text-transform:uppercase; margin-bottom:5px;">Map legend</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px 9px;">${legend
+          .map((item) => `<div style="display:flex; align-items:center; gap:6px; font-size:10px; color:var(--text2);"><span style="width:8px; height:8px; border-radius:${item.label === "Staff" ? "2px" : "50%"}; background:${item.dot}; box-shadow:0 0 6px ${item.dot};"></span>${item.label}</div>`)
+          .join("")}</div>
       </div>
     </footer>
   `;
@@ -1165,7 +1482,7 @@ function renderTimeline(frame, clockMinutes, isSim) {
 // the decision-support context produces).
 function describeDecision(decision) {
   if (decision.type === "staff-reassignment") {
-    return `Reassign ${decision.coverageUnits ?? 1} ${decision.role} unit(s) from ${labelize(decision.fromZoneId)} in ${decision.transferMinutes}m`;
+    return `Reassign ${decision.coverageUnits ?? 1} ${decision.role} unit(s) from ${labelize(decision.fromZoneId)} to ${labelize(decision.toZoneId)} in ${decision.transferMinutes}m`;
   }
   if (decision.type === "counter-capacity") {
     return `Open ${decision.openDelta} ${decision.roleRequired ?? ""} counter(s) within ${decision.openLeadMinutes ?? "—"}m`.replace(/\s+/g, " ");
@@ -1210,6 +1527,7 @@ function wireEvents() {
     el.addEventListener("click", () => {
       state.view = el.getAttribute("data-view");
       state.selected = null;
+      state.selectedCamera = null;
       state.hover = null;
       render();
     });
@@ -1225,6 +1543,14 @@ function wireEvents() {
     el.addEventListener("click", () => {
       const key = el.getAttribute("data-tool");
       state.tool = state.tool === key ? null : key;
+      if (key !== "cctv") state.selectedCamera = null;
+      render();
+    });
+  });
+  app.querySelectorAll("[data-camera]").forEach((el) => {
+    el.addEventListener("click", () => {
+      state.selectedCamera = el.getAttribute("data-camera");
+      state.hover = null;
       render();
     });
   });
@@ -1263,6 +1589,43 @@ function wireEvents() {
       }
     });
   });
+  app.querySelectorAll("[data-add-staff-move]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const toZoneId = el.getAttribute("data-add-staff-move");
+      const fromZoneId = el.getAttribute("data-default-from");
+      if (!fromZoneId) return;
+      stageStaffReassignment({
+        fromZoneId,
+        toZoneId,
+        role: el.getAttribute("data-default-role"),
+        coverageUnits: 1,
+      });
+      render();
+    });
+  });
+  app.querySelectorAll("[data-staff-move-field]").forEach((el) => {
+    el.addEventListener("change", () => {
+      const index = Number(el.getAttribute("data-staff-move-field"));
+      const field = el.getAttribute("data-field");
+      const move = state.simStaffReassignments[index];
+      if (!move) return;
+      if (field === "coverageUnits") {
+        move.coverageUnits = clamp(Number(el.value), 1, 12);
+      } else if (field === "from") {
+        move.from = el.value;
+      } else if (field === "to") {
+        move.to = el.value;
+      }
+      render();
+    });
+  });
+  app.querySelectorAll("[data-remove-staff-move]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const index = Number(el.getAttribute("data-remove-staff-move"));
+      state.simStaffReassignments = state.simStaffReassignments.filter((_, candidateIndex) => candidateIndex !== index);
+      render();
+    });
+  });
   const scrub = app.querySelector("[data-scrub]");
   if (scrub) {
     scrub.addEventListener("input", (event) => {
@@ -1275,8 +1638,12 @@ function wireEvents() {
   const actions = {
     "toggle-theme": () => (state.theme = state.theme === "dark" ? "light" : "dark"),
     "toggle-copilot": () => (state.copilot = !state.copilot),
-    "close-drawer": () => (state.tool = null),
+    "close-drawer": () => {
+      state.tool = null;
+      state.selectedCamera = null;
+    },
     "close-sel": () => (state.selected = null),
+    "close-camera": () => (state.selectedCamera = null),
     "zoom-in": () => (state.zoom = clamp(state.zoom * 1.3, 1, 3.2)),
     "zoom-out": () => zoomOut(),
     "zoom-reset": () => resetView(),

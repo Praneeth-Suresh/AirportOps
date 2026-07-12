@@ -6,6 +6,7 @@ export class SimulationService {
 
     const counterBoostByZone = new Map();
     const movementReliefByZone = new Map();
+    const staffReliefByZone = new Map();
 
     for (const decision of decisions) {
       if (decision.type === "counter-capacity") {
@@ -14,6 +15,12 @@ export class SimulationService {
       if (decision.type === "passenger-movement") {
         movementReliefByZone.set(decision.fromZoneId, (movementReliefByZone.get(decision.fromZoneId) ?? 0) + decision.passengers);
       }
+      if (decision.type === "staff-reassignment") {
+        staffReliefByZone.set(
+          decision.toZoneId,
+          (staffReliefByZone.get(decision.toZoneId) ?? 0) + decision.coverageUnits * 12,
+        );
+      }
     }
 
     const points = forecast.points.map((point) => ({
@@ -21,7 +28,8 @@ export class SimulationService {
       zones: point.zones.map((zone) => {
         const counterRelief = counterBoostByZone.get(zone.zoneId) ?? 0;
         const movementRelief = movementReliefByZone.get(zone.zoneId) ?? 0;
-        const expectedOccupancy = Math.max(0, zone.expectedOccupancy - counterRelief - movementRelief);
+        const staffRelief = staffReliefByZone.get(zone.zoneId) ?? 0;
+        const expectedOccupancy = Math.max(0, zone.expectedOccupancy - counterRelief - movementRelief - staffRelief);
         const sourceZone = snapshot.zones.find((candidate) => candidate.zoneId === zone.zoneId);
         const queuePressure = Number((expectedOccupancy / sourceZone.capacity).toFixed(2));
 
@@ -83,6 +91,20 @@ function validateScenarioDecisions(snapshot, decisions) {
       }
       if (decision.openDelta > remainingCapacity) {
         throw new Error(`ScenarioDecision exceeds counter capacity for ${decision.zoneId}`);
+      }
+      if (decision.openDelta < -counter.open) {
+        throw new Error(`ScenarioDecision closes more counters than are open for ${decision.zoneId}`);
+      }
+    }
+    if (decision.type === "staff-reassignment") {
+      if (!zoneIds.has(decision.fromZoneId)) {
+        throw new Error(`ScenarioDecision references unknown origin zone: ${decision.fromZoneId}`);
+      }
+      if (!zoneIds.has(decision.toZoneId)) {
+        throw new Error(`ScenarioDecision references unknown destination zone: ${decision.toZoneId}`);
+      }
+      if (typeof decision.coverageUnits !== "number" || decision.coverageUnits <= 0) {
+        throw new Error("ScenarioDecision staff reassignment requires positive coverage units");
       }
     }
     if (decision.fromZoneId && !zoneIds.has(decision.fromZoneId)) {

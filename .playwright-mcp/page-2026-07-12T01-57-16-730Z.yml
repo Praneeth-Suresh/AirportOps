@@ -1,0 +1,148 @@
+- main [ref=e2]:
+  - generic [ref=e699]:
+    - generic [ref=e700]:
+      - generic [ref=e701]:
+        - img "sentinel logo" [ref=e702]
+        - generic [ref=e703]: sentinel
+        - generic [ref=e704]: Digital Twin
+      - generic [ref=e706]:
+        - generic [ref=e707]:
+          - generic [ref=e708]: TERMINAL
+          - generic [ref=e709]: BKK · T1 Arrivals
+        - generic [ref=e710]:
+          - generic [ref=e711]: SNAPSHOT
+          - generic [ref=e712]: 09:20
+        - generic [ref=e713]:
+          - generic [ref=e714]: OCCUPANCY
+          - generic [ref=e715]: 8,430
+        - generic [ref=e716]:
+          - generic [ref=e717]: ALERTS
+          - generic [ref=e718]: "15"
+        - generic [ref=e719]:
+          - generic [ref=e720]: SOURCE
+          - generic [ref=e721]: PG EXPORT
+      - generic [ref=e722]:
+        - button "Departures" [ref=e723] [cursor=pointer]
+        - button "Arrivals" [ref=e724] [cursor=pointer]
+      - generic [ref=e725]:
+        - button "Live" [ref=e726] [cursor=pointer]
+        - button "Simulate" [ref=e728] [cursor=pointer]
+      - button "Fetch live updates" [ref=e730] [cursor=pointer]
+      - generic [ref=e732]: 6/9 fresh
+    - main [ref=e734]:
+      - generic [ref=e737]:
+        - img:
+          - generic:
+            - generic: $
+            - generic: $
+        - generic [ref=e738] [cursor=pointer]:
+          - generic [ref=e740]: Arrival Gate A
+          - generic [ref=e741]: 68%
+        - generic [ref=e742] [cursor=pointer]:
+          - generic [ref=e744]: Arrival Gate B
+          - generic [ref=e745]: 61%
+        - generic [ref=e746] [cursor=pointer]:
+          - generic [ref=e748]: Arrivals Hall
+          - generic [ref=e749]: 57%
+        - generic [ref=e750] [cursor=pointer]:
+          - generic [ref=e752]: Baggage Hall
+          - generic [ref=e753]: 41%
+        - generic [ref=e754] [cursor=pointer]:
+          - generic [ref=e756]: Baggage Reclaim North
+          - generic [ref=e757]: 60%
+        - generic [ref=e758] [cursor=pointer]:
+          - generic [ref=e760]: Baggage Reclaim South
+          - generic [ref=e761]: 54%
+        - generic [ref=e762] [cursor=pointer]:
+          - generic [ref=e764]: Customs Hall
+          - generic [ref=e765]: 55%
+        - generic [ref=e766] [cursor=pointer]:
+          - generic [ref=e768]: Immigration East
+          - generic [ref=e769]: 96%
+        - generic [ref=e770] [cursor=pointer]:
+          - generic [ref=e772]: Immigration West
+          - generic [ref=e773]: 89%
+      - generic [ref=e775]:
+        - button "Overview" [ref=e776] [cursor=pointer]
+        - button "Zones" [ref=e783] [cursor=pointer]
+        - button "Layers" [ref=e789] [cursor=pointer]
+        - button "Staffing" [ref=e793] [cursor=pointer]
+        - button "Flights" [ref=e800] [cursor=pointer]
+        - button "CCTV" [ref=e804] [cursor=pointer]
+        - button "Incidents" [ref=e810] [cursor=pointer]
+        - button "+" [ref=e817] [cursor=pointer]
+        - generic [ref=e818]: 100%
+        - button "−" [ref=e819] [cursor=pointer]
+        - button "Reset view" [ref=e820] [cursor=pointer]
+        - button "Toggle theme" [ref=e824] [cursor=pointer]
+      - generic [ref=e828]:
+        - generic [ref=e829]:
+          - generic [ref=e830]:
+            - generic [ref=e831]: Terminal Status
+            - generic [ref=e832]: Degraded
+          - generic [ref=e834]:
+            - generic [ref=e835]:
+              - generic [ref=e836]: 8,430
+              - generic [ref=e837]: in terminal
+            - generic [ref=e838]:
+              - generic [ref=e839]: 24m
+              - generic [ref=e840]: max wait
+            - generic [ref=e841]:
+              - generic [ref=e842]: "13"
+              - generic [ref=e843]: on shift
+        - generic [ref=e844]:
+          - generic [ref=e845]: Hover any zone on the map for live queue stats, or click to inspect.
+          - generic [ref=e850]: Next Movement
+          - generic [ref=e851]:
+            - generic [ref=e852]:
+              - generic [ref=e853]: AX-417
+              - generic [ref=e854]: arrival gate a · 312 pax
+            - generic [ref=e855]: 09:10
+          - generic [ref=e856]: Recent Events
+          - generic [ref=e857]:
+            - generic [ref=e858]:
+              - generic [ref=e859]: 09:20
+              - generic [ref=e861]: arrival gate a abnormal crowding
+            - generic [ref=e862]:
+              - generic [ref=e863]: 09:20
+              - generic [ref=e865]: arrival gate b queue build-up
+            - generic [ref=e866]:
+              - generic [ref=e867]: 09:20
+              - generic [ref=e869]: bag drop a queue build-up
+            - generic [ref=e870]:
+              - generic [ref=e871]: 09:20
+              - generic [ref=e873]: baggage hall queue build-up
+            - generic [ref=e874]:
+              - generic [ref=e875]: 09:20
+              - generic [ref=e877]: baggage reclaim north queue build-up
+            - generic [ref=e878]:
+              - generic [ref=e879]: 09:20
+              - generic [ref=e881]: check in a abnormal crowding
+      - generic:
+        - generic:
+          - generic: ACQUIRING SIGNAL
+          - generic: FLOOR SENSORS · GATES LIVE
+    - generic [ref=e882]:
+      - generic [ref=e883]:
+        - button "▶" [ref=e884] [cursor=pointer]
+        - button "1×" [ref=e885] [cursor=pointer]
+      - generic [ref=e886]:
+        - generic [ref=e887]: 09:20
+        - generic [ref=e888]: MORNING
+      - generic [ref=e889]:
+        - generic [ref=e890]: Forecast horizon · T+0 min
+        - generic [ref=e891]: 09:20
+        - slider [ref=e894] [cursor=pointer]: "0"
+        - generic [ref=e895]:
+          - generic [ref=e896]: 09:20
+          - generic [ref=e897]: 09:50
+          - generic [ref=e898]: 10:20
+          - generic [ref=e899]: 10:50
+          - generic [ref=e900]: 11:20
+      - generic [ref=e901]:
+        - generic [ref=e902]: Map legend
+        - generic [ref=e903]:
+          - generic [ref=e904]: Passengers
+          - generic [ref=e906]: Staff
+          - generic [ref=e908]: Watch
+          - generic [ref=e910]: Critical
