@@ -213,7 +213,31 @@ test("app shell renders from the fixture bundle when no export is loaded", async
   assert.ok(html.includes("SQ-981 public gate advisory"));
   assert.ok(html.includes("Fetch live updates"));
   assert.ok(html.includes("/api/tinyfish/public-context"));
+  assert.equal(html.includes("Digital Twin"), false);
   assert.equal(html.includes("api.search.tinyfish.ai"), false);
+
+  state.selected = "check-in-a";
+  state.mode = "live";
+  const liveDetailHtml = renderToString();
+  assert.ok(liveDetailHtml.includes("Recommended changes"));
+  assert.ok(liveDetailHtml.includes("Apply in simulator"));
+
+  state.mode = "sim";
+  state.simDecisions = { "check-in-a": 1 };
+  state.simStaffReassignments = [
+    { from: "bag-drop-a", to: "check-in-a", role: "ground-staff", coverageUnits: 2, transferMinutes: 4 },
+  ];
+  const simulatorHtml = renderToString();
+  assert.ok(simulatorHtml.includes("Counter plan"));
+  assert.ok(simulatorHtml.includes("7/10 open"));
+  assert.ok(simulatorHtml.includes('data-counter-bank="check-in-a" data-counter-state="open"'));
+  assert.ok(simulatorHtml.includes("Manpower redirection"));
+  assert.ok(simulatorHtml.includes("data-staff-move-field"));
+
+  state.selected = null;
+  state.mode = "live";
+  state.simDecisions = {};
+  state.simStaffReassignments = [];
 });
 
 test("committed Postgres export drives the monitoring pipeline with the seeded values", async () => {

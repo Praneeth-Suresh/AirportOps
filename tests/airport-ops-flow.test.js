@@ -20,6 +20,7 @@ import {
 import { defaultScenarioDecisions, simulationService } from "../src/simulation/index.js";
 import { decisionSupportService } from "../src/decision-support/index.js";
 import { MonitoringViewModel, monitoringAnalyticsService } from "../src/monitoring/index.js";
+import { cameraForId, camerasForView } from "../src/app/cctvDemo.js";
 
 test("fixture snapshot drives the full airport operations decision path", () => {
   const snapshot = createOperationalStateReader().getSnapshot();
@@ -164,6 +165,54 @@ test("simulation rejects counter decisions that exceed available opening capacit
   );
 });
 
+test("simulation applies signed counter deltas without mutating live counters", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const baseline = simulationService.project(snapshot, forecast, []);
+  const opened = simulationService.project(snapshot, forecast, [{ type: "counter-capacity", zoneId: "check-in-a", openDelta: 1 }]);
+  const closed = simulationService.project(snapshot, forecast, [{ type: "counter-capacity", zoneId: "check-in-a", openDelta: -1 }]);
+
+  const baselineZone = baseline.points.at(-1).zones.find((zone) => zone.zoneId === "check-in-a");
+  const openedZone = opened.points.at(-1).zones.find((zone) => zone.zoneId === "check-in-a");
+  const closedZone = closed.points.at(-1).zones.find((zone) => zone.zoneId === "check-in-a");
+
+  assert.ok(openedZone.expectedOccupancy < baselineZone.expectedOccupancy);
+  assert.ok(closedZone.expectedOccupancy > baselineZone.expectedOccupancy);
+  assert.equal(snapshot.counters.find((counter) => counter.zoneId === "check-in-a").open, 6);
+});
+
+test("simulation rejects counter decisions that close more counters than are open", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+
+  assert.throws(
+    () => simulationService.project(snapshot, forecast, [{ type: "counter-capacity", zoneId: "check-in-a", openDelta: -7 }]),
+    /closes more counters/,
+  );
+});
+
+test("simulation applies staff reassignment as scenario-only relief", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const baseline = simulationService.project(snapshot, forecast, []);
+  const reassigned = simulationService.project(snapshot, forecast, [
+    {
+      type: "staff-reassignment",
+      role: "ground-staff",
+      fromZoneId: "bag-drop-a",
+      toZoneId: "check-in-a",
+      coverageUnits: 2,
+      transferMinutes: 4,
+    },
+  ]);
+
+  const baselineZone = baseline.points.at(-1).zones.find((zone) => zone.zoneId === "check-in-a");
+  const reassignedZone = reassigned.points.at(-1).zones.find((zone) => zone.zoneId === "check-in-a");
+
+  assert.ok(reassignedZone.expectedOccupancy < baselineZone.expectedOccupancy);
+  assert.equal(snapshot.staff.find((staff) => staff.staffId === "ops-33").zoneId, "check-in-a");
+});
+
 test("simulation does not mutate live operational state", () => {
   const snapshot = createOperationalStateReader().getSnapshot();
   const before = snapshot.zones.find((zone) => zone.zoneId === "immigration-east").occupancy;
@@ -261,6 +310,59 @@ test("fixture snapshot series simulates changing real-time monitoring state", ()
 
   assert.ok(peakQueue.queueLength > normalQueue.queueLength);
   assert.equal(staleQueue.freshness.status, "stale");
+});
+
+test("CCTV camera view exposes details, insights, and demo detection boxes", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+  const mapZones = monitoring.zones
+    .filter((zone) => ["check-in-a", "bag-drop-a"].includes(zone.zoneId))
+    .map((zone) => ({
+      ...zone,
+      color: zone.status === "critical" ? "#f05b61" : "#32c783",
+      wait: zone.queueState.estimatedWaitMinutes,
+      density: zone.queueState.densityPerSquareMeter,
+      serviceRatePerMinute: zone.queueState.serviceRatePerMinute,
+      queueLength: zone.queueState.queueLength,
+      utilization: zone.counterUtilization,
+      staffing: zone.staffingContext,
+    }));
+
+  const camera = cameraForId(mapZones, "cam-checkin-east-01", { dataSource: "edge" });
+
+  assert.equal(camera.cameraId, "cam-checkin-east-01");
+  assert.equal(camera.isEdgeLive, true);
+  assert.equal(camera.zones.length, 2);
+  assert.equal(camera.insight.queueLength, 184);
+  assert.equal(camera.insight.estimatedWaitMinutes, 5);
+  assert.equal(camera.insight.busyCounters, 9);
+  assert.ok(camera.insight.confidence.score <= 0.88);
+  assert.ok(camera.detectionBoxes.length >= 4);
+  assert.ok(camera.detectionBoxes.every((box) => box.label === "person"));
+});
+
+test("CCTV camera list only includes cameras covering visible floor zones", () => {
+  const snapshot = createOperationalStateReader().getSnapshot();
+  const forecast = predictionService.forecast(snapshot);
+  const monitoring = MonitoringViewModel.from(snapshot, forecast);
+  const departureOnly = monitoring.zones
+    .filter((zone) => zone.zoneId === "check-in-a")
+    .map((zone) => ({
+      ...zone,
+      color: "#f05b61",
+      wait: zone.queueState.estimatedWaitMinutes,
+      density: zone.queueState.densityPerSquareMeter,
+      serviceRatePerMinute: zone.queueState.serviceRatePerMinute,
+      queueLength: zone.queueState.queueLength,
+      utilization: zone.counterUtilization,
+      staffing: zone.staffingContext,
+    }));
+
+  const cameras = camerasForView(departureOnly);
+
+  assert.ok(cameras.some((camera) => camera.cameraId === "cam-checkin-east-01"));
+  assert.equal(cameras.some((camera) => camera.cameraId === "cam-arrivals-01"), false);
 });
 
 test("decision options can trace recommendations to monitoring alerts", () => {

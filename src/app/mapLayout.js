@@ -119,7 +119,7 @@ function wall(d, opacity = 0.6) {
   return `<path d="${d}" fill="none" ${STROKE} stroke-opacity="${opacity}" stroke-width="2.4" stroke-linejoin="round"/>`;
 }
 function box(x, y, w, h, r = 4, opacity = 0.55) {
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="none" ${STROKE} stroke-opacity="${opacity}" stroke-width="2"/>`;
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" fill="var(--floor-fill)" fill-opacity="0.32" ${STROKE} stroke-opacity="${opacity}" stroke-width="2"/>`;
 }
 function bank(x, y, count, cw, ch, gap, vertical = false) {
   const items = [];
