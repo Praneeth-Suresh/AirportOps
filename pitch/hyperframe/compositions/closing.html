@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/theme.css" />
+  </head>
+  <body>
+    <div id="root" data-composition-id="closing" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+      <div class="clip" id="scene" data-start="0" data-duration="10" data-track-index="0">
+        <div class="stage"></div>
+        <div class="grid"></div>
+        <div class="dotfield"></div>
+        <div class="scrim"></div>
+        <div class="placeholder-tag">▶ PLACEHOLDER · Hero dashboard (V1) — reused</div>
+      </div>
+
+      <div class="wordmark clip" id="wordmark" data-start="0" data-duration="10" data-track-index="1">
+        <div class="mark">A</div>
+        <div class="name">AirportOps</div>
+      </div>
+
+      <div class="benefits clip" id="benefits" data-start="0" data-duration="10" data-track-index="2">
+        <div class="benefit">
+          <div class="benefit-title">Live visibility</div>
+          <div class="benefit-sub">the whole terminal, one view</div>
+        </div>
+        <div class="benefit good">
+          <div class="benefit-title">Foresight</div>
+          <div class="benefit-sub">spot bottlenecks before they form</div>
+        </div>
+        <div class="benefit warn">
+          <div class="benefit-title">AI on watch</div>
+          <div class="benefit-sub">Otto catches what humans miss</div>
+        </div>
+      </div>
+
+      <div class="beat-label clip" data-start="0" data-duration="10" data-track-index="3" id="cl">
+        <div class="beat-kicker">AirportOps</div>
+        <div class="beat-title">See it. Foresee it. Otto's got it.</div>
+      </div>
+
+      <script src="assets/stage.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo("#cl", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.2);
+        tl.fromTo(".benefit", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.15, ease: "power2.out" }, 0.5);
+        window.__timelines["closing"] = tl;
+      </script>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+# Rendered output — regenerable, keep out of git
+snapshots/
+out/
+renders/
+*.mp4
+*.webm
+.DS_Store

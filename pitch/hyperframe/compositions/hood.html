@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/theme.css" />
+  </head>
+  <body>
+    <div id="root" data-composition-id="hood" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+      <div class="clip" id="scene" data-start="0" data-duration="10" data-track-index="0">
+        <div class="stage"></div>
+        <div class="grid"></div>
+      </div>
+
+      <div class="wordmark clip" id="wordmark" data-start="0" data-duration="10" data-track-index="1">
+        <div class="mark">A</div>
+        <div class="name">AirportOps</div>
+      </div>
+
+      <div class="layers clip" id="layers" data-start="0" data-duration="10" data-track-index="2">
+        <div class="layers-wrap">
+          <div class="layer">
+            <div class="layer-num">1</div>
+            <div>
+              <div class="layer-title">Multi-camera tracking</div>
+              <div class="layer-sub">Computer vision holds one identity across every camera · GPS tags for staff</div>
+            </div>
+          </div>
+          <div class="layer good">
+            <div class="layer-num">2</div>
+            <div>
+              <div class="layer-title">Data integration</div>
+              <div class="layer-sub">Cameras + flight schedules + staff rosters → one live operational picture</div>
+            </div>
+          </div>
+          <div class="layer warn">
+            <div class="layer-num">3</div>
+            <div>
+              <div class="layer-title">AI &amp; machine learning</div>
+              <div class="layer-sub">Forecasts passenger flow · powers Otto's recommendations</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="beat-label clip" data-start="0" data-duration="10" data-track-index="3" id="hl">
+        <div class="beat-kicker">Under the hood</div>
+        <div class="beat-title">Sensing → Data → AI</div>
+      </div>
+
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo("#hl", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.2);
+        tl.fromTo("#layers .layer", { opacity: 0, y: 44 }, { opacity: 1, y: 0, duration: 0.5, stagger: 0.22, ease: "power2.out" }, 0.3);
+        window.__timelines["hood"] = tl;
+      </script>
+    </div>
+  </body>
+</html>

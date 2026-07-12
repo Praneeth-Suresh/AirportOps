@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/theme.css" />
+  </head>
+  <body>
+    <div id="root" data-composition-id="otto" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+      <div class="clip" id="scene" data-start="0" data-duration="10" data-track-index="0">
+        <div class="stage"></div>
+        <div class="grid"></div>
+        <div class="dotfield"></div>
+        <div class="scrim"></div>
+        <div class="placeholder-tag">▶ PLACEHOLDER · Dashboard state (V5/V6)</div>
+      </div>
+
+      <div class="wordmark clip" id="wordmark" data-start="0" data-duration="10" data-track-index="1">
+        <div class="mark">A</div>
+        <div class="name">AirportOps</div>
+      </div>
+
+      <div class="beat-label clip" data-start="0" data-duration="10" data-track-index="2" id="ol">
+        <div class="beat-kicker">Meet Otto</div>
+        <div class="beat-title">AI on watch</div>
+      </div>
+
+      <div class="otto-card clip" id="otto-card" data-start="0.8" data-duration="9.2" data-track-index="3">
+        <div class="otto-inner">
+          <div class="otto-head">
+            <div class="otto-avatar">O</div>
+            <div>
+              <div class="otto-name">Otto AI</div>
+              <div class="otto-sub">4:00 PM · Staffing alert</div>
+            </div>
+            <div class="otto-dot" id="otto-dot"></div>
+          </div>
+          <div class="otto-body">
+            <span class="red">Gate 5 understaffed</span> for <b>VJ882</b> — landing 4:30 PM.<br />
+            Recommend: move <b>3 staff</b> from Gate 10 → Gate 5.
+          </div>
+          <div class="otto-actions">
+            <div class="btn-primary">View details →</div>
+            <div class="btn-ghost">Dismiss</div>
+          </div>
+        </div>
+      </div>
+
+      <script src="assets/stage.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo("#ol", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 0.2);
+        tl.fromTo("#otto-card", { opacity: 0, x: 460 }, { opacity: 1, x: 0, duration: 0.7, ease: "back.out(1.4)" }, 0.8);
+        tl.to("#otto-dot", { opacity: 0.35, duration: 0.5, yoyo: true, repeat: 8, ease: "sine.inOut" }, 1.6);
+        window.__timelines["otto"] = tl;
+      </script>
+    </div>
+  </body>
+</html>

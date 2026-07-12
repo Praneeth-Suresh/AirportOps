@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/theme.css" />
+  </head>
+  <body>
+    <div id="root" data-composition-id="opener" data-start="0" data-duration="8" data-width="1920" data-height="1080">
+      <div class="clip" id="scene" data-start="0" data-duration="8" data-track-index="0">
+        <div class="stage"></div>
+        <div class="grid"></div>
+        <div class="dotfield"></div>
+        <div class="scrim"></div>
+        <div class="placeholder-tag">▶ PLACEHOLDER · Hero dashboard (V1)</div>
+      </div>
+
+      <div class="wordmark clip" id="wordmark" data-start="0" data-duration="8" data-track-index="1">
+        <div class="mark">A</div>
+        <div class="name">AirportOps</div>
+      </div>
+
+      <div class="center clip" id="op-center" data-start="0" data-duration="8" data-track-index="2">
+        <div>
+          <div class="kicker" id="op-kicker">Real-time · 3D · Live</div>
+          <div class="headline" id="op-headline">Airport operations,<br />one live view</div>
+        </div>
+      </div>
+
+      <script src="assets/stage.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused: true });
+        tl.fromTo("#op-kicker", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }, 0.2);
+        tl.fromTo("#op-headline", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, 0.35);
+        window.__timelines["opener"] = tl;
+      </script>
+    </div>
+  </body>
+</html>
