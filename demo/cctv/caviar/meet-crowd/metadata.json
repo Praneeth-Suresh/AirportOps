@@ -1,0 +1,830 @@
+{
+  "clipId": "caviar-meet-crowd",
+  "title": "CAVIAR Meet_Crowd CCTV sample",
+  "dataset": "CAVIAR Test Case Scenarios",
+  "sourceUrl": "https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/",
+  "sourceClip": "Meet_Crowd_jpg.tar.gz",
+  "sourceGroundTruth": "mc1gt.xml",
+  "attribution": "Data from the EC funded CAVIAR project / IST 2001 37540. Usability stated by CAVIAR as Creative Commons BY-SA.",
+  "nativeResolution": {
+    "width": 384,
+    "height": 288
+  },
+  "playbackFps": 6,
+  "cameraId": "cam-checkin-east-01",
+  "mappedZoneIds": [
+    "check-in-a",
+    "bag-drop-a"
+  ],
+  "observedAt": "2026-07-11T09:20:00+07:00",
+  "freshness": {
+    "status": "fresh",
+    "observedAt": "2026-07-11T09:20:00+07:00"
+  },
+  "confidence": {
+    "score": 0.98,
+    "basis": "CAVIAR hand-labeled ground-truth boxes for demo clip"
+  },
+  "frames": [
+    {
+      "frameNumber": 180,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd180.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-180-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 26.82,
+          "top": 34.55,
+          "width": 9.9,
+          "height": 7.99,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-180-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 30.99,
+          "top": 26.22,
+          "width": 10.94,
+          "height": 10.76,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-180-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 19.14,
+          "top": 35.24,
+          "width": 9.11,
+          "height": 8.68,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-180-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 24.74,
+          "top": 23.78,
+          "width": 9.38,
+          "height": 8.68,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 184,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd184.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-184-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 27.34,
+          "top": 34.55,
+          "width": 9.38,
+          "height": 8.68,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-184-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 31.77,
+          "top": 26.91,
+          "width": 12.5,
+          "height": 10.07,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-184-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 19.4,
+          "top": 35.76,
+          "width": 9.11,
+          "height": 8.33,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-184-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 25.52,
+          "top": 23.96,
+          "width": 8.85,
+          "height": 10.42,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 188,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd188.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-188-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 27.99,
+          "top": 35.24,
+          "width": 9.64,
+          "height": 9.38,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-188-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 32.68,
+          "top": 27.78,
+          "width": 12.76,
+          "height": 11.11,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-188-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 19.66,
+          "top": 35.94,
+          "width": 9.11,
+          "height": 7.99,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-188-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 26.17,
+          "top": 23.96,
+          "width": 9.64,
+          "height": 9.72,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 192,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd192.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-192-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 28.78,
+          "top": 35.59,
+          "width": 10.16,
+          "height": 9.38,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-192-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 33.72,
+          "top": 28.13,
+          "width": 11.72,
+          "height": 11.11,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-192-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 20.44,
+          "top": 36.63,
+          "width": 10.68,
+          "height": 7.29,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-192-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 26.95,
+          "top": 24.13,
+          "width": 7.55,
+          "height": 8.68,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 196,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd196.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-196-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 29.17,
+          "top": 36.11,
+          "width": 9.9,
+          "height": 9.03,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-196-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 34.11,
+          "top": 28.65,
+          "width": 11.46,
+          "height": 10.76,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-196-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 21.35,
+          "top": 36.81,
+          "width": 10.42,
+          "height": 7.64,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-196-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 27.47,
+          "top": 24.31,
+          "width": 7.55,
+          "height": 8.33,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 200,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd200.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-200-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 29.82,
+          "top": 36.28,
+          "width": 10.16,
+          "height": 8.68,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-200-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 34.77,
+          "top": 29.69,
+          "width": 12.24,
+          "height": 13.54,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-200-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 21.88,
+          "top": 37.15,
+          "width": 9.9,
+          "height": 7.64,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-200-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 28.52,
+          "top": 24.31,
+          "width": 8.59,
+          "height": 9.03,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 204,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd204.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-204-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 30.86,
+          "top": 36.63,
+          "width": 11.2,
+          "height": 8.68,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-204-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 35.81,
+          "top": 31.25,
+          "width": 12.24,
+          "height": 13.19,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-204-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 22.66,
+          "top": 37.33,
+          "width": 9.9,
+          "height": 9.38,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-204-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 29.95,
+          "top": 24.31,
+          "width": 9.38,
+          "height": 9.72,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 208,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd208.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-208-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 31.64,
+          "top": 36.98,
+          "width": 10.68,
+          "height": 8.68,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-208-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 36.07,
+          "top": 32.12,
+          "width": 12.24,
+          "height": 12.15,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-208-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 23.05,
+          "top": 38.02,
+          "width": 10.68,
+          "height": 9.38,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-208-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 31.25,
+          "top": 23.78,
+          "width": 9.38,
+          "height": 9.38,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 212,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd212.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-212-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 32.16,
+          "top": 37.5,
+          "width": 10.16,
+          "height": 9.03,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-212-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 36.85,
+          "top": 33.33,
+          "width": 11.72,
+          "height": 11.11,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-212-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 23.7,
+          "top": 38.37,
+          "width": 10.42,
+          "height": 9.38,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-212-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 32.03,
+          "top": 23.96,
+          "width": 9.9,
+          "height": 9.72,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 216,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd216.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-216-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 32.94,
+          "top": 38.54,
+          "width": 10.68,
+          "height": 10.42,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-216-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 38.02,
+          "top": 33.68,
+          "width": 14.06,
+          "height": 12.5,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-216-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 24.22,
+          "top": 39.06,
+          "width": 11.46,
+          "height": 8.68,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-216-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 32.94,
+          "top": 24.31,
+          "width": 9.64,
+          "height": 9.72,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 220,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd220.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-220-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 33.72,
+          "top": 39.41,
+          "width": 11.2,
+          "height": 10.07,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-220-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 39.32,
+          "top": 35.07,
+          "width": 13.54,
+          "height": 12.5,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-220-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 25.13,
+          "top": 39.41,
+          "width": 11.72,
+          "height": 8.68,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-220-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 34.38,
+          "top": 24.48,
+          "width": 11.46,
+          "height": 11.46,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 224,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd224.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-224-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 34.51,
+          "top": 40.28,
+          "width": 10.68,
+          "height": 9.72,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-224-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 40.36,
+          "top": 35.94,
+          "width": 12.5,
+          "height": 11.46,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-224-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 25.91,
+          "top": 39.93,
+          "width": 11.72,
+          "height": 8.33,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-224-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 35.03,
+          "top": 24.65,
+          "width": 10.68,
+          "height": 11.81,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 228,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd228.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-228-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 35.16,
+          "top": 41.15,
+          "width": 11.46,
+          "height": 8.68,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-228-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 40.49,
+          "top": 37.33,
+          "width": 12.24,
+          "height": 12.85,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-228-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 26.43,
+          "top": 40.28,
+          "width": 11.2,
+          "height": 9.03,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-228-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 36.59,
+          "top": 24.65,
+          "width": 12.76,
+          "height": 11.81,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 232,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd232.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-232-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 36.07,
+          "top": 41.49,
+          "width": 12.24,
+          "height": 10.76,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-232-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 41.67,
+          "top": 39.24,
+          "width": 13.02,
+          "height": 15.28,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-232-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 27.6,
+          "top": 40.8,
+          "width": 11.98,
+          "height": 10.76,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-232-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 38.41,
+          "top": 24.48,
+          "width": 12.76,
+          "height": 12.15,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 236,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd236.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-236-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 37.11,
+          "top": 42.88,
+          "width": 11.72,
+          "height": 10.07,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-236-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 42.58,
+          "top": 41.15,
+          "width": 13.28,
+          "height": 14.24,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-236-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 27.99,
+          "top": 41.67,
+          "width": 12.24,
+          "height": 10.42,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-236-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 39.45,
+          "top": 24.48,
+          "width": 11.72,
+          "height": 12.85,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    },
+    {
+      "frameNumber": 240,
+      "image": "demo/cctv/caviar/meet-crowd/frames/Meet_Crowd240.jpg",
+      "boxes": [
+        {
+          "detectionId": "caviar-240-person-0",
+          "trackId": "caviar-person-0",
+          "label": "person",
+          "left": 37.63,
+          "top": 44.27,
+          "width": 11.2,
+          "height": 8.68,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-240-person-1",
+          "trackId": "caviar-person-1",
+          "label": "person",
+          "left": 43.1,
+          "top": 43.06,
+          "width": 12.76,
+          "height": 12.5,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-240-person-2",
+          "trackId": "caviar-person-2",
+          "label": "person",
+          "left": 28.91,
+          "top": 42.71,
+          "width": 11.46,
+          "height": 9.72,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        },
+        {
+          "detectionId": "caviar-240-person-3",
+          "trackId": "caviar-person-3",
+          "label": "person",
+          "left": 41.15,
+          "top": 25.35,
+          "width": 11.98,
+          "height": 14.58,
+          "confidence": 0.98,
+          "source": "CAVIAR ground-truth XML"
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,14 @@
 const STATUS_RANK = { normal: 0, watch: 1, critical: 2 };
 
+export const CCTV_MEDIA_BY_CAMERA = {
+  "cam-checkin-east-01": {
+    clipId: "caviar-meet-crowd",
+    kind: "caviar-frame-sequence",
+    metadataUrl: "demo/cctv/caviar/meet-crowd/metadata.json",
+    label: "CAVIAR Meet_Crowd",
+  },
+};
+
 export const CCTV_CAMERAS = [
   {
     cameraId: "cam-checkin-east-01",
@@ -106,6 +115,7 @@ function buildCameraView(camera, zoneById, dataSource) {
     status: worst.status,
     allFresh,
     isEdgeLive: camera.edge && dataSource.startsWith("edge"),
+    media: CCTV_MEDIA_BY_CAMERA[camera.cameraId] ?? null,
     detectionBoxes: buildDetectionBoxes(camera, zones),
     insight,
   };

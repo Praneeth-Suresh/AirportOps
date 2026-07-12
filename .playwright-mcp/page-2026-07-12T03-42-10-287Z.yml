@@ -1,0 +1,292 @@
+- main [ref=f152e2]:
+  - generic [ref=f152e231]:
+    - generic [ref=f152e232]:
+      - generic [ref=f152e233]:
+        - img "sentinel logo" [ref=f152e234]
+        - generic [ref=f152e235]: sentinel
+      - generic [ref=f152e237]:
+        - generic [ref=f152e238]:
+          - generic [ref=f152e239]: TERMINAL
+          - generic [ref=f152e240]: BKK · T1 Departures
+        - generic [ref=f152e241]:
+          - generic [ref=f152e242]: SNAPSHOT
+          - generic [ref=f152e243]: 09:20
+        - generic [ref=f152e244]:
+          - generic [ref=f152e245]: OCCUPANCY
+          - generic [ref=f152e246]: 8,430
+        - generic [ref=f152e247]:
+          - generic [ref=f152e248]: ALERTS
+          - generic [ref=f152e249]: "15"
+        - generic [ref=f152e250]:
+          - generic [ref=f152e251]: SOURCE
+          - generic [ref=f152e252]: PG EXPORT
+      - generic [ref=f152e253]:
+        - button "Departures" [ref=f152e254] [cursor=pointer]
+        - button "Arrivals" [ref=f152e255] [cursor=pointer]
+      - generic [ref=f152e256]:
+        - button "Live" [ref=f152e257] [cursor=pointer]
+        - button "Simulate" [ref=f152e259] [cursor=pointer]
+      - button "Fetch live updates" [ref=f152e261] [cursor=pointer]
+      - generic [ref=f152e263]: 10/13 fresh
+    - main [ref=f152e265]:
+      - generic [ref=f152e268]:
+        - img:
+          - generic:
+            - generic: A
+            - generic: C
+            - generic: B
+            - generic: D
+        - generic [ref=f152e269] [cursor=pointer]:
+          - generic [ref=f152e271]: Bag Drop A
+          - generic [ref=f152e272]: 74%
+        - generic [ref=f152e273] [cursor=pointer]:
+          - generic [ref=f152e275]: Check-in A
+          - generic [ref=f152e276]: 95%
+        - generic [ref=f152e277] [cursor=pointer]:
+          - generic [ref=f152e279]: Check-in B
+          - generic [ref=f152e280]: 76%
+        - generic [ref=f152e281] [cursor=pointer]:
+          - generic [ref=f152e283]: Departure Gate A
+          - generic [ref=f152e284]: 46%
+        - generic [ref=f152e285] [cursor=pointer]:
+          - generic [ref=f152e287]: Departure Gate B
+          - generic [ref=f152e288]: 35%
+        - generic [ref=f152e289] [cursor=pointer]:
+          - generic [ref=f152e291]: Departure Gate C
+          - generic [ref=f152e292]: 38%
+        - generic [ref=f152e293] [cursor=pointer]:
+          - generic [ref=f152e295]: Departure Gate D
+          - generic [ref=f152e296]: 41%
+        - generic [ref=f152e297] [cursor=pointer]:
+          - generic [ref=f152e299]: Departure Hall
+          - generic [ref=f152e300]: 60%
+        - generic [ref=f152e301] [cursor=pointer]:
+          - generic [ref=f152e303]: Security North
+          - generic [ref=f152e304]: 94%
+        - generic [ref=f152e305] [cursor=pointer]:
+          - generic [ref=f152e307]: Security South
+          - generic [ref=f152e308]: 80%
+        - generic [ref=f152e309] [cursor=pointer]:
+          - generic [ref=f152e311]: Terminal Entrance East
+          - generic [ref=f152e312]: 37%
+        - generic [ref=f152e313] [cursor=pointer]:
+          - generic [ref=f152e315]: Terminal Entrance West
+          - generic [ref=f152e316]: 33%
+        - generic [ref=f152e317] [cursor=pointer]:
+          - generic [ref=f152e319]: Transfer Corridor
+          - generic [ref=f152e320]: 38%
+      - generic [ref=f152e321]:
+        - generic [ref=f152e322]:
+          - button "Overview" [ref=f152e323] [cursor=pointer]
+          - button "Zones" [ref=f152e330] [cursor=pointer]
+          - button "Layers" [ref=f152e336] [cursor=pointer]
+          - button "Staffing" [ref=f152e340] [cursor=pointer]
+          - button "Flights" [ref=f152e347] [cursor=pointer]
+          - button "CCTV" [ref=f152e351] [cursor=pointer]
+          - button "Incidents" [ref=f152e357] [cursor=pointer]
+          - button "+" [ref=f152e364] [cursor=pointer]
+          - generic [ref=f152e365]: 100%
+          - button "−" [ref=f152e366] [cursor=pointer]
+          - button "Reset view" [ref=f152e367] [cursor=pointer]
+          - button "Toggle theme" [ref=f152e371] [cursor=pointer]
+        - generic [ref=f152e375]:
+          - generic [ref=f152e376]:
+            - generic [ref=f152e377]: CCTV · Live View
+            - button "✕" [ref=f152e378] [cursor=pointer]
+          - generic [ref=f152e380]:
+            - generic [ref=f152e381]:
+              - button "Check-in East cam-checkin-east-01 1030 in view" [ref=f152e382] [cursor=pointer]:
+                - generic [ref=f152e389]:
+                  - generic [ref=f152e390]: Check-in East
+                  - text: cam-checkin-east-01
+                - generic [ref=f152e391]:
+                  - generic [ref=f152e392]: "1030"
+                  - generic [ref=f152e393]: in view
+              - generic [ref=f152e394]:
+                - generic [ref=f152e395]: 2 zones · real footage
+                - generic [ref=f152e396]: CAVIAR
+              - generic [ref=f152e397]:
+                - generic [ref=f152e398] [cursor=pointer]:
+                  - generic [ref=f152e399]: Check-in A
+                  - generic [ref=f152e402]:
+                    - generic "people in view" [ref=f152e403]: PAX 720
+                    - generic [ref=f152e404]: 6/6 busy
+                - generic [ref=f152e405] [cursor=pointer]:
+                  - generic [ref=f152e406]: Bag Drop A
+                  - generic [ref=f152e409]:
+                    - generic "people in view" [ref=f152e410]: PAX 310
+                    - generic [ref=f152e411]: 3/4 busy
+            - generic [ref=f152e412]:
+              - button "Check-in West cam-checkin-west-02 1120 in view" [ref=f152e413] [cursor=pointer]:
+                - generic [ref=f152e420]:
+                  - generic [ref=f152e421]: Check-in West
+                  - text: cam-checkin-west-02
+                - generic [ref=f152e422]:
+                  - generic [ref=f152e423]: "1120"
+                  - generic [ref=f152e424]: in view
+              - generic [ref=f152e425]:
+                - generic [ref=f152e426]: 2 zones · 10 boxes
+                - generic [ref=f152e427]: fresh
+              - generic [ref=f152e428]:
+                - generic [ref=f152e429] [cursor=pointer]:
+                  - generic [ref=f152e430]: Check-in B
+                  - generic [ref=f152e433]:
+                    - generic "people in view" [ref=f152e434]: PAX 580
+                    - generic [ref=f152e435]: 5/5 busy
+                - generic [ref=f152e436] [cursor=pointer]:
+                  - generic [ref=f152e437]: Departure Hall
+                  - generic [ref=f152e440]:
+                    - generic "people in view" [ref=f152e441]: PAX 540
+                    - generic [ref=f152e442]: 0/8 busy
+            - generic [ref=f152e443]:
+              - button "Landside Entrance cam-entrance-01 360 in view" [ref=f152e444] [cursor=pointer]:
+                - generic [ref=f152e451]:
+                  - generic [ref=f152e452]: Landside Entrance
+                  - text: cam-entrance-01
+                - generic [ref=f152e453]:
+                  - generic [ref=f152e454]: "360"
+                  - generic [ref=f152e455]: in view
+              - generic [ref=f152e456]:
+                - generic [ref=f152e457]: 2 zones · 4 boxes
+                - generic [ref=f152e458]: fresh
+              - generic [ref=f152e459]:
+                - generic [ref=f152e460] [cursor=pointer]:
+                  - generic [ref=f152e461]: Terminal Entrance East
+                  - generic [ref=f152e464]:
+                    - generic "people in view" [ref=f152e465]: PAX 190
+                    - generic [ref=f152e466]: 0 staff
+                - generic [ref=f152e467] [cursor=pointer]:
+                  - generic [ref=f152e468]: Terminal Entrance West
+                  - generic [ref=f152e471]:
+                    - generic "people in view" [ref=f152e472]: PAX 170
+                    - generic [ref=f152e473]: 0 staff
+            - generic [ref=f152e474]:
+              - button "Security Screening cam-security-01 1280 in view" [ref=f152e475] [cursor=pointer]:
+                - generic [ref=f152e482]:
+                  - generic [ref=f152e483]: Security Screening
+                  - text: cam-security-01
+                - generic [ref=f152e484]:
+                  - generic [ref=f152e485]: "1280"
+                  - generic [ref=f152e486]: in view
+              - generic [ref=f152e487]:
+                - generic [ref=f152e488]: 3 zones · 12 boxes
+                - generic [ref=f152e489]: stale
+              - generic [ref=f152e490]:
+                - generic [ref=f152e491] [cursor=pointer]:
+                  - generic [ref=f152e492]: Security North
+                  - generic [ref=f152e495]:
+                    - generic "people in view" [ref=f152e496]: PAX 610
+                    - generic [ref=f152e497]: 0/7 busy
+                - generic [ref=f152e498] [cursor=pointer]:
+                  - generic [ref=f152e499]: Transfer Corridor
+                  - generic [ref=f152e502]:
+                    - generic "people in view" [ref=f152e503]: PAX 150
+                    - generic [ref=f152e504]: 0 staff
+                - generic [ref=f152e505] [cursor=pointer]:
+                  - generic [ref=f152e506]: Security South
+                  - generic [ref=f152e509]:
+                    - generic "people in view" [ref=f152e510]: PAX 520
+                    - generic [ref=f152e511]: 5/6 busy
+            - generic [ref=f152e512]:
+              - button "Departure Gates cam-gates-dep-01 1090 in view" [ref=f152e513] [cursor=pointer]:
+                - generic [ref=f152e520]:
+                  - generic [ref=f152e521]: Departure Gates
+                  - text: cam-gates-dep-01
+                - generic [ref=f152e522]:
+                  - generic [ref=f152e523]: "1090"
+                  - generic [ref=f152e524]: in view
+              - generic [ref=f152e525]:
+                - generic [ref=f152e526]: 4 zones · 9 boxes
+                - generic [ref=f152e527]: fresh
+              - generic [ref=f152e528]:
+                - generic [ref=f152e529] [cursor=pointer]:
+                  - generic [ref=f152e530]: Departure Gate A
+                  - generic [ref=f152e533]:
+                    - generic "people in view" [ref=f152e534]: PAX 310
+                    - generic [ref=f152e535]: 0 staff
+                - generic [ref=f152e536] [cursor=pointer]:
+                  - generic [ref=f152e537]: Departure Gate B
+                  - generic [ref=f152e540]:
+                    - generic "people in view" [ref=f152e541]: PAX 240
+                    - generic [ref=f152e542]: 0 staff
+                - generic [ref=f152e543] [cursor=pointer]:
+                  - generic [ref=f152e544]: Departure Gate C
+                  - generic [ref=f152e547]:
+                    - generic "people in view" [ref=f152e548]: PAX 260
+                    - generic [ref=f152e549]: 0 staff
+                - generic [ref=f152e550] [cursor=pointer]:
+                  - generic [ref=f152e551]: Departure Gate D
+                  - generic [ref=f152e554]:
+                    - generic "people in view" [ref=f152e555]: PAX 280
+                    - generic [ref=f152e556]: 0 staff
+      - generic [ref=f152e557]:
+        - generic [ref=f152e558]:
+          - generic [ref=f152e559]:
+            - generic [ref=f152e560]: Terminal Status
+            - generic [ref=f152e561]: Degraded
+          - generic [ref=f152e563]:
+            - generic [ref=f152e564]:
+              - generic [ref=f152e565]: 8,430
+              - generic [ref=f152e566]: in terminal
+            - generic [ref=f152e567]:
+              - generic [ref=f152e568]: 17m
+              - generic [ref=f152e569]: max wait
+            - generic [ref=f152e570]:
+              - generic [ref=f152e571]: "13"
+              - generic [ref=f152e572]: on shift
+        - generic [ref=f152e573]:
+          - generic [ref=f152e574]: Hover any zone on the map for live queue stats, or click to inspect.
+          - generic [ref=f152e579]: Next Movement
+          - generic [ref=f152e580]:
+            - generic [ref=f152e581]:
+              - generic [ref=f152e582]: AX-417
+              - generic [ref=f152e583]: arrival gate a · 312 pax
+            - generic [ref=f152e584]: 09:10
+          - generic [ref=f152e585]: Recent Events
+          - generic [ref=f152e586]:
+            - generic [ref=f152e587]:
+              - generic [ref=f152e588]: 09:20
+              - generic [ref=f152e590]: arrival gate a abnormal crowding
+            - generic [ref=f152e591]:
+              - generic [ref=f152e592]: 09:20
+              - generic [ref=f152e594]: arrival gate b queue build-up
+            - generic [ref=f152e595]:
+              - generic [ref=f152e596]: 09:20
+              - generic [ref=f152e598]: bag drop a queue build-up
+            - generic [ref=f152e599]:
+              - generic [ref=f152e600]: 09:20
+              - generic [ref=f152e602]: baggage hall queue build-up
+            - generic [ref=f152e603]:
+              - generic [ref=f152e604]: 09:20
+              - generic [ref=f152e606]: baggage reclaim north queue build-up
+            - generic [ref=f152e607]:
+              - generic [ref=f152e608]: 09:20
+              - generic [ref=f152e610]: check in a abnormal crowding
+      - generic:
+        - generic:
+          - generic: ACQUIRING SIGNAL
+          - generic: FLOOR SENSORS · GATES LIVE
+    - generic [ref=f152e611]:
+      - generic [ref=f152e612]:
+        - button "▶" [ref=f152e613] [cursor=pointer]
+        - button "1×" [ref=f152e614] [cursor=pointer]
+      - generic [ref=f152e615]:
+        - generic [ref=f152e616]: 09:20
+        - generic [ref=f152e617]: MORNING
+      - generic [ref=f152e618]:
+        - generic [ref=f152e619]: Forecast horizon · T+0 min
+        - generic [ref=f152e620]: 09:20
+        - slider [ref=f152e623] [cursor=pointer]: "0"
+        - generic [ref=f152e624]:
+          - generic [ref=f152e625]: 09:20
+          - generic [ref=f152e626]: 09:50
+          - generic [ref=f152e627]: 10:20
+          - generic [ref=f152e628]: 10:50
+          - generic [ref=f152e629]: 11:20
+      - generic [ref=f152e630]:
+        - generic [ref=f152e631]: Map legend
+        - generic [ref=f152e632]:
+          - generic [ref=f152e633]: Passengers
+          - generic [ref=f152e635]: Staff
+          - generic [ref=f152e637]: Watch
+          - generic [ref=f152e639]: Critical
