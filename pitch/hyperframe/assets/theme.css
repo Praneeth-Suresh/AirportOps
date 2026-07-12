@@ -1,4 +1,4 @@
-/* AirportOps pitch — shared theme. Placeholder brand tokens; swap for the real kit. */
+/* Sentinel pitch — shared theme. Placeholder brand tokens; swap for the real kit. */
 :root {
   --bg: #0a0e1a;
   --bg-stage: #0e1424;
@@ -89,3 +89,8 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--
 .benefit.warn { border-top-color: var(--warn); }
 .benefit-title { color: var(--ink); font-size: 28px; font-weight: 700; }
 .benefit-sub { color: var(--ink-dim); font-size: 18px; margin-top: 6px; }
+
+/* model / data chips (under-the-hood diagram) */
+.chips { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.chip { font-size: 18px; color: var(--ink-dim); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; }
+.chip.lead { color: var(--ink); border-color: var(--accent); }

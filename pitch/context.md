@@ -1,4 +1,4 @@
-# AirportOps — Pitch Context
+# Sentinel — Pitch Context
 
 > **Purpose:** Working context for the **pitch portion** of the hackathon. This file accumulates the raw material — problem, scope, differentiation — that the pitch script will later draw from. It is intentionally pitch-focused, not an engineering spec.
 >
@@ -8,7 +8,7 @@
 
 ## The One-Liner
 
-**AirportOps** is an AI-powered airport operations monitoring platform that gives operations teams real-time visibility into passenger flow, queue congestion, and check-in counter utilization — and alerts them to problems *before* they escalate.
+**Sentinel** is an AI-powered airport operations monitoring platform that gives operations teams real-time visibility into passenger flow, queue congestion, and check-in counter utilization — and alerts them to problems *before* they escalate.
 
 ---
 
@@ -86,7 +86,7 @@ Build an AI-powered operations monitoring platform that:
 
 ### How to Tailor the Pitch to This Judge
 
-- **Fit the aviation ambition:** Frame AirportOps as a natural fit for a group already building digital aviation with Vietjet. Optionally name the ecosystem alignment (Vietjet operations, Galaxy Joy loyalty, real-time passenger data).
+- **Fit the aviation ambition:** Frame Sentinel as a natural fit for a group already building digital aviation with Vietjet. Optionally name the ecosystem alignment (Vietjet operations, Galaxy Joy loyalty, real-time passenger data).
 - **Lead with quality and credibility, not hype:** He values precision and proof over flash. Show a working pilot, real metrics, and a believable path — avoid vague "AI magic" claims.
 - **Respect the "small team, big value" ethos:** A lean team shipping a real, high-standard product is exactly his own origin story. Emphasize execution quality.
 - **Show enterprise/scale thinking:** He chased demanding enterprise clients deliberately. Address how this scales from one terminal → multiple zones → airport-wide, and how it holds up to real operational standards.
