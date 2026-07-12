@@ -1,0 +1,18 @@
+- generic [active] [ref=f2e1]:
+  - main [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - heading "www.pexels.com" [level=1] [ref=f2e5]
+      - heading "Performing security verification" [level=2] [ref=f2e6]
+      - paragraph [ref=f2e7]: This website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.
+  - contentinfo [ref=f2e8]:
+    - generic [ref=f2e10]:
+      - generic [ref=f2e12]:
+        - text: "Ray ID:"
+        - code [ref=f2e13]: a19cdc5acaa4ae9e
+      - generic [ref=f2e14]:
+        - generic [ref=f2e15]:
+          - text: Performance and Security by
+          - link "Cloudflare" [ref=f2e16] [cursor=pointer]:
+            - /url: https://www.cloudflare.com?utm_source=challenge&utm_campaign=m
+        - link "Privacy" [ref=f2e18] [cursor=pointer]:
+          - /url: https://www.cloudflare.com/privacypolicy/
