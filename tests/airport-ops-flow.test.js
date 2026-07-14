@@ -333,6 +333,7 @@ test("CCTV camera view exposes details, insights, and demo detection boxes", () 
 
   assert.equal(camera.cameraId, "cam-checkin-east-01");
   assert.equal(camera.isEdgeLive, true);
+  assert.equal(camera.media.clipId, "caviar-meet-crowd");
   assert.equal(camera.zones.length, 2);
   assert.equal(camera.insight.queueLength, 184);
   assert.equal(camera.insight.estimatedWaitMinutes, 5);
@@ -340,6 +341,23 @@ test("CCTV camera view exposes details, insights, and demo detection boxes", () 
   assert.ok(camera.insight.confidence.score <= 0.88);
   assert.ok(camera.detectionBoxes.length >= 4);
   assert.ok(camera.detectionBoxes.every((box) => box.label === "person"));
+});
+
+test("CAVIAR CCTV media sidecar provides real footage frames and labeled boxes", () => {
+  const metadata = JSON.parse(readFileSync(new URL("../demo/cctv/caviar/meet-crowd/metadata.json", import.meta.url), "utf8"));
+  const firstFrame = metadata.frames[0];
+
+  assert.equal(metadata.clipId, "caviar-meet-crowd");
+  assert.equal(metadata.dataset, "CAVIAR Test Case Scenarios");
+  assert.equal(metadata.cameraId, "cam-checkin-east-01");
+  assert.equal(metadata.frames.length, 16);
+  assert.ok(metadata.attribution.includes("CAVIAR"));
+  assert.ok(firstFrame.image.endsWith("Meet_Crowd180.jpg"));
+  assert.ok(firstFrame.boxes.length >= 4);
+  assert.ok(firstFrame.boxes.every((box) => box.source === "CAVIAR ground-truth XML"));
+
+  const frameBytes = readFileSync(new URL("../demo/cctv/caviar/meet-crowd/frames/Meet_Crowd180.jpg", import.meta.url));
+  assert.ok(frameBytes.length > 10000);
 });
 
 test("CCTV camera list only includes cameras covering visible floor zones", () => {

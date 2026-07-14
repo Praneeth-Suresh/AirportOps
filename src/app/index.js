@@ -157,6 +157,8 @@ const state = {
   mode: "live", // live | sim
   selected: null,
   selectedCamera: null,
+  cctvFrameIndex: 0,
+  cctvMedia: {},
   tool: null,
   copilot: false,
   theme: "dark",
@@ -544,6 +546,51 @@ async function fetchTinyFishLiveUpdates(fetcher = globalThis.fetch) {
   render();
 }
 
+async function loadCctvMedia(camera, fetcher = globalThis.fetch) {
+  if (!camera?.media || state.cctvMedia[camera.media.clipId]?.status === "ready") return;
+  state.cctvMedia = {
+    ...state.cctvMedia,
+    [camera.media.clipId]: { status: "loading", metadata: null, error: null },
+  };
+  render();
+
+  try {
+    const response = await fetcher(camera.media.metadataUrl, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const metadata = await response.json();
+    if (!Array.isArray(metadata.frames) || metadata.frames.length === 0) {
+      throw new Error("CCTV media metadata has no frames");
+    }
+    state.cctvMedia = {
+      ...state.cctvMedia,
+      [camera.media.clipId]: { status: "ready", metadata, error: null },
+    };
+  } catch (error) {
+    state.cctvMedia = {
+      ...state.cctvMedia,
+      [camera.media.clipId]: { status: "error", metadata: null, error: error.message },
+    };
+  }
+
+  render();
+}
+
+function selectedCctvCamera() {
+  if (!lastFrame || !state.selectedCamera) return null;
+  return cameraForId(lastFrame.mapZones, state.selectedCamera, { dataSource });
+}
+
+function selectCamera(cameraId) {
+  state.selectedCamera = cameraId;
+  state.cctvFrameIndex = 0;
+  state.hover = null;
+  const camera = selectedCctvCamera();
+  render();
+  if (camera?.media) {
+    void loadCctvMedia(camera);
+  }
+}
+
 function renderCommandBar(frame, clockMinutes, isSim) {
   const { snapshot, kpiPax, kpiAlerts, mapZones } = frame;
   const allFresh = frame.freshCount === mapZones.length;
@@ -908,6 +955,8 @@ function renderDrawerBody(frame) {
         const badge =
           cam.isEdgeLive
             ? `<span style="font-size:8px; font-weight:600; letter-spacing:.04em; color:#04121f; background:${OK}; padding:2px 5px; border-radius:3px;">● LIVE CV</span>`
+            : cam.media
+              ? `<span style="font-size:8px; font-weight:600; letter-spacing:.04em; color:#04121f; background:${ACCENT}; padding:2px 5px; border-radius:3px;">CAVIAR</span>`
             : `<span style="font-size:9px; color:${cam.allFresh ? OK : WARN};">${cam.allFresh ? "fresh" : "stale"}</span>`;
         const zoneRows = cam.zones
           .map((z) => {
@@ -929,7 +978,7 @@ function renderDrawerBody(frame) {
             </span>
             <span style="display:flex; flex-direction:column; align-items:flex-end; flex:none;"><span class="mono" style="font-size:15px; font-weight:600; color:${cam.color};">${cam.peopleInView}</span><span style="font-size:8px; color:var(--text3);">in view</span></span>
           </button>
-          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px 4px;"><span style="font-size:8.5px; color:var(--text3); letter-spacing:.04em; text-transform:uppercase;">${cam.zones.length} zone${cam.zones.length > 1 ? "s" : ""} · ${cam.detectionBoxes.length} boxes</span>${badge}</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px 4px;"><span style="font-size:8.5px; color:var(--text3); letter-spacing:.04em; text-transform:uppercase;">${cam.zones.length} zone${cam.zones.length > 1 ? "s" : ""} · ${cam.media ? "real footage" : `${cam.detectionBoxes.length} boxes`}</span>${badge}</div>
           <div style="display:flex; flex-direction:column; gap:5px; padding:0 8px 8px;">${zoneRows}</div>
         </div>`;
       })
@@ -957,18 +1006,30 @@ function renderCctvViewer(frame) {
   const cameraAlerts = frame.alerts.filter((alert) => zoneIds.has(alert.zoneId));
   const recommendation = frame.options.find((option) => option.affectedZones.some((zoneId) => zoneIds.has(zoneId)));
   const insight = camera.insight;
+  const mediaState = camera.media ? state.cctvMedia[camera.media.clipId] : null;
+  const media = mediaState?.metadata ?? null;
+  const mediaFrame = media ? media.frames[state.cctvFrameIndex % media.frames.length] : null;
+  const activeBoxes = mediaFrame?.boxes ?? camera.detectionBoxes;
+  const hasRealFootage = !!mediaFrame;
   const feedStatus = camera.status === "critical" ? "Crowd critical" : camera.status === "watch" ? "Crowd watch" : "Within threshold";
   const statusColor = camera.status === "critical" ? BUSY : camera.status === "watch" ? WARN : OK;
-  const sourceLabel = camera.isEdgeLive ? "LIVE CV" : "DEMO CV";
+  const sourceLabel = media ? "CAVIAR CCTV" : camera.isEdgeLive ? "LIVE CV" : "DEMO CV";
   const details = [
     ["Camera", camera.cameraId],
     ["Coverage", camera.zones.map((zone) => zone.label).join(" + ")],
     ["Floor", camera.floor],
     ["Lens", camera.lens],
-    ["Source", camera.source],
-    ["Freshness", insight.freshness],
-    ["Confidence", pct(insight.confidence.score)],
+    ["Source", media?.dataset ?? camera.source],
+    ["Freshness", media?.freshness?.status ?? insight.freshness],
+    ["Confidence", media?.confidence ? pct(media.confidence.score) : pct(insight.confidence.score)],
   ];
+  if (media) {
+    details.push(["Clip", media.title], ["Frame", `${mediaFrame.frameNumber}`]);
+  } else if (mediaState?.status === "loading") {
+    details.push(["Footage", "Loading CAVIAR clip"]);
+  } else if (mediaState?.status === "error") {
+    details.push(["Footage error", mediaState.error]);
+  }
   const metrics = [
     ["Occupancy", `${insight.occupancy} / ${insight.capacity}`, "occupancy"],
     ["Queue length", `${insight.queueLength} pax`, "queue_length"],
@@ -977,19 +1038,26 @@ function renderCctvViewer(frame) {
     ["Service load", `${insight.activeServiceLoadPerMinute}/min`, "active_service_load_per_minute"],
     ["Busy counters", insight.openCounters > 0 ? `${insight.busyCounters}/${insight.openCounters}` : "n/a", "busy_counters"],
   ];
-  const boxes = camera.detectionBoxes
+  const boxes = activeBoxes
     .map((box, index) => `<div class="cctv-box" style="left:${box.left}%; top:${box.top}%; width:${box.width}%; height:${box.height}%; animation-delay:${(index % 6) * 0.18}s;">
-      <span>${box.label.toUpperCase()} ${Math.round(box.confidence * 100)}%</span>
+      <span>${box.trackId ? box.trackId.replace("caviar-person-", "P") : box.label.toUpperCase()} ${Math.round(box.confidence * 100)}%</span>
     </div>`)
     .join("");
-  const people = camera.detectionBoxes
+  const people = hasRealFootage ? "" : camera.detectionBoxes
     .map((box, index) => `<span class="cctv-person" style="left:${box.left + box.width / 2}%; top:${box.top + box.height * 0.75}%; animation-delay:${(index % 5) * 0.22}s;"></span>`)
     .join("");
-  const laneGuides = camera.zones
+  const laneGuides = hasRealFootage ? "" : camera.zones
     .map((zone, index) => `<div class="cctv-zone-band" style="left:${8 + index * (84 / camera.zones.length)}%; width:${Math.max(18, 76 / camera.zones.length)}%; border-color:${zone.color};">
       <span>${escapeHtml(zone.label)}</span>
     </div>`)
     .join("");
+  const mediaNotice = media
+    ? `<div class="cctv-source-note">${escapeHtml(media.attribution)}</div>`
+    : mediaState?.status === "loading"
+      ? `<div class="cctv-source-note">Loading CAVIAR CCTV frame sequence...</div>`
+      : mediaState?.status === "error"
+        ? `<div class="cctv-source-note" style="color:${WARN};">CAVIAR media unavailable: ${escapeHtml(mediaState.error)}</div>`
+        : "";
   const alertBlock = cameraAlerts.length > 0
     ? cameraAlerts.slice(0, 3).map((alert) => `<div style="padding:8px 9px; border:1px solid ${alert.severity === "critical" ? "rgba(240,91,97,.45)" : "rgba(245,185,66,.45)"}; border-left:3px solid ${alert.severity === "critical" ? BUSY : WARN}; border-radius:6px; background:var(--panel2);">
         <div style="font-size:10px; font-weight:600; color:${alert.severity === "critical" ? BUSY : WARN}; text-transform:uppercase;">${alert.severity} · ${escapeHtml(alert.type)}</div>
@@ -1017,25 +1085,25 @@ function renderCctvViewer(frame) {
               <span style="font-size:15px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(camera.label)}</span>
               <span class="mono" style="font-size:9px; color:#04121f; background:${camera.isEdgeLive ? OK : WARN}; padding:3px 6px; border-radius:4px; font-weight:700;">${sourceLabel}</span>
             </div>
-            <div style="font-size:10px; color:var(--text3); margin-top:3px;">${escapeHtml(feedStatus)} · ${camera.peopleInView} people in frame · ${camera.detectionBoxes.length} detections</div>
+            <div style="font-size:10px; color:var(--text3); margin-top:3px;">${escapeHtml(feedStatus)} · ${hasRealFootage ? `${activeBoxes.length} CAVIAR labels` : `${camera.peopleInView} people in frame`} · ${activeBoxes.length} detections</div>
           </div>
           <button data-action="close-camera" aria-label="Close CCTV viewer" style="border:1px solid var(--border); background:var(--hover); color:var(--text2); cursor:pointer; width:32px; height:32px; border-radius:7px; font-size:15px;">x</button>
         </div>
         <div class="cctv-viewer-body">
-          <section class="cctv-feed" aria-label="Demo CCTV footage with crowd detection boxes">
-            <div class="cctv-feed-stage">
-              <div class="cctv-feed-grid"></div>
-              <div class="cctv-feed-depth"></div>
+          <section class="cctv-feed" aria-label="${hasRealFootage ? "CAVIAR CCTV footage with crowd detection boxes" : "Demo CCTV footage with crowd detection boxes"}">
+            <div class="cctv-feed-stage ${hasRealFootage ? "has-media" : ""}">
+              ${hasRealFootage ? `<img class="cctv-frame" src="${escapeHtml(mediaFrame.image)}" alt="${escapeHtml(media.title)} frame ${mediaFrame.frameNumber}">` : `<div class="cctv-feed-grid"></div><div class="cctv-feed-depth"></div>`}
               ${laneGuides}
               ${people}
               ${boxes}
               <div class="cctv-scan"></div>
               <div class="cctv-feed-osd">
                 <span class="mono">${camera.cameraId}</span>
-                <span class="mono">${hhmm(currentClockMinutes())}</span>
-                <span class="mono">${camera.floor.toUpperCase()}</span>
+                <span class="mono">${hasRealFootage ? `FRAME ${mediaFrame.frameNumber}` : hhmm(currentClockMinutes())}</span>
+                <span class="mono">${hasRealFootage ? media.clipId.toUpperCase() : camera.floor.toUpperCase()}</span>
               </div>
             </div>
+            ${mediaNotice}
           </section>
           <aside class="cctv-side">
             <div>
@@ -1549,9 +1617,7 @@ function wireEvents() {
   });
   app.querySelectorAll("[data-camera]").forEach((el) => {
     el.addEventListener("click", () => {
-      state.selectedCamera = el.getAttribute("data-camera");
-      state.hover = null;
-      render();
+      selectCamera(el.getAttribute("data-camera"));
     });
   });
   app.querySelectorAll("[data-layer]").forEach((el) => {
@@ -1750,6 +1816,15 @@ function init() {
     }
     render();
   }, 1000);
+
+  globalThis.setInterval(() => {
+    const camera = selectedCctvCamera();
+    const mediaState = camera?.media ? state.cctvMedia[camera.media.clipId] : null;
+    const frames = mediaState?.metadata?.frames ?? [];
+    if (frames.length === 0) return;
+    state.cctvFrameIndex = (state.cctvFrameIndex + 1) % frames.length;
+    render();
+  }, 170);
 }
 
 if (app) {

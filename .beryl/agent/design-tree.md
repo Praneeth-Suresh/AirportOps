@@ -36,6 +36,26 @@ Scalability is the first design priority. The initial build must make the system
 | How are bounded contexts released? | Shared monorepo; separate packages; separate repositories | Separate repositories per bounded context plus shared contracts repository | Enables independent team ownership, CI, and release cycles |
 | Which website runtime should host the first UI? | Static ES modules; React/Vite; Next.js; server-rendered app; dashboard framework | Static ES modules until routing/server needs are proven | No dependency install is required, local checks are fast, and the bounded-context public APIs remain framework-agnostic |
 | How should scalability be protected in the first build? | Scale UI only; scale backend only; contracts and repos first | Contracts, bounded-context APIs, fixture adapters, and stateless UI composition first | The product can scale teams, services, traffic, and integrations without rewriting the UI |
+| What footage should drive the CCTV demo viewer? | CAVIAR CCTV dataset; MOTChallenge/MOT17; SOMPT22; airport-specific research footage by author request; public webcam/CCTV feed; stock footage | Start with CAVIAR CCTV dataset, then run the project's own person detection/tracking and emit processed demo video plus sidecar metadata | CAVIAR provides real fixed-camera CCTV-style footage, direct MPEG/JPEG downloads, hand-labeled ground truth XML, and Creative Commons BY-SA usability. MOTChallenge and SOMPT22 are better tracking benchmarks but carry non-commercial/research constraints or less airport-like scenes. Airport-specific datasets are closest to the product story but require access requests and should not block the demo. Stock footage is rejected because it does not look like authentic CCTV. |
+
+## CCTV Footage Source Notes
+
+The next CCTV implementation slice should replace the synthetic in-app camera animation with downloaded real-looking surveillance footage while preserving the current app-shell boundary: the website shell presents media and sidecar metadata, while monitoring analytics remains derived from `OperationalSnapshot` contracts.
+
+Initial source decision:
+
+- Use the CAVIAR Test Case Scenarios dataset first: https://homepages.inf.ed.ac.uk/rbf/CAVIARDATA1/
+- Prefer clips that show a fixed wide-angle lobby or corridor view with multiple people moving through frame, such as `Meet_Crowd.mpg`, `OneShopOneWait2front.mpg`, or corridor-view sequences with groups.
+- Download the source MPEG or JPEG sequence into a demo-media directory, run the project's own computer-vision pass, and produce a browser-friendly processed video plus JSON sidecar containing per-frame detection boxes, confidence, track IDs, counts, camera ID, source citation, freshness, and zone mapping.
+- Treat CAVIAR ground-truth XML as optional validation/reference data, not as the only source of boxes. The demo should visibly show that the project can run person detection/tracking, even when a dataset provides hand labels.
+- Document CAVIAR attribution in the media metadata and in any public demo notes because the dataset page asks users publishing results to acknowledge the EC-funded CAVIAR project and states Creative Commons BY-SA usability.
+
+Other options retained for future comparison:
+
+- MOTChallenge/MOT17: useful for pedestrian detection/tracking workflows and existing benchmark formats, but less airport-specific and license terms must be reviewed before any public or commercial demo.
+- SOMPT22: surveillance-oriented static-camera multi-pedestrian data with public training videos and annotations, but the dataset page states non-commercial research-only use for videos/images.
+- Airport-specific research footage: best semantic match for security/checkpoint passenger flow, but only usable after permission or a public download path is confirmed.
+- Public webcam/CCTV streams: potentially authentic, but require source permission, privacy review, retention limits, and a live-ingest adapter plan.
 
 ## Settled Decisions
 
