@@ -10,26 +10,25 @@
     <link rel="stylesheet" href="assets/theme.css" />
     <link rel="stylesheet" href="assets/dash.css" />
     <style>
-      #tlbox { position: absolute; left: 186px; top: 1000px; width: 1588px; height: 74px; border: 2px solid rgba(41, 163, 255, 0.6); border-radius: 12px; box-shadow: 0 0 26px rgba(41, 163, 255, 0.35); }
-      #tlmark { position: absolute; top: 968px; left: 258px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: "IBM Plex Sans", sans-serif; }
+      /* lift the whole dashboard up (scale from the top) so the bottom timeline
+         clears the presenter's info bar; overlays live inside and scale with it */
+      #stage { position: absolute; inset: 0; transform: scale(0.93); transform-origin: 50% 0; }
+      #tlbox { position: absolute; left: 186px; top: 1000px; width: 1588px; height: 74px; border: 2px solid rgba(41, 163, 255, 0.6); border-radius: 12px; box-shadow: 0 0 26px rgba(41, 163, 255, 0.35); opacity: 0; }
+      #tlmark { position: absolute; top: 968px; left: 258px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: "IBM Plex Sans", sans-serif; opacity: 0; }
       #tlmark .lbl { background: #0b1015; border: 1px solid #29a3ff; color: #f3f6f8; font-size: 17px; font-weight: 600; padding: 4px 12px; border-radius: 8px; white-space: nowrap; }
       #tlmark .bar { width: 4px; height: 66px; background: #29a3ff; box-shadow: 0 0 14px #29a3ff; border-radius: 2px; }
-      #zonebox { position: absolute; left: 686px; top: 478px; width: 158px; height: 56px; border: 2px solid #f05b61; border-radius: 8px; box-shadow: 0 0 20px rgba(240, 91, 97, 0.45); }
+      #zonebox { position: absolute; left: 686px; top: 478px; width: 158px; height: 56px; border: 2px solid #f05b61; border-radius: 8px; box-shadow: 0 0 20px rgba(240, 91, 97, 0.45); opacity: 0; }
       #zonebox .tag { position: absolute; top: -34px; left: 50%; transform: translateX(-50%); background: #f05b61; color: #0b1015; font-family: "IBM Plex Sans", sans-serif; font-size: 16px; font-weight: 700; padding: 3px 10px; border-radius: 6px; white-space: nowrap; }
     </style>
   </head>
   <body>
     <div id="root" data-composition-id="realtime" data-start="0" data-duration="12" data-width="1920" data-height="1080">
-      <div class="dash clip hide-copilot" id="dashB" data-start="0" data-duration="12" data-track-index="0"></div>
-      <div class="dash clip hide-copilot" id="dashA" data-start="0" data-duration="12" data-track-index="1"></div>
-
-      <div id="tlbox" class="clip" data-start="0.4" data-duration="11.6" data-track-index="2" data-layout-allow-occlusion></div>
-      <div id="tlmark" class="clip" data-start="0.4" data-duration="11.6" data-track-index="3" data-layout-allow-occlusion>
-        <div class="lbl">Scrub forward · +60 min</div>
-        <div class="bar"></div>
-      </div>
-      <div id="zonebox" class="clip" data-start="5.5" data-duration="6.5" data-track-index="4" data-layout-allow-occlusion>
-        <div class="tag">Check-in A → 111%</div>
+      <div id="stage" class="clip" data-start="0" data-duration="12" data-track-index="0" data-layout-allow-occlusion>
+        <div class="dash hide-copilot" id="dashB"></div>
+        <div class="dash hide-copilot" id="dashA"></div>
+        <div id="tlbox"></div>
+        <div id="tlmark"><div class="lbl">Scrub forward · +60 min</div><div class="bar"></div></div>
+        <div id="zonebox"><div class="tag">Check-in A → 111%</div></div>
       </div>
 
       <script src="assets/dash.js"></script>
@@ -41,13 +40,12 @@
         const tl = gsap.timeline({ paused: true });
         const fx = window.DashFX.overlay(document.getElementById("dashB"));
         gsap.set(window.DashFX.plane(fx, "#29a3ff"), { x: 104, y: 410, rotation: 118, scale: 2.5, transformOrigin: "0px 0px" });
-        // draw attention to the timeline, then scrub the marker forward as the terminal fills
-        tl.fromTo("#tlbox", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.4);
+        tl.to("#tlbox", { opacity: 1, duration: 0.5 }, 0.4);
         tl.to("#tlbox", { boxShadow: "0 0 10px rgba(41,163,255,.2)", duration: 0.9, yoyo: true, repeat: 5, ease: "sine.inOut" }, 1.0);
-        tl.fromTo("#tlmark", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.5);
+        tl.to("#tlmark", { opacity: 1, duration: 0.4 }, 0.5);
         tl.to("#tlmark", { left: 1002, duration: 4.5, ease: "power1.inOut" }, 2.5);
         tl.to("#dashA", { opacity: 0, duration: 4.5, ease: "power1.inOut" }, 2.5);
-        tl.fromTo("#zonebox", { opacity: 0, scale: 1.15 }, { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)", transformOrigin: "50% 50%" }, 5.5);
+        tl.to("#zonebox", { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(2)", transformOrigin: "50% 50%" }, 5.5);
         window.__timelines["realtime"] = tl;
       </script>
     </div>
