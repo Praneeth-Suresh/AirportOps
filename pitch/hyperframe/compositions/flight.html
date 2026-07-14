@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/theme.css" />
+    <link rel="stylesheet" href="assets/dash.css" />
+  </head>
+  <body>
+    <div id="root" data-composition-id="flight" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+      <div class="dash clip hide-rail hide-timeline hide-copilot" id="dash" data-start="0" data-duration="10" data-track-index="0"></div>
+
+      <script src="assets/dash.js"></script>
+      <script src="assets/dashfx.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+        const dash = document.getElementById("dash");
+        dash.innerHTML = window.SentinelDash.variants.min0;
+        const tl = gsap.timeline({ paused: true });
+        const fx = window.DashFX.overlay(dash);
+        // A plane taxis in from the left apron and docks at Gate A.
+        const p = window.DashFX.plane(fx, "#29a3ff");
+        window.DashFX.dock(tl, p, [[-170, 540], [-30, 505], [55, 450], [104, 410]], 118, 2.5, 0.5);
+        window.__timelines["flight"] = tl;
+      </script>
+    </div>
+  </body>
+</html>

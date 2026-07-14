@@ -1,0 +1,140 @@
+/* Sentinel pitch — shared theme. Placeholder brand tokens; swap for the real kit. */
+:root {
+  --bg: #0a0e1a;
+  --bg-stage: #0e1424;
+  --ink: #e8ecf4;
+  --ink-dim: #93a0b8;
+  --accent: #39c2ff;
+  --good: #37d6a0;
+  --warn: #ffb23e;
+  --danger: #ff5c6c;
+  --line: #22304c;
+  /* aliases so the retrieved Otto otter SVG (uses app tokens) renders theme-aware */
+  --hover: #1a2438;
+  --panel: #0a0e1a;
+  --panel2: #0e1424;
+  --text: #e8ecf4;
+  --text2: #93a0b8;
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); font-family: var(--font); }
+#root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--bg); }
+
+/* placeholder dashboard stage (stands in for real footage) */
+.stage { position: absolute; inset: 0; background: radial-gradient(1300px 760px at 50% 42%, var(--bg-stage), var(--bg)); }
+.grid { position: absolute; inset: 0; opacity: 0.5;
+  background-image: linear-gradient(rgba(34, 48, 76, 0.13) 1px, transparent 1px), linear-gradient(90deg, rgba(34, 48, 76, 0.13) 1px, transparent 1px);
+  background-size: 64px 64px; }
+.dotfield { position: absolute; inset: 0; }
+.dot { position: absolute; width: 10px; height: 10px; border-radius: 50%; opacity: 0.85; transform: translate(-50%, -50%); }
+.scrim { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6, 9, 18, 0.4) 0%, rgba(6, 9, 18, 0) 28%, rgba(6, 9, 18, 0) 62%, rgba(6, 9, 18, 0.6) 100%); }
+.placeholder-tag { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); padding: 8px 16px; border: 1px dashed var(--line); border-radius: 8px; color: var(--ink-dim); font-size: 20px; letter-spacing: 1px; }
+
+/* wordmark */
+.wordmark { position: absolute; left: 80px; top: 60px; display: flex; align-items: center; gap: 12px; }
+.wordmark .mark { width: 34px; height: 34px; border-radius: 9px; background: var(--accent); display: flex; align-items: center; justify-content: center; color: #04121c; font-weight: 900; font-size: 20px; }
+.wordmark .name { color: var(--ink); font-weight: 700; font-size: 26px; letter-spacing: 1px; }
+
+/* lower-third beat label */
+.beat-label { position: absolute; left: 80px; bottom: 96px; }
+.beat-kicker { color: var(--accent); font-size: 26px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
+.beat-title { color: var(--ink); font-size: 64px; font-weight: 800; line-height: 1.05; }
+
+/* centered opener title */
+.center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; }
+.center .kicker { color: var(--accent); font-size: 28px; letter-spacing: 4px; text-transform: uppercase; font-weight: 600; }
+.center .headline { color: var(--ink); font-size: 86px; font-weight: 800; margin-top: 12px; line-height: 1.05; }
+
+/* highlight rings (centering handled via GSAP xPercent/yPercent) */
+.ring { position: absolute; }
+.ring .circle { width: 92px; height: 92px; border-radius: 50%; border: 4px solid var(--warn); box-shadow: 0 0 24px rgba(255, 178, 62, 0.53); }
+.ring.accent .circle { border-color: var(--accent); box-shadow: 0 0 24px rgba(57, 194, 255, 0.53); }
+.ring .rlabel { position: absolute; top: 102px; left: 50%; transform: translateX(-50%); white-space: nowrap; background: rgba(10, 14, 26, 0.92); border: 1px solid var(--warn); color: var(--ink); font-size: 20px; padding: 6px 12px; border-radius: 8px; }
+.ring.accent .rlabel { border-color: var(--accent); }
+.arrow-svg { position: absolute; inset: 0; }
+
+/* Otto alert card */
+.otto-card { position: absolute; right: 70px; top: 130px; width: 540px; }
+.otto-inner { background: rgba(14, 20, 36, 0.94); border: 1px solid var(--line); border-radius: 18px; padding: 26px; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5); }
+.otto-head { display: flex; align-items: center; gap: 14px; }
+.otto-avatar { width: 46px; height: 46px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: #04121c; font-weight: 800; font-size: 22px; }
+.otto-name { color: var(--ink); font-weight: 700; font-size: 24px; }
+.otto-sub { color: var(--ink-dim); font-size: 16px; }
+.otto-dot { margin-left: auto; width: 12px; height: 12px; border-radius: 50%; background: var(--danger); box-shadow: 0 0 14px var(--danger); }
+.otto-body { color: var(--ink); font-size: 23px; line-height: 1.45; margin-top: 18px; }
+.otto-body b { font-weight: 700; }
+.otto-body .red { color: var(--danger); font-weight: 700; }
+.otto-actions { display: flex; gap: 12px; margin-top: 22px; }
+.btn-primary { background: var(--accent); color: #04121c; font-weight: 700; font-size: 18px; padding: 12px 18px; border-radius: 10px; }
+.btn-ghost { border: 1px solid var(--line); color: var(--ink-dim); font-size: 18px; padding: 12px 18px; border-radius: 10px; }
+
+/* under-the-hood layer diagram */
+.layers { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+.layers-wrap { display: flex; flex-direction: column; gap: 26px; width: 1120px; }
+.layer { display: flex; align-items: center; gap: 22px; background: var(--bg-stage); border: 1px solid var(--line); border-left: 6px solid var(--accent); border-radius: 16px; padding: 26px 30px; }
+.layer.good { border-left-color: var(--good); }
+.layer.warn { border-left-color: var(--warn); }
+.layer-num { width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; background: rgba(57, 194, 255, 0.13); color: var(--accent); }
+.layer.good .layer-num { background: rgba(55, 214, 160, 0.13); color: var(--good); }
+.layer.warn .layer-num { background: rgba(255, 178, 62, 0.13); color: var(--warn); }
+.layer-title { color: var(--ink); font-size: 36px; font-weight: 700; }
+.layer-sub { color: var(--ink-dim); font-size: 22px; margin-top: 6px; }
+
+/* staff legend */
+.legend { position: absolute; left: 80px; top: 150px; display: flex; flex-direction: column; gap: 16px; }
+.legend-row { display: flex; align-items: center; gap: 14px; }
+.legend-swatch { width: 20px; height: 20px; border-radius: 50%; }
+.legend-label { color: var(--ink); font-size: 30px; font-weight: 600; }
+
+/* closing benefit chips */
+.benefits { position: absolute; left: 80px; bottom: 250px; display: flex; gap: 20px; }
+.benefit { background: var(--bg-stage); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 14px; padding: 18px 22px; width: 300px; }
+.benefit.good { border-top-color: var(--good); }
+.benefit.warn { border-top-color: var(--warn); }
+.benefit-title { color: var(--ink); font-size: 28px; font-weight: 700; }
+.benefit-sub { color: var(--ink-dim); font-size: 18px; margin-top: 6px; }
+
+/* model / data chips (under-the-hood diagram) */
+.chips { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.chip { font-size: 18px; color: var(--ink-dim); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px; }
+.chip.lead { color: var(--ink); border-color: var(--accent); }
+
+/* Otto otter avatar (retrieved brand mark) */
+.otto-avatar.otter { background: var(--bg-stage); border: 1px solid var(--line); overflow: hidden; padding: 0; }
+.otto-avatar.otter svg { width: 34px; height: 38px; }
+@keyframes blink { 0%, 90%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.12); } }
+
+/* team slide */
+.team-wrap { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 46px; font-family: var(--font); }
+.team-heading { text-align: center; }
+.team-kicker { color: var(--accent); font-size: 26px; letter-spacing: 3px; text-transform: uppercase; font-weight: 600; }
+.team-title { color: var(--ink); font-size: 62px; font-weight: 800; margin-top: 8px; }
+.team-row { display: flex; gap: 26px; }
+.member { width: 300px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.member .photo, .member .avatar-fallback { width: 150px; height: 150px; border-radius: 50%; border: 3px solid var(--line); }
+.member .photo { object-fit: cover; }
+.member .avatar-fallback { display: flex; align-items: center; justify-content: center; background: var(--bg-stage); color: var(--accent); font-size: 58px; font-weight: 800; }
+.member .m-name { color: var(--ink); font-size: 30px; font-weight: 700; margin-top: 18px; }
+.member .m-role { color: var(--ink-dim); font-size: 18px; margin-top: 6px; line-height: 1.35; }
+.member .school-pill { margin-top: 18px; background: #ffffff; border-radius: 10px; padding: 10px 18px; display: flex; align-items: center; }
+.member .school-pill img { height: 69px; object-fit: contain; display: block; }
+
+/* stylized digital-twin map backdrop (self-contained; stands in for app footage) */
+.map { position: absolute; inset: 0; background: radial-gradient(1400px 820px at 50% 44%, var(--bg-stage), var(--bg)); }
+.map-geo { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map-geo .floor { fill: none; stroke: var(--line); stroke-width: 1.5; opacity: 0.55; }
+.map-geo .counter { fill: rgba(57, 194, 255, 0.05); stroke: var(--line); stroke-width: 1; opacity: 0.7; }
+.plane { position: absolute; transform: translate(-50%, -50%); opacity: 0.45; }
+.plane path { fill: none; stroke: var(--ink-dim); stroke-width: 2.4; stroke-linejoin: round; }
+.zpill { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; gap: 9px; background: rgba(10, 14, 26, 0.85); border: 1px solid var(--line); border-radius: 10px; padding: 8px 13px; white-space: nowrap; font-family: var(--font); box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4); }
+.zpill .zdot { width: 9px; height: 9px; border-radius: 50%; }
+.zpill .zlabel { color: var(--ink); font-size: 20px; font-weight: 600; }
+.zpill .zpct { font-size: 20px; font-weight: 700; }
+.zpill.s-ok .zdot { background: var(--good); } .zpill.s-ok .zpct { color: var(--good); }
+.zpill.s-warn .zdot { background: var(--warn); } .zpill.s-warn .zpct { color: var(--warn); }
+.zpill.s-crit { border-color: rgba(255, 92, 108, 0.5); } .zpill.s-crit .zdot { background: var(--danger); } .zpill.s-crit .zpct { color: var(--danger); }
+.pax-layer { position: absolute; inset: 0; }
+.pax { position: absolute; top: 0; left: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.staff { position: absolute; top: 0; left: 0; width: 13px; height: 13px; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 10px currentColor; border: 2px solid rgba(255, 255, 255, 0.15); }

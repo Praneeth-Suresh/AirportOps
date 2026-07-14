@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sentinel — Pitch Deck</title>
+    <style>
+      :root { --ink: #e8ecf4; --dim: #93a0b8; --accent: #39c2ff; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { height: 100%; background: #05070d; overflow: hidden; font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      #stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+      video { position: absolute; max-width: 100%; max-height: 100%; width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.25s ease; }
+      video.active { opacity: 1; }
+      #bar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 16px; padding: 14px 22px; background: linear-gradient(0deg, rgba(5,7,13,0.85), rgba(5,7,13,0)); color: var(--dim); font-size: 15px; transition: opacity 0.3s ease; }
+      #bar.hidden { opacity: 0; }
+      #bar .idx { color: var(--accent); font-weight: 700; }
+      #bar .title { color: var(--ink); font-weight: 600; }
+      #bar .script { margin-left: auto; opacity: 0.8; }
+      #bar .hint { opacity: 0.5; font-size: 13px; }
+      #dots { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }
+      #dots span { width: 8px; height: 8px; border-radius: 50%; background: #2a3550; transition: background 0.2s; }
+      #dots span.on { background: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="dots"></div>
+    <div id="bar">
+      <span class="idx" id="idx">1 / 8</span>
+      <span class="title" id="title">Opener</span>
+      <span class="script" id="script"></span>
+      <span class="hint">→ / click next · ← back · F fullscreen · H hide bar</span>
+    </div>
+    <script>
+      const CLIPS = [
+        { f: "cover.mp4",      t: "Cover",                  s: "0 · Sentinel title" },
+        { f: "opener.mp4",     t: "Opener + Problem",       s: "1 · dashboard — top + right" },
+        { f: "flight.mp4",     t: "Dashboard · Flights",    s: "2 · plane taxis in & docks" },
+        { f: "passengers.mp4", t: "Dashboard · Passengers", s: "3 · disembark & flow inward" },
+        { f: "staff.mp4",      t: "Dashboard · Staff",      s: "4 · staff reveal by role" },
+        { f: "realtime.mp4",   t: "Real-time decision",     s: "5 · rail + timeline, scrub" },
+        { f: "otto.mp4",       t: "Otto AI",                s: "6 · copilot recommends" },
+        { f: "hood.mp4",       t: "Under the hood",         s: "7 · Sensing → Data → AI" },
+        { f: "closing.mp4",    t: "Closing",                s: "8 · full dashboard + 3 boxes" },
+        { f: "team.mp4",       t: "The Team",               s: "9 · Built by a holistic team" },
+      ];
+      const stage = document.getElementById("stage");
+      const dots = document.getElementById("dots");
+      const vids = CLIPS.map((c, i) => {
+        const v = document.createElement("video");
+        v.src = c.f; v.muted = true; v.loop = true; v.playsInline = true; v.preload = "auto";
+        stage.appendChild(v);
+        const d = document.createElement("span"); dots.appendChild(d);
+        return v;
+      });
+      let cur = -1;
+      function go(i) {
+        i = Math.max(0, Math.min(CLIPS.length - 1, i));
+        if (i === cur) return;
+        if (cur >= 0) { vids[cur].classList.remove("active"); vids[cur].pause(); }
+        cur = i;
+        const v = vids[cur];
+        v.currentTime = 0; v.classList.add("active"); v.play().catch(() => {});
+        document.getElementById("idx").textContent = (i + 1) + " / " + CLIPS.length;
+        document.getElementById("title").textContent = CLIPS[i].t;
+        document.getElementById("script").textContent = CLIPS[i].s;
+        [...dots.children].forEach((s, k) => s.classList.toggle("on", k === i));
+        // show the info bar briefly on each slide, then get out of the way
+        const bar = document.getElementById("bar");
+        bar.classList.remove("hidden");
+        clearTimeout(window.__hideTimer);
+        window.__hideTimer = setTimeout(() => bar.classList.add("hidden"), 3000);
+      }
+      function next() { go(cur + 1); }
+      function prev() { go(cur - 1); }
+      addEventListener("keydown", (e) => {
+        if (["ArrowRight", " ", "PageDown", "Enter"].includes(e.key)) { e.preventDefault(); next(); }
+        else if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); prev(); }
+        else if (e.key.toLowerCase() === "f") { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+        else if (e.key.toLowerCase() === "h") { document.getElementById("bar").classList.toggle("hidden"); }
+        else if (/^[1-8]$/.test(e.key)) { go(+e.key - 1); }
+      });
+      stage.addEventListener("click", next);
+      go(0);
+    </script>
+  </body>
+</html>

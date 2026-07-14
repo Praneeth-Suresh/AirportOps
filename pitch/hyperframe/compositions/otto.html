@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/theme.css" />
+    <link rel="stylesheet" href="assets/dash.css" />
+    <style>
+      /* zoom toward the copilot (bottom-right); spotlight lives inside and tracks it */
+      #stage { position: absolute; inset: 0; transform-origin: 98% 64%; }
+      #spot { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(520px 640px at 90% 60%, transparent 48%, rgba(4, 7, 12, 0.5) 64%, rgba(4, 7, 12, 0.88) 100%); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="otto" data-start="0" data-duration="12" data-width="1920" data-height="1080">
+      <div id="stage" class="clip" data-start="0" data-duration="12" data-track-index="0" data-layout-allow-occlusion>
+        <div class="dash" id="dash"></div>
+        <div id="spot"></div>
+      </div>
+
+      <script src="assets/dash.js"></script>
+      <script>
+        window.__timelines = window.__timelines || {};
+        document.getElementById("dash").innerHTML = window.SentinelDash.variants.otto;
+        const tl = gsap.timeline({ paused: true });
+        // start on the full dashboard, then dim the rest and zoom into the copilot
+        tl.fromTo("#spot", { opacity: 0 }, { opacity: 1, duration: 1.1, ease: "power2.inOut" }, 0.6);
+        tl.fromTo("#stage", { scale: 1 }, { scale: 1.55, duration: 2.4, ease: "power2.inOut" }, 0.8);
+        window.__timelines["otto"] = tl;
+      </script>
+    </div>
+  </body>
+</html>
