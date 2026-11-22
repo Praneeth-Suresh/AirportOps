@@ -1,36 +1,52 @@
-# sentinel
+# Sentinel (AirportOps)
 
-sentinel is a dependency-free static ES module application for airport operations decision support. The frontend reads operational rows exported from the Postgres operational database (`database/export/operational-rows.json`) when that export is present, and falls back to deterministic fixtures otherwise — so the frontend and domain systems can always be exercised without live airport integrations. The header of the sentinel surface shows which source is active (`PG EXPORT` or `FIXTURES`).
+Sentinel is an airport operations dashboard prototype built for the AABW
+2026 hackathon. It shows passenger flow, queue pressure, and counter
+utilization on a terminal map, then lets you preview a response without
+changing the active snapshot. This is a demonstration, not a live airport
+deployment.
 
-## Prerequisites
+## Try the fixture demo
 
-- Node.js with the built-in test runner available.
-- Python 3 for serving the static frontend locally.
-- Optional: Postgres plus `psql` if you want to load the operational database schema and fixture seed data.
-
-## Run the Frontend Application
-
-From the repository root:
-
-```bash
-python3 -m http.server 8000
-```
-
-Then open:
-
-```text
-http://localhost:8000/
-```
-
-The frontend entrypoint is `index.html`, which loads `src/app/index.js` and `src/app/styles.css`. The app shell renders the **sentinel digital-twin surface** — a flow map, timeline scrubber over the 120-minute forecast horizon, zone-inspection panel, live-vs-simulate modes, and the Beagle decision copilot. Every value it shows is composed from the operational-database reader plus the monitoring, prediction, simulation, and decision-support modules; the flow map is laid out from the seeded zone/path graph (`src/app/mapLayout.js`), so it reflects whatever the migrations and seeds contain.
-
-If port `8000` is already in use, choose another port:
+From the repository root, start a static server with Python 3. No npm
+install, database, or API key is needed to use this path.
 
 ```bash
-python3 -m http.server 8080
+python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-Then open `http://localhost:8080/`.
+Open <http://127.0.0.1:8000/?source=fixtures>. This forces deterministic
+fixtures even though a seeded database export is tracked in the repository.
+The header shows **FIX + TINYFISH**, where the TinyFish context also comes
+from built-in fixtures, and the live-update button is disabled.
+
+1. Start on **Live**, which means the active fixture snapshot in this demo.
+   Click a terminal zone to inspect its queues, wait times, and alerts.
+2. Use the timeline to inspect the 120-minute forecast.
+3. Switch to **Simulate** to explore changes as a separate scenario.
+
+The fixture demo exercises the same domain pipeline as the export-based mode:
+
+```mermaid
+flowchart LR
+    A[Deterministic snapshot] --> B[Terminal map and monitoring]
+    A --> C[120-minute forecast]
+    A --> D[Separate scenario projection]
+    C --> E[Decision recommendations]
+    D --> E
+```
+
+The default URL without `?source=fixtures` loads the bundled Postgres-shaped
+seed export if present, otherwise falls back to deterministic fixture rows.
+A **PG EXPORT** badge does not imply a connection to a live airport or database.
+
+The frontend entrypoint is `index.html` with the composition root in
+`src/app/index.js`. See [ALGORITHMS.md](ALGORITHMS.md) for implementation
+details and the [pitch](pitch/script.md) for the hackathon context.
+
+If port `8000` is busy, change it in the server command and browser URL.
+
+## Optional integrations
 
 ### Run the TinyFish live-update demo
 
@@ -56,7 +72,7 @@ PORT=8080 TINYFISH_SEARCH_QUERY="latest airport passenger congestion Vietnam" TI
 
 ## Run the Back-End Domain Systems
 
-There is no separate long-running backend service in the current implementation. The backend systems are domain modules under `src/`:
+Node.js is needed for the test runner and optional TinyFish demo. There is no separate long-running backend service for the domain logic. The backend systems are domain modules under `src/`:
 
 - `src/operational-state`
 - `src/operational-database`

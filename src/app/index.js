@@ -55,9 +55,11 @@ const TINYFISH_PUBLIC_CONTEXT_API = "/api/tinyfish/public-context";
 const EDGE_ROWS_URL = new URL("../../database/export/edge-operational-rows.json", import.meta.url);
 const EXPORTED_ROWS_URL = new URL("../../database/export/operational-rows.json", import.meta.url);
 const SOURCE_LABELS = { edge: "EDGE CV", postgres: "PG EXPORT", fixtures: "FIXTURES" };
-const EDGE_ROWS_REQUESTED =
-  typeof globalThis.location !== "undefined" &&
-  new URLSearchParams(globalThis.location.search).get("source") === "edge";
+const requestedSource = typeof globalThis.location === "undefined"
+  ? null
+  : new URLSearchParams(globalThis.location.search).get("source");
+const EDGE_ROWS_REQUESTED = requestedSource === "edge";
+const FIXTURE_ROWS_REQUESTED = requestedSource === "fixtures";
 const tinyFishPublicContextAdapter = createTinyFishPublicContextAdapter();
 
 function createFixtureRowsBundle() {
@@ -121,6 +123,8 @@ async function fetchRowsBundle(url) {
 }
 
 async function loadRowsBundle() {
+  if (FIXTURE_ROWS_REQUESTED) return;
+
   const sources = [
     ...(EDGE_ROWS_REQUESTED ? [{ url: EDGE_ROWS_URL, source: "edge" }] : []),
     { url: EXPORTED_ROWS_URL, source: "postgres" },
@@ -603,7 +607,9 @@ function renderCommandBar(frame, clockMinutes, isSim) {
       : state.liveTinyFish.status === "loading"
         ? WARN
         : ACCENT;
-  const liveLabel = state.liveTinyFish.status === "loading" ? "Fetching..." : "Fetch live updates";
+  const liveLabel = FIXTURE_ROWS_REQUESTED
+    ? "Live updates disabled in fixture mode"
+    : state.liveTinyFish.status === "loading" ? "Fetching..." : "Fetch live updates";
   const viewLabel = state.view === "arrival" ? "Arrivals" : "Departures";
   const viewBtns = [
     { key: "departure", label: "Departures" },
@@ -646,7 +652,7 @@ function renderCommandBar(frame, clockMinutes, isSim) {
       <div style="flex:1;"></div>
       <div style="display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden;">${viewBtns}</div>
       <div style="display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden;">${modeBtns}</div>
-      <button data-action="fetch-tinyfish" data-live-api="${TINYFISH_PUBLIC_CONTEXT_API}" title="${escapeHtml(state.liveTinyFish.message)}" style="display:flex; align-items:center; gap:7px; padding:7px 12px; border:1px solid rgba(39,211,209,.45); border-radius:6px; background:${state.liveTinyFish.status === "loading" ? "rgba(245,185,66,.15)" : "var(--hover)"}; color:${liveColor}; cursor:${state.liveTinyFish.status === "loading" ? "default" : "pointer"}; font-size:11px; font-weight:600;">
+      <button data-action="fetch-tinyfish" data-live-api="${TINYFISH_PUBLIC_CONTEXT_API}" ${FIXTURE_ROWS_REQUESTED ? "disabled" : ""} title="${escapeHtml(state.liveTinyFish.message)}" style="display:flex; align-items:center; gap:7px; padding:7px 12px; border:1px solid rgba(39,211,209,.45); border-radius:6px; background:${state.liveTinyFish.status === "loading" ? "rgba(245,185,66,.15)" : "var(--hover)"}; color:${liveColor}; cursor:${state.liveTinyFish.status === "loading" ? "default" : "pointer"}; font-size:11px; font-weight:600;">
         <span style="width:6px; height:6px; border-radius:50%; background:${liveColor}; box-shadow:0 0 6px ${liveColor};"></span>${liveLabel}
       </button>
       ${state.liveTinyFish.status === "idle" ? "" : `<div data-live-status style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; color:${liveColor};" title="${escapeHtml(state.liveTinyFish.message)}">${escapeHtml(state.liveTinyFish.message)}</div>`}
@@ -1716,7 +1722,7 @@ function wireEvents() {
     "toggle-play": () => (state.playing = !state.playing),
     "cycle-speed": () => (state.speed = state.speed === 1 ? 2 : state.speed === 2 ? 4 : 1),
     "fetch-tinyfish": () => {
-      void fetchTinyFishLiveUpdates();
+      if (!FIXTURE_ROWS_REQUESTED) void fetchTinyFishLiveUpdates();
     },
     confirm: () => {
       if (draftCount() > 0) confirmDecisions();
